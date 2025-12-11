@@ -17,4 +17,3 @@ var _ = BeforeSuite(func() {
 	// Check for required CRDs (TempoMonolithic, OpenTelemetryCollector)
 	// This can be done by trying to list the CRDs or checking if the framework can be created
 })
-

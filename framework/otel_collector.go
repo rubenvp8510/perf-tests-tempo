@@ -202,7 +202,7 @@ func (f *Framework) buildOTelCollectorCR() *unstructured.Unstructured {
 				"namespace": f.namespace,
 			},
 			"spec": map[string]interface{}{
-				"mode":            "deployment",
+				"mode":           "deployment",
 				"serviceAccount": "otel-collector-sa",
 				"config": map[string]interface{}{
 					"extensions": map[string]interface{}{
@@ -258,4 +258,3 @@ func (f *Framework) buildOTelCollectorCR() *unstructured.Unstructured {
 		},
 	}
 }
-

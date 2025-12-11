@@ -12,7 +12,7 @@ import (
 // WaitForPodsReady waits for pods matching the selector to be ready
 func (f *Framework) WaitForPodsReady(selector labels.Selector, timeout time.Duration, minReady int) error {
 	deadline := time.Now().Add(timeout)
-	
+
 	for time.Now().Before(deadline) {
 		pods, err := f.client.CoreV1().Pods(f.namespace).List(f.ctx, metav1.ListOptions{
 			LabelSelector: selector.String(),
@@ -145,7 +145,7 @@ func (f *Framework) WaitForTempoPodsReady(timeout time.Duration) error {
 		allPods, err := f.client.CoreV1().Pods(f.namespace).List(f.ctx, metav1.ListOptions{})
 		if err == nil {
 			for _, pod := range allPods.Items {
-				if (pod.Name == "tempo-simplest" || 
+				if (pod.Name == "tempo-simplest" ||
 					len(pod.Name) > 13 && pod.Name[:13] == "tempo-simplest") &&
 					isPodReady(&pod) {
 					return nil
@@ -161,4 +161,3 @@ func (f *Framework) WaitForTempoPodsReady(timeout time.Duration) error {
 	}
 	return fmt.Errorf("tempo pods not ready after %v", timeout)
 }
-

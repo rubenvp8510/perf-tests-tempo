@@ -72,4 +72,3 @@ func (f *Framework) buildTempoStackCR() *unstructured.Unstructured {
 		},
 	}
 }
-

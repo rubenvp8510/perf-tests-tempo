@@ -122,4 +122,3 @@ func (f *Framework) applyResources(resources []runtime.Object) error {
 func generateNamespace() string {
 	return fmt.Sprintf("tempo-perf-test-%d", time.Now().Unix())
 }
-

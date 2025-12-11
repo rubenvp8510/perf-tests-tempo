@@ -19,4 +19,3 @@ func (f *Framework) SetupTempo(variant string, resources *ResourceConfig) error 
 		return fmt.Errorf("invalid tempo variant: %s (must be 'monolithic' or 'stack')", variant)
 	}
 }
-

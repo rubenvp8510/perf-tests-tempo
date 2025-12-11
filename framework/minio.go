@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"time"
 
-	corev1 "k8s.io/api/core/v1"
 	appsv1 "k8s.io/api/apps/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
@@ -49,9 +49,9 @@ func (f *Framework) SetupMinIO() error {
 			Namespace: f.namespace,
 		},
 		StringData: map[string]string{
-			"endpoint":        fmt.Sprintf("http://minio.%s.svc.cluster.local:9000", f.namespace),
-			"bucket":          "tempo",
-			"access_key_id":   "tempo",
+			"endpoint":          fmt.Sprintf("http://minio.%s.svc.cluster.local:9000", f.namespace),
+			"bucket":            "tempo",
+			"access_key_id":     "tempo",
 			"access_key_secret": "supersecret",
 		},
 		Type: corev1.SecretTypeOpaque,
@@ -170,4 +170,3 @@ func (f *Framework) SetupMinIO() error {
 
 	return f.WaitForPodsReady(selector, 120*time.Second, 1)
 }
-
