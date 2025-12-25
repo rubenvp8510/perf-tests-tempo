@@ -1,36 +1,160 @@
 # Tempo Performance Test Framework
 
-A Ginkgo-based performance test framework for Tempo that provides structured deployment, testing, and cleanup capabilities.
+A Go framework for performance testing Tempo on Kubernetes/OpenShift clusters.
 
 ## Features
 
-- **Automated Deployment**: Deploy MinIO, Tempo (monolithic or stack), and OpenTelemetry Collector with proper readiness checks
-- **Resource Configuration**: Configure Tempo resources using preset profiles (small/medium/large) or custom specifications
-- **Comprehensive Cleanup**: Automatically clean up all resources including PVs/PVCs
-- **Namespace Isolation**: Each test run uses a unique namespace for complete isolation
-- **Ginkgo Integration**: Full integration with Ginkgo BDD testing framework
+- **Automated Deployment**: Deploy MinIO, Tempo (monolithic or stack), and OpenTelemetry Collector
+- **Resource Configuration**: Configure Tempo resources using preset profiles (small/medium/large) or custom specs
+- **Load Testing**: Integrated k6 load testing with configurable test profiles
+- **Metrics Collection**: Export performance metrics to CSV from Prometheus/Thanos
+- **Comprehensive Cleanup**: Automatic cleanup of all resources including finalizer handling
 
 ## Prerequisites
 
-- Go 1.21 or later
-- Kubernetes cluster access (kubeconfig or in-cluster)
+- Go 1.21+
+- Kubernetes/OpenShift cluster access
 - Tempo Operator installed
 - OpenTelemetry Operator installed
-- Required CRDs:
-  - `tempomonolithics.tempo.grafana.com`
-  - `tempostacks.tempo.grafana.com`
-  - `opentelemetrycollectors.opentelemetry.io`
 
 ## Installation
 
 ```bash
-cd test
 go mod download
 ```
 
-## Usage
+## Quick Start
 
-### Basic Example
+```go
+package mytest
+
+import (
+    "github.com/redhat/perf-tests-tempo/test/framework"
+    "github.com/redhat/perf-tests-tempo/test/framework/k6"
+)
+
+func Example() {
+    // Create framework with explicit namespace
+    fw, err := framework.New("my-perf-test")
+    if err != nil {
+        panic(err)
+    }
+    defer fw.Cleanup()
+
+    // Deploy infrastructure
+    fw.SetupMinIO()
+    fw.SetupTempo("monolithic", &framework.ResourceConfig{Profile: "medium"})
+    fw.SetupOTelCollector()
+
+    // Run load test
+    result, err := fw.RunK6Test(k6.TestIngestion, &k6.Config{Size: k6.SizeMedium})
+    if err != nil {
+        panic(err)
+    }
+    fmt.Println(result.Output)
+}
+```
+
+## Framework API
+
+### Creating a Framework
+
+```go
+// Create with explicit namespace (required)
+fw, err := framework.New("my-namespace")
+```
+
+### Deploying Components
+
+```go
+// Deploy MinIO storage backend
+fw.SetupMinIO()
+
+// Deploy Tempo with preset profile
+fw.SetupTempo("monolithic", &framework.ResourceConfig{Profile: "medium"})
+
+// Deploy Tempo with custom resources
+fw.SetupTempo("monolithic", &framework.ResourceConfig{
+    Resources: &corev1.ResourceRequirements{
+        Limits: corev1.ResourceList{
+            corev1.ResourceMemory: resource.MustParse("8Gi"),
+            corev1.ResourceCPU:    resource.MustParse("1000m"),
+        },
+    },
+})
+
+// Deploy Tempo Stack variant
+fw.SetupTempo("stack", nil)
+
+// Deploy OpenTelemetry Collector
+fw.SetupOTelCollector()
+```
+
+### Resource Profiles
+
+| Profile | Memory | CPU |
+|---------|--------|-----|
+| small   | 4Gi    | 500m |
+| medium  | 8Gi    | 1000m |
+| large   | 12Gi   | 1500m |
+
+### Running Load Tests
+
+```go
+import "github.com/redhat/perf-tests-tempo/test/framework/k6"
+
+// Run ingestion test
+result, err := fw.RunK6Test(k6.TestIngestion, &k6.Config{
+    Size: k6.SizeMedium,
+})
+
+// Convenience methods
+fw.RunK6IngestionTest(k6.SizeMedium)
+fw.RunK6QueryTest(k6.SizeLarge)
+fw.RunK6CombinedTest(k6.SizeSmall)
+```
+
+### Collecting Metrics
+
+```go
+import "time"
+
+testStart := time.Now()
+
+// ... run your test ...
+
+// Collect metrics from test start to now
+err := fw.CollectMetrics(testStart, "results/metrics.csv")
+
+// Or collect last N minutes
+err := fw.CollectMetricsWithDuration(30*time.Minute, "results/metrics.csv")
+```
+
+### Cleanup
+
+```go
+// Cleanup all resources (CRs, RBAC, PVs, namespace)
+err := fw.Cleanup()
+```
+
+## Package Structure
+
+```
+framework/
+├── framework.go      # Core Framework, New()
+├── types.go          # Interfaces, TrackedResource, ResourceConfig
+├── facade.go         # Backward-compatible API methods
+├── namespace.go      # Namespace lifecycle
+├── cleanup.go        # Resource cleanup
+├── tempo/            # Tempo deployment
+├── minio/            # MinIO storage backend
+├── otel/             # OpenTelemetry Collector
+├── k6/               # Load testing
+├── wait/             # Readiness utilities
+└── metrics/          # Metrics collection
+```
+
+## Using with Ginkgo
 
 ```go
 var _ = Describe("Performance Test", func() {
@@ -38,148 +162,42 @@ var _ = Describe("Performance Test", func() {
 
     BeforeEach(func() {
         var err error
-        fw, err = framework.New()
+        fw, err = framework.New("tempo-perf-test")
         Expect(err).NotTo(HaveOccurred())
 
-        // Deploy MinIO
-        err = fw.SetupMinIO()
-        Expect(err).NotTo(HaveOccurred())
-
-        // Deploy Tempo with medium resources
-        resourceConfig := &framework.ResourceConfig{
+        Expect(fw.SetupMinIO()).To(Succeed())
+        Expect(fw.SetupTempo("monolithic", &framework.ResourceConfig{
             Profile: "medium",
-        }
-        err = fw.SetupTempo("monolithic", resourceConfig)
-        Expect(err).NotTo(HaveOccurred())
-
-        // Deploy OpenTelemetry Collector
-        err = fw.SetupOTelCollector()
-        Expect(err).NotTo(HaveOccurred())
+        })).To(Succeed())
+        Expect(fw.SetupOTelCollector()).To(Succeed())
     })
 
-    It("should handle medium load", func() {
-        // Your performance test here
+    It("should handle load", func() {
+        result, err := fw.RunK6IngestionTest(k6.SizeMedium)
+        Expect(err).NotTo(HaveOccurred())
+        Expect(result.Success).To(BeTrue())
     })
 
     AfterEach(func() {
         if fw != nil {
-            err := fw.Cleanup()
-            Expect(err).NotTo(HaveOccurred())
+            Expect(fw.Cleanup()).To(Succeed())
         }
     })
 })
 ```
 
-### Resource Configuration
-
-#### Using Preset Profiles
-
-```go
-resourceConfig := &framework.ResourceConfig{
-    Profile: "small", // or "medium", "large"
-}
-fw.SetupTempo("monolithic", resourceConfig)
-```
-
-Preset profiles:
-- **small**: 4Gi memory, 500m CPU
-- **medium**: 8Gi memory, 1000m CPU
-- **large**: 12Gi memory, 1500m CPU
-
-#### Using Custom Resources
-
-```go
-resourceConfig := &framework.ResourceConfig{
-    Resources: &corev1.ResourceRequirements{
-        Limits: corev1.ResourceList{
-            corev1.ResourceMemory: resource.MustParse("6Gi"),
-            corev1.ResourceCPU:    resource.MustParse("750m"),
-        },
-        Requests: corev1.ResourceList{
-            corev1.ResourceMemory: resource.MustParse("6Gi"),
-            corev1.ResourceCPU:    resource.MustParse("750m"),
-        },
-    },
-}
-fw.SetupTempo("monolithic", resourceConfig)
-```
-
-#### Using Default Resources
-
-```go
-fw.SetupTempo("monolithic", nil) // Uses base deployment resources
-```
-
-### Tempo Variants
-
-#### Monolithic
-
-```go
-fw.SetupTempo("monolithic", resourceConfig)
-```
-
-#### Stack
-
-```go
-fw.SetupTempo("stack", nil) // Resources not supported for stack
-```
-
-## Framework API
-
-### Framework Methods
-
-- `New()` - Create a new framework instance with unique namespace
-- `NewWithNamespace(namespace)` - Create framework with specific namespace
-- `GetNamespace()` - Get the namespace used by this framework
-- `SetupMinIO()` - Deploy MinIO with PVC and wait for readiness
-- `SetupTempo(variant, resources)` - Deploy Tempo (monolithic or stack) with optional resources
-- `SetupOTelCollector()` - Deploy OpenTelemetry Collector with RBAC
-- `Cleanup()` - Remove all resources including PVs/PVCs
-
-### Resource Configuration
-
-- `ResourceConfig.Profile` - Preset profile name ("small", "medium", "large")
-- `ResourceConfig.Resources` - Custom resource requirements
-
 ## Running Tests
 
 ```bash
-cd test
+# Run all tests
 go test -v ./...
-```
 
-Or run specific test:
-
-```bash
+# Run examples
 go test -v ./examples/...
 ```
 
-## Cleanup
-
-The framework automatically handles cleanup of:
-- Deployments (MinIO, OTel Collector, query generators)
-- Jobs (trace generators)
-- CRs (TempoMonolithic, TempoStack, OpenTelemetryCollector)
-- RBAC resources (ServiceAccounts, Roles, RoleBindings, ClusterRoles, ClusterRoleBindings)
-- Services
-- Secrets
-- PVCs (with finalizer handling)
-- PVs (Released/Available state)
-- Namespace
-
 ## Examples
 
-See [`examples/basic_perf_test.go`](examples/basic_perf_test.go) for complete examples including:
-- Basic performance test with preset resources
-- Custom resource configuration
-- Tempo Stack deployment
-- Default resource usage
-
-## Notes
-
-- Resource configuration only applies to Tempo Monolithic, not Tempo Stack
-- Each test run creates a unique namespace for isolation
-- Cleanup waits for all pods to terminate before deleting PVCs
-- The framework handles stuck PVC finalizers automatically
-- Orphaned PVs are automatically cleaned up
-
+See [`examples/`](examples/) for complete examples:
+- `basic_perf_test.go` - Basic deployment and resource configuration
+- `metrics_export_test.go` - Metrics collection examples

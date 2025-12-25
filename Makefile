@@ -78,9 +78,17 @@ deps-update: ## Update all dependencies to latest versions
 build: ## Build the test binary
 	$(GO) build -o $(BINARY_NAME) .
 
+build-metrics-exporter: ## Build the metrics exporter CLI tool
+	@mkdir -p bin
+	$(GO) build -o $(METRICS_EXPORTER) ./cmd/metrics-exporter
+	@echo "Metrics exporter built: $(METRICS_EXPORTER)"
+
+build-all: build build-metrics-exporter ## Build all binaries
+
 clean: ## Clean build artifacts
 	$(GO) clean -cache -testcache
 	rm -f $(BINARY_NAME) $(COVERAGE_FILE) coverage.html
+	rm -rf bin/
 	@echo "Clean complete"
 
 install-tools: ## Install development tools
@@ -110,4 +118,29 @@ test-timeout: ## Run tests with timeout (useful for long-running tests)
 
 .PHONY: all
 all: format-check vet test ## Run format check, vet, and tests
+
+# K6 Performance Tests
+# Requires xk6-tempo: https://github.com/rubenvp8510/xk6-tempo
+
+K6_DIR := tests/k6
+K6_SIZE ?= medium
+
+.PHONY: k6-check k6-ingestion k6-query k6-combined k6-all
+
+k6-check: ## Check if k6 with xk6-tempo is installed
+	@k6 version || (echo "Error: k6 is not installed. Install xk6-tempo from https://github.com/rubenvp8510/xk6-tempo" && exit 1)
+
+k6-ingestion: k6-check ## Run k6 ingestion test (SIZE=small|medium|large|xlarge)
+	@echo "Running k6 ingestion test (size: $(K6_SIZE))..."
+	SIZE=$(K6_SIZE) k6 run $(K6_DIR)/ingestion-test.js
+
+k6-query: k6-check ## Run k6 query test (SIZE=small|medium|large|xlarge)
+	@echo "Running k6 query test (size: $(K6_SIZE))..."
+	SIZE=$(K6_SIZE) k6 run $(K6_DIR)/query-test.js
+
+k6-combined: k6-check ## Run k6 combined test (SIZE=small|medium|large|xlarge)
+	@echo "Running k6 combined test (size: $(K6_SIZE))..."
+	SIZE=$(K6_SIZE) k6 run $(K6_DIR)/combined-test.js
+
+k6-all: k6-ingestion k6-query k6-combined ## Run all k6 tests sequentially
 

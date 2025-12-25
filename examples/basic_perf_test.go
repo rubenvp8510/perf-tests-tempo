@@ -1,163 +1,130 @@
 package examples
 
 import (
+	"fmt"
+	"time"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	"github.com/redhat/perf-tests-tempo/test/framework"
+	"github.com/redhat/perf-tests-tempo/test/framework/k6"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 )
 
-var _ = Describe("Basic Performance Test", func() {
-	var fw *framework.Framework
+var _ = Describe("Tempo Performance Tests", func() {
+	var (
+		fw        *framework.Framework
+		testStart time.Time
+	)
 
-	BeforeEach(func() {
-		var err error
-		fw, err = framework.New("tempo-perf-test")
-		Expect(err).NotTo(HaveOccurred())
-
-		// Deploy MinIO
-		err = fw.SetupMinIO()
-		Expect(err).NotTo(HaveOccurred())
-
-		// Deploy Tempo with medium resources
-		resourceConfig := &framework.ResourceConfig{
-			Profile: "medium", // Uses preset profile
-		}
-		err = fw.SetupTempo("monolithic", resourceConfig)
-		Expect(err).NotTo(HaveOccurred())
-
-		// Deploy OpenTelemetry Collector
-		err = fw.SetupOTelCollector()
-		Expect(err).NotTo(HaveOccurred())
-	})
-
-	It("should handle medium load", func() {
-		// TODO: Add your performance test here
-		// This is where you would:
-		// - Deploy trace generators
-		// - Deploy query generators
-		// - Run load tests
-		// - Collect metrics
-		// - Assert on performance metrics
-	})
-
-	AfterEach(func() {
-		if fw != nil {
-			err := fw.Cleanup()
+	Context("with medium profile", func() {
+		BeforeEach(func() {
+			var err error
+			fw, err = framework.New("tempo-perf-medium")
 			Expect(err).NotTo(HaveOccurred())
-		}
+
+			Expect(fw.SetupMinIO()).To(Succeed())
+			Expect(fw.SetupTempo("monolithic", &framework.ResourceConfig{
+				Profile: "medium",
+			})).To(Succeed())
+			Expect(fw.SetupOTelCollector()).To(Succeed())
+
+			testStart = time.Now()
+		})
+
+		AfterEach(func() {
+			if fw != nil {
+				// Collect metrics before cleanup
+				outputFile := fmt.Sprintf("results/%s-metrics.csv", fw.Namespace())
+				_ = fw.CollectMetrics(testStart, outputFile)
+
+				Expect(fw.Cleanup()).To(Succeed())
+			}
+		})
+
+		It("should handle ingestion load", func() {
+			result, err := fw.RunK6IngestionTest(k6.SizeMedium)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(result.Success).To(BeTrue())
+
+			GinkgoWriter.Printf("Test completed in %s\n", result.Duration)
+		})
+
+		It("should handle query load", func() {
+			result, err := fw.RunK6QueryTest(k6.SizeMedium)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(result.Success).To(BeTrue())
+		})
+
+		It("should handle combined load", func() {
+			result, err := fw.RunK6CombinedTest(k6.SizeMedium)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(result.Success).To(BeTrue())
+		})
 	})
-})
 
-var _ = Describe("Performance Test with Custom Resources", func() {
-	var fw *framework.Framework
+	Context("with custom resources", func() {
+		BeforeEach(func() {
+			var err error
+			fw, err = framework.New("tempo-perf-custom")
+			Expect(err).NotTo(HaveOccurred())
 
-	BeforeEach(func() {
-		var err error
-		fw, err = framework.New("tempo-perf-test")
-		Expect(err).NotTo(HaveOccurred())
-
-		// Deploy MinIO
-		err = fw.SetupMinIO()
-		Expect(err).NotTo(HaveOccurred())
-
-		// Deploy Tempo with custom resources
-		resourceConfig := &framework.ResourceConfig{
-			Resources: &corev1.ResourceRequirements{
-				Limits: corev1.ResourceList{
-					corev1.ResourceMemory: resource.MustParse("6Gi"),
-					corev1.ResourceCPU:    resource.MustParse("750m"),
+			Expect(fw.SetupMinIO()).To(Succeed())
+			Expect(fw.SetupTempo("monolithic", &framework.ResourceConfig{
+				Resources: &corev1.ResourceRequirements{
+					Limits: corev1.ResourceList{
+						corev1.ResourceMemory: resource.MustParse("6Gi"),
+						corev1.ResourceCPU:    resource.MustParse("750m"),
+					},
+					Requests: corev1.ResourceList{
+						corev1.ResourceMemory: resource.MustParse("6Gi"),
+						corev1.ResourceCPU:    resource.MustParse("750m"),
+					},
 				},
-				Requests: corev1.ResourceList{
-					corev1.ResourceMemory: resource.MustParse("6Gi"),
-					corev1.ResourceCPU:    resource.MustParse("750m"),
-				},
-			},
-		}
-		err = fw.SetupTempo("monolithic", resourceConfig)
-		Expect(err).NotTo(HaveOccurred())
+			})).To(Succeed())
+			Expect(fw.SetupOTelCollector()).To(Succeed())
 
-		// Deploy OpenTelemetry Collector
-		err = fw.SetupOTelCollector()
-		Expect(err).NotTo(HaveOccurred())
-	})
+			testStart = time.Now()
+		})
 
-	It("should handle custom resource configuration", func() {
-		// TODO: Add your performance test here
-	})
+		AfterEach(func() {
+			if fw != nil {
+				Expect(fw.Cleanup()).To(Succeed())
+			}
+		})
 
-	AfterEach(func() {
-		if fw != nil {
-			err := fw.Cleanup()
+		It("should handle load with custom resources", func() {
+			result, err := fw.RunK6IngestionTest(k6.SizeSmall)
 			Expect(err).NotTo(HaveOccurred())
-		}
-	})
-})
-
-var _ = Describe("Performance Test with Tempo Stack", func() {
-	var fw *framework.Framework
-
-	BeforeEach(func() {
-		var err error
-		fw, err = framework.New("tempo-perf-test")
-		Expect(err).NotTo(HaveOccurred())
-
-		// Deploy MinIO
-		err = fw.SetupMinIO()
-		Expect(err).NotTo(HaveOccurred())
-
-		// Deploy Tempo Stack (resources not supported for stack)
-		err = fw.SetupTempo("stack", nil)
-		Expect(err).NotTo(HaveOccurred())
-
-		// Deploy OpenTelemetry Collector
-		err = fw.SetupOTelCollector()
-		Expect(err).NotTo(HaveOccurred())
+			Expect(result.Success).To(BeTrue())
+		})
 	})
 
-	It("should handle stack deployment", func() {
-		// TODO: Add your performance test here
-	})
-
-	AfterEach(func() {
-		if fw != nil {
-			err := fw.Cleanup()
+	Context("with Tempo Stack", func() {
+		BeforeEach(func() {
+			var err error
+			fw, err = framework.New("tempo-perf-stack")
 			Expect(err).NotTo(HaveOccurred())
-		}
-	})
-})
 
-var _ = Describe("Performance Test without Resources", func() {
-	var fw *framework.Framework
+			Expect(fw.SetupMinIO()).To(Succeed())
+			Expect(fw.SetupTempo("stack", nil)).To(Succeed())
+			Expect(fw.SetupOTelCollector()).To(Succeed())
 
-	BeforeEach(func() {
-		var err error
-		fw, err = framework.New("tempo-perf-test")
-		Expect(err).NotTo(HaveOccurred())
+			testStart = time.Now()
+		})
 
-		// Deploy MinIO
-		err = fw.SetupMinIO()
-		Expect(err).NotTo(HaveOccurred())
+		AfterEach(func() {
+			if fw != nil {
+				Expect(fw.Cleanup()).To(Succeed())
+			}
+		})
 
-		// Deploy Tempo without resource configuration (uses defaults)
-		err = fw.SetupTempo("monolithic", nil)
-		Expect(err).NotTo(HaveOccurred())
-
-		// Deploy OpenTelemetry Collector
-		err = fw.SetupOTelCollector()
-		Expect(err).NotTo(HaveOccurred())
-	})
-
-	It("should use default resources", func() {
-		// TODO: Add your performance test here
-	})
-
-	AfterEach(func() {
-		if fw != nil {
-			err := fw.Cleanup()
+		It("should handle stack deployment", func() {
+			result, err := fw.RunK6IngestionTest(k6.SizeSmall)
 			Expect(err).NotTo(HaveOccurred())
-		}
+			Expect(result.Success).To(BeTrue())
+		})
 	})
 })
