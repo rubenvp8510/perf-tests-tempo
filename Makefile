@@ -1,146 +1,90 @@
-.PHONY: help run test format lint vet clean deps build install-tools coverage
+.DEFAULT_GOAL := help
 
 # Variables
 GO := go
 GOFMT := gofmt
 GOLINT := golangci-lint
-TEST_PACKAGES := ./...
-COVERAGE_FILE := coverage.out
-BINARY_NAME := perf-tests
 
-# Default target
-.DEFAULT_GOAL := help
+##@ General
 
+.PHONY: help
 help: ## Show this help message
-	@echo 'Usage: make [target]'
-	@echo ''
-	@echo 'Available targets:'
-	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  %-15s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z0-9_-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) }' $(MAKEFILE_LIST)
 
-run: test ## Run tests (alias for test)
+##@ Development
 
-test: ## Run all tests
-	$(GO) test -v $(TEST_PACKAGES)
-
-test-verbose: ## Run tests with verbose output
-	$(GO) test -v -race $(TEST_PACKAGES)
-
-test-coverage: ## Run tests with coverage
-	$(GO) test -v -coverprofile=$(COVERAGE_FILE) $(TEST_PACKAGES)
-	$(GO) tool cover -html=$(COVERAGE_FILE) -o coverage.html
-	@echo "Coverage report generated: coverage.html"
-
-test-examples: ## Run example tests only
-	$(GO) test -v ./examples/...
-
-test-framework: ## Run framework tests only
-	$(GO) test -v ./framework/...
-
+.PHONY: format
 format: ## Format Go code
 	$(GOFMT) -s -w .
-	@echo "Code formatted"
 
-format-check: ## Check if code is formatted correctly
-	@if [ $$($(GOFMT) -l . | wc -l) -ne 0 ]; then \
-		echo "Code is not formatted. Run 'make format' to fix."; \
-		$(GOFMT) -l .; \
-		exit 1; \
-	fi
-	@echo "Code is properly formatted"
+.PHONY: format-check
+format-check: ## Check code formatting
+	@test -z "$$($(GOFMT) -l .)" || (echo "Code not formatted. Run 'make format'" && $(GOFMT) -l . && exit 1)
 
-lint: ## Run linter
-	@if command -v $(GOLINT) > /dev/null; then \
-		$(GOLINT) run $(TEST_PACKAGES); \
-	else \
-		echo "golangci-lint not installed. Install it with: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest"; \
-		exit 1; \
-	fi
-
+.PHONY: vet
 vet: ## Run go vet
-	$(GO) vet $(TEST_PACKAGES)
+	$(GO) vet ./...
 
-mod-tidy: ## Tidy go.mod and go.sum
+.PHONY: lint
+lint: ## Run golangci-lint
+	@command -v $(GOLINT) >/dev/null || (echo "Install golangci-lint: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest" && exit 1)
+	$(GOLINT) run ./...
+
+.PHONY: check
+check: format-check vet ## Run all checks
+
+##@ Testing
+
+.PHONY: test
+test: ## Run all tests
+	$(GO) test -v ./...
+
+.PHONY: test-examples
+test-examples: ## Run example tests
+	$(GO) test -v ./examples/...
+
+.PHONY: test-race
+test-race: ## Run tests with race detector
+	$(GO) test -race ./...
+
+##@ Dependencies
+
+.PHONY: deps
+deps: ## Tidy dependencies
 	$(GO) mod tidy
-	@echo "Dependencies tidied"
 
-mod-verify: ## Verify dependencies
-	$(GO) mod verify
-	@echo "Dependencies verified"
-
-deps: mod-tidy ## Update and tidy dependencies
-	@echo "Dependencies updated"
-
-deps-update: ## Update all dependencies to latest versions
+.PHONY: deps-update
+deps-update: ## Update dependencies to latest
 	$(GO) get -u ./...
 	$(GO) mod tidy
-	@echo "Dependencies updated to latest versions"
 
-build: ## Build the test binary
-	$(GO) build -o $(BINARY_NAME) .
+##@ k6 Load Tests
+# Set test size: K6_SIZE=small|medium|large|xlarge (default: medium)
 
-build-metrics-exporter: ## Build the metrics exporter CLI tool
-	@mkdir -p bin
-	$(GO) build -o $(METRICS_EXPORTER) ./cmd/metrics-exporter
-	@echo "Metrics exporter built: $(METRICS_EXPORTER)"
-
-build-all: build build-metrics-exporter ## Build all binaries
-
-clean: ## Clean build artifacts
-	$(GO) clean -cache -testcache
-	rm -f $(BINARY_NAME) $(COVERAGE_FILE) coverage.html
-	rm -rf bin/
-	@echo "Clean complete"
-
-install-tools: ## Install development tools
-	@echo "Installing development tools..."
-	$(GO) install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
-	@echo "Tools installed"
-
-check: format-check vet ## Run all checks (format, vet)
-	@echo "All checks passed"
-
-ci: format-check vet test ## Run CI checks (format, vet, test)
-	@echo "CI checks complete"
-
-coverage: test-coverage ## Generate coverage report (alias for test-coverage)
-
-benchmark: ## Run benchmarks
-	$(GO) test -bench=. -benchmem $(TEST_PACKAGES)
-
-test-race: ## Run tests with race detector
-	$(GO) test -race $(TEST_PACKAGES)
-
-test-short: ## Run tests in short mode
-	$(GO) test -short $(TEST_PACKAGES)
-
-test-timeout: ## Run tests with timeout (useful for long-running tests)
-	$(GO) test -timeout 30m $(TEST_PACKAGES)
-
-.PHONY: all
-all: format-check vet test ## Run format check, vet, and tests
-
-# K6 Performance Tests
-# Requires xk6-tempo: https://github.com/rubenvp8510/xk6-tempo
-
-K6_DIR := tests/k6
 K6_SIZE ?= medium
 
-.PHONY: k6-check k6-ingestion k6-query k6-combined k6-all
+.PHONY: k6-all
+k6-all: k6-ingestion k6-query k6-combined ## Run all k6 tests
 
-k6-check: ## Check if k6 with xk6-tempo is installed
-	@k6 version || (echo "Error: k6 is not installed. Install xk6-tempo from https://github.com/rubenvp8510/xk6-tempo" && exit 1)
+.PHONY: k6-ingestion
+k6-ingestion: ## Run k6 ingestion test
+	SIZE=$(K6_SIZE) k6 run tests/k6/ingestion-test.js
 
-k6-ingestion: k6-check ## Run k6 ingestion test (SIZE=small|medium|large|xlarge)
-	@echo "Running k6 ingestion test (size: $(K6_SIZE))..."
-	SIZE=$(K6_SIZE) k6 run $(K6_DIR)/ingestion-test.js
+.PHONY: k6-query
+k6-query: ## Run k6 query test
+	SIZE=$(K6_SIZE) k6 run tests/k6/query-test.js
 
-k6-query: k6-check ## Run k6 query test (SIZE=small|medium|large|xlarge)
-	@echo "Running k6 query test (size: $(K6_SIZE))..."
-	SIZE=$(K6_SIZE) k6 run $(K6_DIR)/query-test.js
+.PHONY: k6-combined
+k6-combined: ## Run k6 combined test
+	SIZE=$(K6_SIZE) k6 run tests/k6/combined-test.js
 
-k6-combined: k6-check ## Run k6 combined test (SIZE=small|medium|large|xlarge)
-	@echo "Running k6 combined test (size: $(K6_SIZE))..."
-	SIZE=$(K6_SIZE) k6 run $(K6_DIR)/combined-test.js
+##@ Cleanup
 
-k6-all: k6-ingestion k6-query k6-combined ## Run all k6 tests sequentially
+.PHONY: clean
+clean: ## Clean test cache
+	$(GO) clean -testcache
 
+##@ CI
+
+.PHONY: ci
+ci: check test ## Run CI pipeline (check + test)

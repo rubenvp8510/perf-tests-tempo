@@ -13,9 +13,10 @@ A Go framework for performance testing Tempo on Kubernetes/OpenShift clusters.
 ## Prerequisites
 
 - Go 1.21+
-- Kubernetes/OpenShift cluster access
+- Kubernetes/OpenShift cluster access (kubeconfig configured)
 - Tempo Operator installed
 - OpenTelemetry Operator installed
+- k6 with xk6-tempo extension (for standalone k6 tests)
 
 ## Installation
 
@@ -23,111 +24,225 @@ A Go framework for performance testing Tempo on Kubernetes/OpenShift clusters.
 go mod download
 ```
 
-## Quick Start
+## Running Tests
+
+### Using Make (Recommended)
+
+```bash
+# Show all available targets
+make help
+
+# Run all Go tests
+make test
+
+# Run example tests only
+make test-examples
+
+# Run with race detector
+make test-race
+```
+
+### Using Ginkgo CLI
+
+```bash
+# Install ginkgo
+go install github.com/onsi/ginkgo/v2/ginkgo@latest
+
+# Run all tests
+ginkgo -v ./...
+
+# Run specific test file
+ginkgo -v --focus "medium profile" ./examples/...
+
+# Run with parallel execution
+ginkgo -v -p ./examples/...
+```
+
+### Standalone k6 Tests
+
+Run k6 load tests directly against an existing Tempo instance:
+
+```bash
+# Run individual tests (SIZE: small|medium|large|xlarge)
+make k6-ingestion              # Trace ingestion test
+make k6-query                  # Query test
+make k6-combined               # Combined test
+
+# Run with different size
+make k6-ingestion K6_SIZE=large
+
+# Run all k6 tests
+make k6-all
+```
+
+## Creating New Tests
+
+### 1. Create a Test File
+
+Create a new file in `examples/` or your test directory:
 
 ```go
-package mytest
+// examples/my_perf_test.go
+package examples
 
 import (
+    "time"
+
+    . "github.com/onsi/ginkgo/v2"
+    . "github.com/onsi/gomega"
+
     "github.com/redhat/perf-tests-tempo/test/framework"
     "github.com/redhat/perf-tests-tempo/test/framework/k6"
 )
 
-func Example() {
-    // Create framework with explicit namespace
-    fw, err := framework.New("my-perf-test")
-    if err != nil {
-        panic(err)
-    }
-    defer fw.Cleanup()
+var _ = Describe("My Performance Test", func() {
+    var (
+        fw        *framework.Framework
+        testStart time.Time
+    )
 
-    // Deploy infrastructure
-    fw.SetupMinIO()
-    fw.SetupTempo("monolithic", &framework.ResourceConfig{Profile: "medium"})
-    fw.SetupOTelCollector()
+    BeforeEach(func() {
+        var err error
+        // Create framework with a unique namespace
+        fw, err = framework.New("my-perf-test")
+        Expect(err).NotTo(HaveOccurred())
 
-    // Run load test
-    result, err := fw.RunK6Test(k6.TestIngestion, &k6.Config{Size: k6.SizeMedium})
-    if err != nil {
-        panic(err)
-    }
-    fmt.Println(result.Output)
-}
+        // Deploy infrastructure
+        Expect(fw.SetupMinIO()).To(Succeed())
+        Expect(fw.SetupTempo("monolithic", &framework.ResourceConfig{
+            Profile: "medium",
+        })).To(Succeed())
+        Expect(fw.SetupOTelCollector()).To(Succeed())
+
+        testStart = time.Now()
+    })
+
+    AfterEach(func() {
+        if fw != nil {
+            // Optional: collect metrics before cleanup
+            _ = fw.CollectMetrics(testStart, "results/my-test-metrics.csv")
+
+            // Always cleanup resources
+            Expect(fw.Cleanup()).To(Succeed())
+        }
+    })
+
+    It("should handle my workload", func() {
+        result, err := fw.RunK6IngestionTest(k6.SizeMedium)
+        Expect(err).NotTo(HaveOccurred())
+        Expect(result.Success).To(BeTrue())
+    })
+})
 ```
 
-## Framework API
+### 2. Test Structure
+
+A typical test follows this pattern:
+
+```
+BeforeEach:
+  1. Create Framework with namespace
+  2. Deploy MinIO (storage backend)
+  3. Deploy Tempo (monolithic or stack)
+  4. Deploy OpenTelemetry Collector
+  5. Record test start time
+
+It (test case):
+  1. Run load test (k6 ingestion/query/combined)
+  2. Assert results
+
+AfterEach:
+  1. Collect metrics (optional)
+  2. Cleanup all resources
+```
+
+### 3. Resource Configuration Options
+
+**Using preset profiles:**
+
+```go
+fw.SetupTempo("monolithic", &framework.ResourceConfig{
+    Profile: "small",   // 4Gi memory, 500m CPU
+    Profile: "medium",  // 8Gi memory, 1000m CPU
+    Profile: "large",   // 12Gi memory, 1500m CPU
+})
+```
+
+**Using custom resources:**
+
+```go
+import (
+    corev1 "k8s.io/api/core/v1"
+    "k8s.io/apimachinery/pkg/api/resource"
+)
+
+fw.SetupTempo("monolithic", &framework.ResourceConfig{
+    Resources: &corev1.ResourceRequirements{
+        Limits: corev1.ResourceList{
+            corev1.ResourceMemory: resource.MustParse("16Gi"),
+            corev1.ResourceCPU:    resource.MustParse("2000m"),
+        },
+        Requests: corev1.ResourceList{
+            corev1.ResourceMemory: resource.MustParse("16Gi"),
+            corev1.ResourceCPU:    resource.MustParse("2000m"),
+        },
+    },
+})
+```
+
+**Using Tempo Stack (distributed deployment):**
+
+```go
+fw.SetupTempo("stack", nil)
+```
+
+### 4. Load Test Sizes
+
+| Size   | Description |
+|--------|-------------|
+| small  | Light load for quick validation |
+| medium | Moderate load for standard testing |
+| large  | Heavy load for stress testing |
+| xlarge | Maximum load for limit testing |
+
+### 5. Collecting Metrics
+
+```go
+// Collect from specific start time
+err := fw.CollectMetrics(testStart, "results/metrics.csv")
+
+// Collect last N minutes
+err := fw.CollectMetricsWithDuration(30*time.Minute, "results/metrics.csv")
+```
+
+## Framework API Reference
 
 ### Creating a Framework
 
 ```go
-// Create with explicit namespace (required)
+// Namespace is required
 fw, err := framework.New("my-namespace")
 ```
 
 ### Deploying Components
 
 ```go
-// Deploy MinIO storage backend
-fw.SetupMinIO()
-
-// Deploy Tempo with preset profile
-fw.SetupTempo("monolithic", &framework.ResourceConfig{Profile: "medium"})
-
-// Deploy Tempo with custom resources
-fw.SetupTempo("monolithic", &framework.ResourceConfig{
-    Resources: &corev1.ResourceRequirements{
-        Limits: corev1.ResourceList{
-            corev1.ResourceMemory: resource.MustParse("8Gi"),
-            corev1.ResourceCPU:    resource.MustParse("1000m"),
-        },
-    },
-})
-
-// Deploy Tempo Stack variant
-fw.SetupTempo("stack", nil)
-
-// Deploy OpenTelemetry Collector
-fw.SetupOTelCollector()
+fw.SetupMinIO()                                    // Storage backend
+fw.SetupTempo("monolithic", &framework.ResourceConfig{...})  // Tempo
+fw.SetupTempo("stack", nil)                        // Tempo Stack variant
+fw.SetupOTelCollector()                            // OTel Collector
 ```
-
-### Resource Profiles
-
-| Profile | Memory | CPU |
-|---------|--------|-----|
-| small   | 4Gi    | 500m |
-| medium  | 8Gi    | 1000m |
-| large   | 12Gi   | 1500m |
 
 ### Running Load Tests
 
 ```go
-import "github.com/redhat/perf-tests-tempo/test/framework/k6"
-
-// Run ingestion test
-result, err := fw.RunK6Test(k6.TestIngestion, &k6.Config{
-    Size: k6.SizeMedium,
-})
+// Generic method
+result, err := fw.RunK6Test(testType, config)
 
 // Convenience methods
 fw.RunK6IngestionTest(k6.SizeMedium)
 fw.RunK6QueryTest(k6.SizeLarge)
 fw.RunK6CombinedTest(k6.SizeSmall)
-```
-
-### Collecting Metrics
-
-```go
-import "time"
-
-testStart := time.Now()
-
-// ... run your test ...
-
-// Collect metrics from test start to now
-err := fw.CollectMetrics(testStart, "results/metrics.csv")
-
-// Or collect last N minutes
-err := fw.CollectMetricsWithDuration(30*time.Minute, "results/metrics.csv")
 ```
 
 ### Cleanup
@@ -143,61 +258,31 @@ err := fw.Cleanup()
 framework/
 ├── framework.go      # Core Framework, New()
 ├── types.go          # Interfaces, TrackedResource, ResourceConfig
-├── facade.go         # Backward-compatible API methods
+├── facade.go         # API methods (SetupMinIO, SetupTempo, etc.)
 ├── namespace.go      # Namespace lifecycle
-├── cleanup.go        # Resource cleanup
-├── tempo/            # Tempo deployment
+├── cleanup.go        # Resource cleanup with finalizer handling
+├── tempo/            # Tempo deployment (monolithic + stack)
 ├── minio/            # MinIO storage backend
 ├── otel/             # OpenTelemetry Collector
-├── k6/               # Load testing
+├── k6/               # Load testing runner
 ├── wait/             # Readiness utilities
-└── metrics/          # Metrics collection
-```
+└── metrics/          # Metrics collection and export
 
-## Using with Ginkgo
+tests/
+└── k6/               # Standalone k6 test scripts
+    ├── ingestion-test.js
+    ├── query-test.js
+    ├── combined-test.js
+    └── lib/          # Shared k6 utilities
 
-```go
-var _ = Describe("Performance Test", func() {
-    var fw *framework.Framework
-
-    BeforeEach(func() {
-        var err error
-        fw, err = framework.New("tempo-perf-test")
-        Expect(err).NotTo(HaveOccurred())
-
-        Expect(fw.SetupMinIO()).To(Succeed())
-        Expect(fw.SetupTempo("monolithic", &framework.ResourceConfig{
-            Profile: "medium",
-        })).To(Succeed())
-        Expect(fw.SetupOTelCollector()).To(Succeed())
-    })
-
-    It("should handle load", func() {
-        result, err := fw.RunK6IngestionTest(k6.SizeMedium)
-        Expect(err).NotTo(HaveOccurred())
-        Expect(result.Success).To(BeTrue())
-    })
-
-    AfterEach(func() {
-        if fw != nil {
-            Expect(fw.Cleanup()).To(Succeed())
-        }
-    })
-})
-```
-
-## Running Tests
-
-```bash
-# Run all tests
-go test -v ./...
-
-# Run examples
-go test -v ./examples/...
+examples/             # Example Ginkgo tests
+├── basic_perf_test.go
+└── metrics_export_test.go
 ```
 
 ## Examples
 
 See [`examples/`](examples/) for complete examples:
-- `basic_perf_test.go` - Basic deployment and resource configuration
+
+- `basic_perf_test.go` - Basic deployment with different resource configurations
 - `metrics_export_test.go` - Metrics collection examples
