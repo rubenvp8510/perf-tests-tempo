@@ -1,8 +1,12 @@
-package framework
+package minio
 
 import (
+	"context"
 	"fmt"
+	"log/slog"
 	"time"
+
+	"github.com/redhat/perf-tests-tempo/test/framework/wait"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -10,19 +14,29 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/client-go/kubernetes"
 )
 
-// SetupMinIO deploys MinIO with PVC and waits for it to be ready
-func (f *Framework) SetupMinIO() error {
-	if err := f.EnsureNamespace(); err != nil {
-		return fmt.Errorf("failed to ensure namespace: %w", err)
-	}
+// Clients provides access to Kubernetes clients needed for MinIO setup
+type Clients interface {
+	Client() kubernetes.Interface
+	Context() context.Context
+	Namespace() string
+	Logger() *slog.Logger
+}
+
+// Setup deploys MinIO with PVC and waits for it to be ready
+// Note: EnsureNamespace should be called before this function
+func Setup(c Clients) error {
+	namespace := c.Namespace()
+	client := c.Client()
+	ctx := c.Context()
 
 	// Create PVC
 	pvc := &corev1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "minio",
-			Namespace: f.namespace,
+			Namespace: namespace,
 			Labels: map[string]string{
 				"app.kubernetes.io/name": "minio",
 			},
@@ -37,7 +51,7 @@ func (f *Framework) SetupMinIO() error {
 		},
 	}
 
-	_, err := f.client.CoreV1().PersistentVolumeClaims(f.namespace).Create(f.ctx, pvc, metav1.CreateOptions{})
+	_, err := client.CoreV1().PersistentVolumeClaims(namespace).Create(ctx, pvc, metav1.CreateOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to create MinIO PVC: %w", err)
 	}
@@ -46,10 +60,10 @@ func (f *Framework) SetupMinIO() error {
 	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "minio",
-			Namespace: f.namespace,
+			Namespace: namespace,
 		},
 		StringData: map[string]string{
-			"endpoint":          fmt.Sprintf("http://minio.%s.svc.cluster.local:9000", f.namespace),
+			"endpoint":          fmt.Sprintf("http://minio.%s.svc.cluster.local:9000", namespace),
 			"bucket":            "tempo",
 			"access_key_id":     "tempo",
 			"access_key_secret": "supersecret",
@@ -57,7 +71,7 @@ func (f *Framework) SetupMinIO() error {
 		Type: corev1.SecretTypeOpaque,
 	}
 
-	_, err = f.client.CoreV1().Secrets(f.namespace).Create(f.ctx, secret, metav1.CreateOptions{})
+	_, err = client.CoreV1().Secrets(namespace).Create(ctx, secret, metav1.CreateOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to create MinIO secret: %w", err)
 	}
@@ -66,7 +80,7 @@ func (f *Framework) SetupMinIO() error {
 	deployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "minio",
-			Namespace: f.namespace,
+			Namespace: namespace,
 		},
 		Spec: appsv1.DeploymentSpec{
 			Selector: &metav1.LabelSelector{
@@ -131,7 +145,7 @@ func (f *Framework) SetupMinIO() error {
 		},
 	}
 
-	_, err = f.client.AppsV1().Deployments(f.namespace).Create(f.ctx, deployment, metav1.CreateOptions{})
+	_, err = client.AppsV1().Deployments(namespace).Create(ctx, deployment, metav1.CreateOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to create MinIO deployment: %w", err)
 	}
@@ -140,7 +154,7 @@ func (f *Framework) SetupMinIO() error {
 	service := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "minio",
-			Namespace: f.namespace,
+			Namespace: namespace,
 		},
 		Spec: corev1.ServiceSpec{
 			Ports: []corev1.ServicePort{
@@ -157,7 +171,7 @@ func (f *Framework) SetupMinIO() error {
 		},
 	}
 
-	_, err = f.client.CoreV1().Services(f.namespace).Create(f.ctx, service, metav1.CreateOptions{})
+	_, err = client.CoreV1().Services(namespace).Create(ctx, service, metav1.CreateOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to create MinIO service: %w", err)
 	}
@@ -168,5 +182,5 @@ func (f *Framework) SetupMinIO() error {
 		return fmt.Errorf("failed to parse selector: %w", err)
 	}
 
-	return f.WaitForPodsReady(selector, 120*time.Second, 1)
+	return wait.ForPodsReady(c, selector, 120*time.Second, 1)
 }

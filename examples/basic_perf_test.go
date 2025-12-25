@@ -14,7 +14,7 @@ var _ = Describe("Basic Performance Test", func() {
 
 	BeforeEach(func() {
 		var err error
-		fw, err = framework.New()
+		fw, err = framework.New("tempo-perf-test")
 		Expect(err).NotTo(HaveOccurred())
 
 		// Deploy MinIO
@@ -56,7 +56,7 @@ var _ = Describe("Performance Test with Custom Resources", func() {
 
 	BeforeEach(func() {
 		var err error
-		fw, err = framework.New()
+		fw, err = framework.New("tempo-perf-test")
 		Expect(err).NotTo(HaveOccurred())
 
 		// Deploy MinIO
@@ -101,7 +101,7 @@ var _ = Describe("Performance Test with Tempo Stack", func() {
 
 	BeforeEach(func() {
 		var err error
-		fw, err = framework.New()
+		fw, err = framework.New("tempo-perf-test")
 		Expect(err).NotTo(HaveOccurred())
 
 		// Deploy MinIO
@@ -134,7 +134,7 @@ var _ = Describe("Performance Test without Resources", func() {
 
 	BeforeEach(func() {
 		var err error
-		fw, err = framework.New()
+		fw, err = framework.New("tempo-perf-test")
 		Expect(err).NotTo(HaveOccurred())
 
 		// Deploy MinIO

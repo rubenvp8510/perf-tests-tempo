@@ -1,8 +1,12 @@
-package framework
+package otel
 
 import (
+	"context"
 	"fmt"
+	"log/slog"
 	"time"
+
+	"github.com/redhat/perf-tests-tempo/test/framework/wait"
 
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -10,34 +14,72 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/kubernetes"
 )
 
-// SetupOTelCollector deploys OpenTelemetry Collector with RBAC
-func (f *Framework) SetupOTelCollector() error {
+// GVRs for OTel and RBAC resources
+var (
+	CollectorGVR = schema.GroupVersionResource{
+		Group:    "opentelemetry.io",
+		Version:  "v1beta1",
+		Resource: "opentelemetrycollectors",
+	}
+	clusterRoleGVR = schema.GroupVersionResource{
+		Group:    "rbac.authorization.k8s.io",
+		Version:  "v1",
+		Resource: "clusterroles",
+	}
+	clusterRoleBindingGVR = schema.GroupVersionResource{
+		Group:    "rbac.authorization.k8s.io",
+		Version:  "v1",
+		Resource: "clusterrolebindings",
+	}
+)
+
+// FrameworkOperations provides access to framework capabilities needed by otel
+type FrameworkOperations interface {
+	Client() kubernetes.Interface
+	DynamicClient() dynamic.Interface
+	Context() context.Context
+	Namespace() string
+	Logger() *slog.Logger
+	TrackCR(gvr schema.GroupVersionResource, namespace, name string)
+	TrackClusterResource(gvr schema.GroupVersionResource, name string)
+	GetManagedLabels() map[string]string
+}
+
+// SetupCollector deploys OpenTelemetry Collector with RBAC
+func SetupCollector(fw FrameworkOperations) error {
 	// Deploy RBAC first
-	if err := f.setupOTelCollectorRBAC(); err != nil {
+	if err := setupRBAC(fw); err != nil {
 		return fmt.Errorf("failed to setup OTel Collector RBAC: %w", err)
 	}
 
 	// Deploy Collector CR
-	if err := f.setupOTelCollectorCR(); err != nil {
+	if err := setupCollectorCR(fw); err != nil {
 		return fmt.Errorf("failed to setup OTel Collector CR: %w", err)
 	}
 
 	// Wait for collector to be ready
-	return f.WaitForOTelCollectorReady(300 * time.Second)
+	return waitForCollectorReady(fw, 300*time.Second)
 }
 
-// setupOTelCollectorRBAC sets up RBAC resources for OTel Collector
-func (f *Framework) setupOTelCollectorRBAC() error {
+// setupRBAC sets up RBAC resources for OTel Collector
+func setupRBAC(fw FrameworkOperations) error {
+	namespace := fw.Namespace()
+	client := fw.Client()
+	ctx := fw.Context()
+	managedLabels := fw.GetManagedLabels()
+
 	// Create ServiceAccount
 	sa := &corev1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "otel-collector-sa",
-			Namespace: f.namespace,
+			Namespace: namespace,
+			Labels:    managedLabels,
 		},
 	}
-	_, err := f.client.CoreV1().ServiceAccounts(f.namespace).Create(f.ctx, sa, metav1.CreateOptions{})
+	_, err := client.CoreV1().ServiceAccounts(namespace).Create(ctx, sa, metav1.CreateOptions{})
 	if err != nil {
 		// Ignore if already exists
 	}
@@ -46,7 +88,8 @@ func (f *Framework) setupOTelCollectorRBAC() error {
 	role := &rbacv1.Role{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "otel-collector-role",
-			Namespace: f.namespace,
+			Namespace: namespace,
+			Labels:    managedLabels,
 		},
 		Rules: []rbacv1.PolicyRule{
 			{
@@ -56,7 +99,7 @@ func (f *Framework) setupOTelCollectorRBAC() error {
 			},
 		},
 	}
-	_, err = f.client.RbacV1().Roles(f.namespace).Create(f.ctx, role, metav1.CreateOptions{})
+	_, err = client.RbacV1().Roles(namespace).Create(ctx, role, metav1.CreateOptions{})
 	if err != nil {
 		// Ignore if already exists
 	}
@@ -65,7 +108,8 @@ func (f *Framework) setupOTelCollectorRBAC() error {
 	roleBinding := &rbacv1.RoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "otel-collector-rolebinding",
-			Namespace: f.namespace,
+			Namespace: namespace,
+			Labels:    managedLabels,
 		},
 		RoleRef: rbacv1.RoleRef{
 			APIGroup: "rbac.authorization.k8s.io",
@@ -76,19 +120,24 @@ func (f *Framework) setupOTelCollectorRBAC() error {
 			{
 				Kind:      "ServiceAccount",
 				Name:      "otel-collector-sa",
-				Namespace: f.namespace,
+				Namespace: namespace,
 			},
 		},
 	}
-	_, err = f.client.RbacV1().RoleBindings(f.namespace).Create(f.ctx, roleBinding, metav1.CreateOptions{})
+	_, err = client.RbacV1().RoleBindings(namespace).Create(ctx, roleBinding, metav1.CreateOptions{})
 	if err != nil {
 		// Ignore if already exists
 	}
 
+	// Generate unique names for cluster-scoped resources to avoid conflicts
+	clusterRoleName := fmt.Sprintf("allow-write-traces-%s", namespace)
+	clusterRoleBindingName := fmt.Sprintf("allow-write-traces-%s", namespace)
+
 	// Create ClusterRole
 	clusterRole := &rbacv1.ClusterRole{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "allow-write-traces-tenant-1",
+			Name:   clusterRoleName,
+			Labels: managedLabels,
 		},
 		Rules: []rbacv1.PolicyRule{
 			{
@@ -99,70 +148,81 @@ func (f *Framework) setupOTelCollectorRBAC() error {
 			},
 		},
 	}
-	_, err = f.client.RbacV1().ClusterRoles().Create(f.ctx, clusterRole, metav1.CreateOptions{})
+	_, err = client.RbacV1().ClusterRoles().Create(ctx, clusterRole, metav1.CreateOptions{})
 	if err != nil {
 		// Ignore if already exists
 	}
+	// Track ClusterRole
+	fw.TrackClusterResource(clusterRoleGVR, clusterRoleName)
 
 	// Create ClusterRoleBinding
 	clusterRoleBinding := &rbacv1.ClusterRoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "allow-write-traces-tenant-1",
+			Name:   clusterRoleBindingName,
+			Labels: managedLabels,
 		},
 		RoleRef: rbacv1.RoleRef{
 			APIGroup: "rbac.authorization.k8s.io",
 			Kind:     "ClusterRole",
-			Name:     "allow-write-traces-tenant-1",
+			Name:     clusterRoleName,
 		},
 		Subjects: []rbacv1.Subject{
 			{
 				Kind:      "ServiceAccount",
 				Name:      "otel-collector-sa",
-				Namespace: f.namespace,
+				Namespace: namespace,
 			},
 		},
 	}
-	_, err = f.client.RbacV1().ClusterRoleBindings().Create(f.ctx, clusterRoleBinding, metav1.CreateOptions{})
+	_, err = client.RbacV1().ClusterRoleBindings().Create(ctx, clusterRoleBinding, metav1.CreateOptions{})
 	if err != nil {
 		// Ignore if already exists
 	}
+	// Track ClusterRoleBinding
+	fw.TrackClusterResource(clusterRoleBindingGVR, clusterRoleBindingName)
 
 	return nil
 }
 
-// setupOTelCollectorCR sets up the OpenTelemetryCollector CR
-func (f *Framework) setupOTelCollectorCR() error {
+// setupCollectorCR sets up the OpenTelemetryCollector CR
+func setupCollectorCR(fw FrameworkOperations) error {
+	namespace := fw.Namespace()
+
 	// Build OpenTelemetryCollector CR programmatically
-	collectorObj := f.buildOTelCollectorCR()
+	collectorObj := buildCollectorCR(namespace)
 
-	// Apply using dynamic client
-	dynamicClient, err := dynamic.NewForConfig(f.config)
-	if err != nil {
-		return fmt.Errorf("failed to create dynamic client: %w", err)
+	// Add managed labels
+	labels := collectorObj.GetLabels()
+	if labels == nil {
+		labels = make(map[string]string)
 	}
-
-	gvr := schema.GroupVersionResource{
-		Group:    "opentelemetry.io",
-		Version:  "v1beta1",
-		Resource: "opentelemetrycollectors",
+	for k, v := range fw.GetManagedLabels() {
+		labels[k] = v
 	}
+	collectorObj.SetLabels(labels)
 
-	_, err = dynamicClient.Resource(gvr).Namespace(f.namespace).Create(f.ctx, collectorObj, metav1.CreateOptions{})
+	_, err := fw.DynamicClient().Resource(CollectorGVR).Namespace(namespace).Create(fw.Context(), collectorObj, metav1.CreateOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to create OpenTelemetryCollector: %w", err)
 	}
 
+	// Track the created resource
+	fw.TrackCR(CollectorGVR, namespace, "otel-collector")
+
 	return nil
 }
 
-// WaitForOTelCollectorReady waits for OpenTelemetry Collector to be ready
-func (f *Framework) WaitForOTelCollectorReady(timeout time.Duration) error {
+// waitForCollectorReady waits for OpenTelemetry Collector to be ready
+func waitForCollectorReady(fw FrameworkOperations, timeout time.Duration) error {
+	namespace := fw.Namespace()
+	client := fw.Client()
+	ctx := fw.Context()
 	deadline := time.Now().Add(timeout)
 
 	for time.Now().Before(deadline) {
 		// Check for deployment
 		for _, deploymentName := range []string{"otel-collector-collector", "otel-collector"} {
-			deployment, err := f.client.AppsV1().Deployments(f.namespace).Get(f.ctx, deploymentName, metav1.GetOptions{})
+			deployment, err := client.AppsV1().Deployments(namespace).Get(ctx, deploymentName, metav1.GetOptions{})
 			if err == nil {
 				if deployment.Status.ReadyReplicas == deployment.Status.Replicas &&
 					deployment.Status.ReadyReplicas > 0 {
@@ -172,12 +232,12 @@ func (f *Framework) WaitForOTelCollectorReady(timeout time.Duration) error {
 		}
 
 		// Check for pods directly
-		pods, err := f.client.CoreV1().Pods(f.namespace).List(f.ctx, metav1.ListOptions{
+		pods, err := client.CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{
 			LabelSelector: "app.kubernetes.io/name=opentelemetry-collector",
 		})
 		if err == nil {
 			for _, pod := range pods.Items {
-				if isPodReady(&pod) {
+				if wait.IsPodReady(&pod) {
 					return nil
 				}
 			}
@@ -189,9 +249,9 @@ func (f *Framework) WaitForOTelCollectorReady(timeout time.Duration) error {
 	return fmt.Errorf("otel collector not ready after %v", timeout)
 }
 
-// buildOTelCollectorCR builds an OpenTelemetryCollector CR programmatically
-func (f *Framework) buildOTelCollectorCR() *unstructured.Unstructured {
-	tempoGatewayHost := fmt.Sprintf("tempo-simplest-gateway.%s.svc.cluster.local", f.namespace)
+// buildCollectorCR builds an OpenTelemetryCollector CR programmatically
+func buildCollectorCR(namespace string) *unstructured.Unstructured {
+	tempoGatewayHost := fmt.Sprintf("tempo-simplest-gateway.%s.svc.cluster.local", namespace)
 
 	return &unstructured.Unstructured{
 		Object: map[string]interface{}{
@@ -199,7 +259,7 @@ func (f *Framework) buildOTelCollectorCR() *unstructured.Unstructured {
 			"kind":       "OpenTelemetryCollector",
 			"metadata": map[string]interface{}{
 				"name":      "otel-collector",
-				"namespace": f.namespace,
+				"namespace": namespace,
 			},
 			"spec": map[string]interface{}{
 				"mode":           "deployment",
