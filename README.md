@@ -107,6 +107,14 @@ var _ = Describe("My Performance Test", func() {
         fw, err = framework.New("my-perf-test")
         Expect(err).NotTo(HaveOccurred())
 
+        // Check prerequisites (Tempo and OpenTelemetry operators)
+        prereqs, err := fw.CheckPrerequisites()
+        Expect(err).NotTo(HaveOccurred())
+        Expect(prereqs.AllMet).To(BeTrue(), prereqs.String())
+
+        // Enable user workload monitoring (OpenShift)
+        Expect(fw.EnableUserWorkloadMonitoring()).To(Succeed())
+
         // Deploy infrastructure
         Expect(fw.SetupMinIO()).To(Succeed())
         Expect(fw.SetupTempo("monolithic", &framework.ResourceConfig{
@@ -142,10 +150,12 @@ A typical test follows this pattern:
 ```
 BeforeEach:
   1. Create Framework with namespace
-  2. Deploy MinIO (storage backend)
-  3. Deploy Tempo (monolithic or stack)
-  4. Deploy OpenTelemetry Collector
-  5. Record test start time
+  2. Check prerequisites (operators installed)
+  3. Enable user workload monitoring (OpenShift)
+  4. Deploy MinIO (storage backend)
+  5. Deploy Tempo (monolithic or stack)
+  6. Deploy OpenTelemetry Collector
+  7. Record test start time
 
 It (test case):
   1. Run load test (k6 ingestion/query/combined)
@@ -224,6 +234,35 @@ err := fw.CollectMetricsWithDuration(30*time.Minute, "results/metrics.csv")
 fw, err := framework.New("my-namespace")
 ```
 
+### Checking Prerequisites
+
+```go
+// Check if Tempo and OpenTelemetry operators are installed
+prereqs, err := fw.CheckPrerequisites()
+if !prereqs.AllMet {
+    fmt.Println(prereqs.String())
+    // Handle missing operators
+}
+
+// Check individual operators
+if !prereqs.TempoOperator.Installed {
+    fmt.Println("Tempo Operator missing:", prereqs.TempoOperator.Message)
+}
+if !prereqs.OpenTelemetryOperator.Installed {
+    fmt.Println("OpenTelemetry Operator missing:", prereqs.OpenTelemetryOperator.Message)
+}
+```
+
+### Enabling User Workload Monitoring (OpenShift)
+
+```go
+// Enable user workload monitoring for metrics collection
+err := fw.EnableUserWorkloadMonitoring()
+
+// Check if already enabled
+enabled, err := fw.IsUserWorkloadMonitoringEnabled()
+```
+
 ### Deploying Components
 
 ```go
@@ -259,6 +298,8 @@ framework/
 ├── framework.go      # Core Framework, New()
 ├── types.go          # Interfaces, TrackedResource, ResourceConfig
 ├── facade.go         # API methods (SetupMinIO, SetupTempo, etc.)
+├── prerequisites.go  # CheckPrerequisites() - operator verification
+├── monitoring.go     # EnableUserWorkloadMonitoring() - OpenShift monitoring
 ├── namespace.go      # Namespace lifecycle
 ├── cleanup.go        # Resource cleanup with finalizer handling
 ├── tempo/            # Tempo deployment (monolithic + stack)
