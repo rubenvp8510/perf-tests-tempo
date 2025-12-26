@@ -100,4 +100,3 @@ func formatLabels(labels map[string]string) string {
 
 	return strings.Join(pairs, ",")
 }
-

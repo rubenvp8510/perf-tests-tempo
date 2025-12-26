@@ -154,4 +154,3 @@ func countDataPoints(results []MetricResult) int {
 	}
 	return total
 }
-

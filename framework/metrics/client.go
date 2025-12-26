@@ -34,7 +34,7 @@ type Client struct {
 type PrometheusResponse struct {
 	Status string `json:"status"`
 	Data   struct {
-		ResultType string           `json:"resultType"`
+		ResultType string             `json:"resultType"`
 		Result     []PrometheusResult `json:"result"`
 	} `json:"data"`
 	ErrorType string `json:"errorType,omitempty"`
@@ -217,4 +217,3 @@ func (c *Client) Query(ctx context.Context, query string, evalTime time.Time) (*
 
 	return &promResp, nil
 }
-
