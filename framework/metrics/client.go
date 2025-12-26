@@ -11,21 +11,15 @@ import (
 	"strings"
 	"time"
 
+	"github.com/redhat/perf-tests-tempo/test/framework/gvr"
+
 	authenticationv1 "k8s.io/api/authentication/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 )
-
-// Route GVR for OpenShift routes
-var routeGVR = schema.GroupVersionResource{
-	Group:    "route.openshift.io",
-	Version:  "v1",
-	Resource: "routes",
-}
 
 // ClientConfig holds configuration for the Prometheus client
 type ClientConfig struct {
@@ -127,7 +121,7 @@ func (c *Client) discoverThanosURL(ctx context.Context) (string, error) {
 		namespace = "openshift-monitoring"
 	}
 
-	route, err := dynamicClient.Resource(routeGVR).Namespace(namespace).Get(ctx, "thanos-querier", metav1.GetOptions{})
+	route, err := dynamicClient.Resource(gvr.Route).Namespace(namespace).Get(ctx, "thanos-querier", metav1.GetOptions{})
 	if err != nil {
 		return "", fmt.Errorf("failed to get thanos-querier route: %w", err)
 	}

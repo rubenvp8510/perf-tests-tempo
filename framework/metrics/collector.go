@@ -6,11 +6,8 @@ import (
 	"strconv"
 	"sync"
 	"time"
-)
 
-const (
-	// MaxConcurrentQueries limits parallel Prometheus queries to avoid overwhelming the server
-	MaxConcurrentQueries = 5
+	"github.com/redhat/perf-tests-tempo/test/framework/config"
 )
 
 // DataPoint represents a single time-series data point
@@ -35,13 +32,14 @@ func (c *Client) CollectAllMetrics(ctx context.Context, start, end time.Time) ([
 	queries := GetAllQueries(c.config.Namespace)
 	step := 60 * time.Second // 1-minute intervals
 
-	fmt.Printf("📈 Collecting %d metrics (concurrency: %d)...\n\n", len(queries), MaxConcurrentQueries)
+	maxConcurrentQueries := config.DefaultMaxConcurrentQueries
+	fmt.Printf("📈 Collecting %d metrics (concurrency: %d)...\n\n", len(queries), maxConcurrentQueries)
 
 	var (
 		results   []MetricResult
 		mu        sync.Mutex
 		wg        sync.WaitGroup
-		sem       = make(chan struct{}, MaxConcurrentQueries)
+		sem       = make(chan struct{}, maxConcurrentQueries)
 		completed int32
 	)
 

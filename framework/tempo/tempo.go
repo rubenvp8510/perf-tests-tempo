@@ -5,28 +5,23 @@ import (
 	"fmt"
 	"log/slog"
 
+	"github.com/redhat/perf-tests-tempo/test/framework/gvr"
+
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 )
 
-// GVRs for Tempo custom resources
+// GVR aliases for backward compatibility - use gvr package directly instead
 var (
-	TempoMonolithicGVR = schema.GroupVersionResource{
-		Group:    "tempo.grafana.com",
-		Version:  "v1alpha1",
-		Resource: "tempomonolithics",
-	}
-	TempoStackGVR = schema.GroupVersionResource{
-		Group:    "tempo.grafana.com",
-		Version:  "v1alpha1",
-		Resource: "tempostacks",
-	}
+	TempoMonolithicGVR = gvr.TempoMonolithic
+	TempoStackGVR      = gvr.TempoStack
 )
 
-// ResourceConfig represents optional resource configuration for Tempo components
-type ResourceConfig struct {
+// ResourceConfig is a type alias for the framework's ResourceConfig.
+// Use the framework package's ResourceConfig type for new code.
+type ResourceConfig = struct {
 	// Profile is a preset profile name: "small", "medium", or "large"
 	Profile string
 

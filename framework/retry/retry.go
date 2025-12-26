@@ -3,7 +3,6 @@ package retry
 import (
 	"context"
 	"errors"
-	"math"
 	"math/rand"
 	"time"
 )
@@ -242,18 +241,4 @@ func DoWithData[T any](ctx context.Context, fn func(ctx context.Context) (T, err
 		return err
 	}, opts...)
 	return result, err
-}
-
-// calculateBackoff calculates the delay for a given attempt using exponential backoff
-func calculateBackoff(attempt int, initialDelay, maxDelay time.Duration, multiplier float64) time.Duration {
-	if attempt <= 1 {
-		return initialDelay
-	}
-
-	delay := float64(initialDelay) * math.Pow(multiplier, float64(attempt-1))
-	if delay > float64(maxDelay) {
-		delay = float64(maxDelay)
-	}
-
-	return time.Duration(delay)
 }

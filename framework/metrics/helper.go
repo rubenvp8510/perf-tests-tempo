@@ -6,11 +6,19 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 // NamespaceProvider provides the namespace for metrics collection
 type NamespaceProvider interface {
 	Namespace() string
+}
+
+// ConfigProvider optionally provides a REST config for auto-discovery
+type ConfigProvider interface {
+	Config() *rest.Config
 }
 
 // CollectMetrics collects performance metrics for the test namespace and exports to CSV
@@ -37,12 +45,29 @@ func CollectMetrics(np NamespaceProvider, testStart time.Time, outputPath string
 		return fmt.Errorf("failed to create output directory: %w", err)
 	}
 
+	// Get KubeConfig - try interface first, then fall back to discovery
+	var kubeConfig *rest.Config
+	if cp, ok := np.(ConfigProvider); ok {
+		kubeConfig = cp.Config()
+	} else {
+		// Fall back to standard config discovery
+		var err error
+		kubeConfig, err = rest.InClusterConfig()
+		if err != nil {
+			kubeConfig, err = clientcmd.BuildConfigFromFlags("", clientcmd.RecommendedHomeFile)
+			if err != nil {
+				return fmt.Errorf("failed to get kube config: %w", err)
+			}
+		}
+	}
+
 	// Create metrics client with auto-discovery
 	config := &ClientConfig{
 		Namespace:           namespace,
 		AutoDiscover:        true,
 		MonitoringNamespace: "openshift-monitoring",
-		ServiceAccountName:  "monitoring-sa",
+		ServiceAccountName:  "prometheus-k8s",
+		KubeConfig:          kubeConfig,
 	}
 
 	client, err := NewClient(ctx, config)

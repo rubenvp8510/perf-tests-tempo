@@ -6,10 +6,12 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/redhat/perf-tests-tempo/test/framework/gvr"
 	"github.com/redhat/perf-tests-tempo/test/framework/wait"
 
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -17,24 +19,8 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-// GVRs for OTel and RBAC resources
-var (
-	CollectorGVR = schema.GroupVersionResource{
-		Group:    "opentelemetry.io",
-		Version:  "v1beta1",
-		Resource: "opentelemetrycollectors",
-	}
-	clusterRoleGVR = schema.GroupVersionResource{
-		Group:    "rbac.authorization.k8s.io",
-		Version:  "v1",
-		Resource: "clusterroles",
-	}
-	clusterRoleBindingGVR = schema.GroupVersionResource{
-		Group:    "rbac.authorization.k8s.io",
-		Version:  "v1",
-		Resource: "clusterrolebindings",
-	}
-)
+// CollectorGVR is an alias for backward compatibility - use gvr.OpenTelemetryCollector directly instead
+var CollectorGVR = gvr.OpenTelemetryCollector
 
 // FrameworkOperations provides access to framework capabilities needed by otel
 type FrameworkOperations interface {
@@ -80,8 +66,8 @@ func setupRBAC(fw FrameworkOperations) error {
 		},
 	}
 	_, err := client.CoreV1().ServiceAccounts(namespace).Create(ctx, sa, metav1.CreateOptions{})
-	if err != nil {
-		// Ignore if already exists
+	if err != nil && !apierrors.IsAlreadyExists(err) {
+		return fmt.Errorf("failed to create ServiceAccount: %w", err)
 	}
 
 	// Create Role
@@ -100,8 +86,8 @@ func setupRBAC(fw FrameworkOperations) error {
 		},
 	}
 	_, err = client.RbacV1().Roles(namespace).Create(ctx, role, metav1.CreateOptions{})
-	if err != nil {
-		// Ignore if already exists
+	if err != nil && !apierrors.IsAlreadyExists(err) {
+		return fmt.Errorf("failed to create Role: %w", err)
 	}
 
 	// Create RoleBinding
@@ -125,8 +111,8 @@ func setupRBAC(fw FrameworkOperations) error {
 		},
 	}
 	_, err = client.RbacV1().RoleBindings(namespace).Create(ctx, roleBinding, metav1.CreateOptions{})
-	if err != nil {
-		// Ignore if already exists
+	if err != nil && !apierrors.IsAlreadyExists(err) {
+		return fmt.Errorf("failed to create RoleBinding: %w", err)
 	}
 
 	// Generate unique names for cluster-scoped resources to avoid conflicts
@@ -149,11 +135,11 @@ func setupRBAC(fw FrameworkOperations) error {
 		},
 	}
 	_, err = client.RbacV1().ClusterRoles().Create(ctx, clusterRole, metav1.CreateOptions{})
-	if err != nil {
-		// Ignore if already exists
+	if err != nil && !apierrors.IsAlreadyExists(err) {
+		return fmt.Errorf("failed to create ClusterRole: %w", err)
 	}
 	// Track ClusterRole
-	fw.TrackClusterResource(clusterRoleGVR, clusterRoleName)
+	fw.TrackClusterResource(gvr.ClusterRole, clusterRoleName)
 
 	// Create ClusterRoleBinding
 	clusterRoleBinding := &rbacv1.ClusterRoleBinding{
@@ -175,11 +161,11 @@ func setupRBAC(fw FrameworkOperations) error {
 		},
 	}
 	_, err = client.RbacV1().ClusterRoleBindings().Create(ctx, clusterRoleBinding, metav1.CreateOptions{})
-	if err != nil {
-		// Ignore if already exists
+	if err != nil && !apierrors.IsAlreadyExists(err) {
+		return fmt.Errorf("failed to create ClusterRoleBinding: %w", err)
 	}
 	// Track ClusterRoleBinding
-	fw.TrackClusterResource(clusterRoleBindingGVR, clusterRoleBindingName)
+	fw.TrackClusterResource(gvr.ClusterRoleBinding, clusterRoleBindingName)
 
 	return nil
 }

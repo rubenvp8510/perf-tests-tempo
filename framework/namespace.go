@@ -27,7 +27,7 @@ func (f *Framework) EnsureNamespace() error {
 	}
 
 	// Wait a moment for namespace to be ready
-	time.Sleep(2 * time.Second)
+	time.Sleep(f.config.NamespacePollInterval)
 	return nil
 }
 
@@ -39,7 +39,8 @@ func (f *Framework) DeleteNamespace() error {
 	}
 
 	// Wait for namespace deletion with timeout
-	timeout := 120 * time.Second
+	timeout := f.config.NamespaceTimeout
+	pollInterval := f.config.NamespacePollInterval
 	deadline := time.Now().Add(timeout)
 	for time.Now().Before(deadline) {
 		_, err := f.client.CoreV1().Namespaces().Get(f.ctx, f.namespace, metav1.GetOptions{})
@@ -47,7 +48,7 @@ func (f *Framework) DeleteNamespace() error {
 			// Namespace is gone
 			return nil
 		}
-		time.Sleep(2 * time.Second)
+		time.Sleep(pollInterval)
 	}
 
 	return fmt.Errorf("namespace deletion timed out after %v", timeout)

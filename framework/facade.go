@@ -25,15 +25,8 @@ func (f *Framework) SetupMinIO() error {
 // variant: "monolithic" or "stack"
 // resources: optional resource configuration (only applies to monolithic)
 func (f *Framework) SetupTempo(variant string, resources *ResourceConfig) error {
-	// Convert ResourceConfig to tempo.ResourceConfig
-	var tempoResources *tempo.ResourceConfig
-	if resources != nil {
-		tempoResources = &tempo.ResourceConfig{
-			Profile:   resources.Profile,
-			Resources: resources.Resources,
-		}
-	}
-	return tempo.Setup(f, variant, tempoResources)
+	// ResourceConfig types are structurally identical, cast directly
+	return tempo.Setup(f, variant, (*tempo.ResourceConfig)(resources))
 }
 
 // SetupOTelCollector deploys OpenTelemetry Collector with RBAC

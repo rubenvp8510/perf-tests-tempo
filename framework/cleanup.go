@@ -6,8 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/redhat/perf-tests-tempo/test/framework/otel"
-	"github.com/redhat/perf-tests-tempo/test/framework/tempo"
+	"github.com/redhat/perf-tests-tempo/test/framework/gvr"
 
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -16,12 +15,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-const (
-	// crDeletionTimeout is the timeout for waiting for CR deletion
-	crDeletionTimeout = 120 * time.Second
-	// crDeletionPollInterval is the interval for polling CR deletion status
-	crDeletionPollInterval = 2 * time.Second
-)
 
 // Cleanup removes all resources created by the framework
 func (f *Framework) Cleanup() error {
@@ -105,7 +98,7 @@ func (f *Framework) cleanupCRs() error {
 func (f *Framework) cleanupCRsByLabel() error {
 	labelSelector := fmt.Sprintf("%s=%s,%s=%s", LabelManagedBy, LabelManagedByValue, LabelInstance, f.namespace)
 
-	gvrs := []schema.GroupVersionResource{tempo.TempoMonolithicGVR, tempo.TempoStackGVR, otel.CollectorGVR}
+	gvrs := gvr.AllManagedCRs()
 
 	var wg sync.WaitGroup
 	errCh := make(chan error, len(gvrs))
@@ -161,6 +154,9 @@ func (f *Framework) waitForCRsDeletion() error {
 	if len(trackedCRs) == 0 {
 		return nil
 	}
+
+	crDeletionTimeout := f.config.CRDeletionTimeout
+	crDeletionPollInterval := f.config.CRDeletionPollInterval
 
 	f.logger.Info("waiting for CRs to be deleted", "count", len(trackedCRs), "timeout", crDeletionTimeout)
 

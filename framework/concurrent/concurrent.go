@@ -243,44 +243,32 @@ func MapWithLimit[T, R any](ctx context.Context, items []T, limit int, fn func(c
 }
 
 // Filter returns items for which fn returns true, processing concurrently.
-// Order of results is not guaranteed.
+// Order of results matches order of input items.
 func Filter[T any](items []T, fn func(T) bool) []T {
 	if len(items) == 0 {
 		return nil
 	}
 
-	type result struct {
-		item  T
-		keep  bool
-		index int
-	}
-
-	resultCh := make(chan result, len(items))
+	// Store keep decisions for each index
+	keep := make([]bool, len(items))
 	var wg sync.WaitGroup
 
 	for i, item := range items {
 		wg.Add(1)
 		go func(i int, item T) {
 			defer wg.Done()
-			resultCh <- result{item: item, keep: fn(item), index: i}
+			keep[i] = fn(item)
 		}(i, item)
 	}
 
 	wg.Wait()
-	close(resultCh)
 
-	// Collect results maintaining order
-	indexedResults := make([]result, 0, len(items))
-	for r := range resultCh {
-		if r.keep {
-			indexedResults = append(indexedResults, r)
+	// Collect results in original order
+	results := make([]T, 0, len(items))
+	for i, item := range items {
+		if keep[i] {
+			results = append(results, item)
 		}
-	}
-
-	// Sort by original index to maintain order
-	results := make([]T, 0, len(indexedResults))
-	for _, r := range indexedResults {
-		results = append(results, r.item)
 	}
 
 	return results
