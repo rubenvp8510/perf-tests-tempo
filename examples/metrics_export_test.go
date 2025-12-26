@@ -21,7 +21,15 @@ var _ = Describe("Performance Test with Metrics Collection", func() {
 		fw, err = framework.New("tempo-perf-test")
 		Expect(err).NotTo(HaveOccurred())
 
-		GinkgoWriter.Printf("📋 Test namespace: %s\n", fw.Namespace())
+		GinkgoWriter.Printf("Test namespace: %s\n", fw.Namespace())
+
+		// Check prerequisites
+		prereqs, err := fw.CheckPrerequisites()
+		Expect(err).NotTo(HaveOccurred())
+		Expect(prereqs.AllMet).To(BeTrue(), prereqs.String())
+
+		// Enable user workload monitoring for metrics collection
+		Expect(fw.EnableUserWorkloadMonitoring()).To(Succeed())
 
 		// Deploy MinIO
 		err = fw.SetupMinIO()
@@ -40,7 +48,7 @@ var _ = Describe("Performance Test with Metrics Collection", func() {
 
 		// Record when the actual test starts
 		testStart = time.Now()
-		GinkgoWriter.Printf("⏱️  Test started at: %s\n", testStart.Format(time.RFC3339))
+		GinkgoWriter.Printf("Test started at: %s\n", testStart.Format(time.RFC3339))
 	})
 
 	It("should collect metrics after performance test", func() {
@@ -52,7 +60,7 @@ var _ = Describe("Performance Test with Metrics Collection", func() {
 		// - Wait for test duration
 
 		// Simulate some test duration
-		GinkgoWriter.Printf("🔄 Running performance test...\n")
+		GinkgoWriter.Printf("Running performance test...\n")
 		time.Sleep(5 * time.Second) // Replace with actual test
 
 		// Collect metrics at the end of the test
@@ -61,7 +69,7 @@ var _ = Describe("Performance Test with Metrics Collection", func() {
 		err := fw.CollectMetrics(testStart, outputFile)
 		Expect(err).NotTo(HaveOccurred())
 
-		GinkgoWriter.Printf("✅ Metrics collected and exported to: %s\n", outputFile)
+		GinkgoWriter.Printf("Metrics collected and exported to: %s\n", outputFile)
 	})
 
 	AfterEach(func() {
@@ -89,6 +97,14 @@ var _ = Describe("Performance Test with Duration-based Collection", func() {
 		var err error
 		fw, err = framework.New("tempo-perf-test")
 		Expect(err).NotTo(HaveOccurred())
+
+		// Check prerequisites
+		prereqs, err := fw.CheckPrerequisites()
+		Expect(err).NotTo(HaveOccurred())
+		Expect(prereqs.AllMet).To(BeTrue(), prereqs.String())
+
+		// Enable user workload monitoring for metrics collection
+		Expect(fw.EnableUserWorkloadMonitoring()).To(Succeed())
 
 		// Deploy stack
 		err = fw.SetupMinIO()

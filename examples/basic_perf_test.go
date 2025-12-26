@@ -25,6 +25,14 @@ var _ = Describe("Tempo Performance Tests", func() {
 			fw, err = framework.New("tempo-perf-medium")
 			Expect(err).NotTo(HaveOccurred())
 
+			// Check prerequisites
+			prereqs, err := fw.CheckPrerequisites()
+			Expect(err).NotTo(HaveOccurred())
+			Expect(prereqs.AllMet).To(BeTrue(), prereqs.String())
+
+			// Enable user workload monitoring for metrics collection
+			Expect(fw.EnableUserWorkloadMonitoring()).To(Succeed())
+
 			Expect(fw.SetupMinIO()).To(Succeed())
 			Expect(fw.SetupTempo("monolithic", &framework.ResourceConfig{
 				Profile: "medium",
@@ -71,6 +79,14 @@ var _ = Describe("Tempo Performance Tests", func() {
 			fw, err = framework.New("tempo-perf-custom")
 			Expect(err).NotTo(HaveOccurred())
 
+			// Check prerequisites
+			prereqs, err := fw.CheckPrerequisites()
+			Expect(err).NotTo(HaveOccurred())
+			Expect(prereqs.AllMet).To(BeTrue(), prereqs.String())
+
+			// Enable user workload monitoring for metrics collection
+			Expect(fw.EnableUserWorkloadMonitoring()).To(Succeed())
+
 			Expect(fw.SetupMinIO()).To(Succeed())
 			Expect(fw.SetupTempo("monolithic", &framework.ResourceConfig{
 				Resources: &corev1.ResourceRequirements{
@@ -107,6 +123,14 @@ var _ = Describe("Tempo Performance Tests", func() {
 			var err error
 			fw, err = framework.New("tempo-perf-stack")
 			Expect(err).NotTo(HaveOccurred())
+
+			// Check prerequisites
+			prereqs, err := fw.CheckPrerequisites()
+			Expect(err).NotTo(HaveOccurred())
+			Expect(prereqs.AllMet).To(BeTrue(), prereqs.String())
+
+			// Enable user workload monitoring for metrics collection
+			Expect(fw.EnableUserWorkloadMonitoring()).To(Succeed())
 
 			Expect(fw.SetupMinIO()).To(Succeed())
 			Expect(fw.SetupTempo("stack", nil)).To(Succeed())
