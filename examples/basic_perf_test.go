@@ -1,6 +1,7 @@
 package examples
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -17,12 +18,14 @@ var _ = Describe("Tempo Performance Tests", func() {
 	var (
 		fw        *framework.Framework
 		testStart time.Time
+		ctx       context.Context
 	)
 
 	Context("with medium profile", func() {
 		BeforeEach(func() {
+			ctx = context.Background()
 			var err error
-			fw, err = framework.New("tempo-perf-medium")
+			fw, err = framework.New(ctx, "tempo-perf-medium")
 			Expect(err).NotTo(HaveOccurred())
 
 			// Check prerequisites
@@ -75,8 +78,9 @@ var _ = Describe("Tempo Performance Tests", func() {
 
 	Context("with custom resources", func() {
 		BeforeEach(func() {
+			ctx = context.Background()
 			var err error
-			fw, err = framework.New("tempo-perf-custom")
+			fw, err = framework.New(ctx, "tempo-perf-custom")
 			Expect(err).NotTo(HaveOccurred())
 
 			// Check prerequisites
@@ -120,8 +124,9 @@ var _ = Describe("Tempo Performance Tests", func() {
 
 	Context("with Tempo Stack", func() {
 		BeforeEach(func() {
+			ctx = context.Background()
 			var err error
-			fw, err = framework.New("tempo-perf-stack")
+			fw, err = framework.New(ctx, "tempo-perf-stack")
 			Expect(err).NotTo(HaveOccurred())
 
 			// Check prerequisites

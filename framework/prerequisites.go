@@ -37,7 +37,7 @@ var (
 
 // CheckPrerequisites verifies that required operators are installed in the cluster
 func (f *Framework) CheckPrerequisites() (*PrerequisitesResult, error) {
-	apiextClient, err := apiextensionsclient.NewForConfig(f.config)
+	apiextClient, err := apiextensionsclient.NewForConfig(f.restConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create apiextensions client: %w", err)
 	}

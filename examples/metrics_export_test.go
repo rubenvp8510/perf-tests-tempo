@@ -1,6 +1,7 @@
 package examples
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -14,11 +15,13 @@ var _ = Describe("Performance Test with Metrics Collection", func() {
 	var (
 		fw        *framework.Framework
 		testStart time.Time
+		ctx       context.Context
 	)
 
 	BeforeEach(func() {
+		ctx = context.Background()
 		var err error
-		fw, err = framework.New("tempo-perf-test")
+		fw, err = framework.New(ctx, "tempo-perf-test")
 		Expect(err).NotTo(HaveOccurred())
 
 		GinkgoWriter.Printf("Test namespace: %s\n", fw.Namespace())
@@ -91,11 +94,15 @@ var _ = Describe("Performance Test with Metrics Collection", func() {
 })
 
 var _ = Describe("Performance Test with Duration-based Collection", func() {
-	var fw *framework.Framework
+	var (
+		fw  *framework.Framework
+		ctx context.Context
+	)
 
 	BeforeEach(func() {
+		ctx = context.Background()
 		var err error
-		fw, err = framework.New("tempo-perf-test")
+		fw, err = framework.New(ctx, "tempo-perf-test")
 		Expect(err).NotTo(HaveOccurred())
 
 		// Check prerequisites

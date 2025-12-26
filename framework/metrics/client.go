@@ -8,10 +8,24 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"os/exec"
 	"strings"
 	"time"
+
+	authenticationv1 "k8s.io/api/authentication/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 )
+
+// Route GVR for OpenShift routes
+var routeGVR = schema.GroupVersionResource{
+	Group:    "route.openshift.io",
+	Version:  "v1",
+	Resource: "routes",
+}
 
 // ClientConfig holds configuration for the Prometheus client
 type ClientConfig struct {
@@ -21,6 +35,9 @@ type ClientConfig struct {
 	MonitoringNamespace string
 	ServiceAccountName  string
 	AutoDiscover        bool
+
+	// KubeConfig is optional; if provided, it will be used for auto-discovery
+	KubeConfig *rest.Config
 }
 
 // Client represents a Prometheus/Thanos client
@@ -62,8 +79,12 @@ func NewClient(ctx context.Context, config *ClientConfig) (*Client, error) {
 
 	// Auto-discover Thanos URL and token if needed
 	if config.AutoDiscover {
+		if config.KubeConfig == nil {
+			return nil, fmt.Errorf("KubeConfig is required for auto-discovery")
+		}
+
 		if config.ThanosURL == "" {
-			url, err := client.discoverThanosURL()
+			url, err := client.discoverThanosURL(ctx)
 			if err != nil {
 				return nil, fmt.Errorf("failed to discover Thanos URL: %w", err)
 			}
@@ -72,7 +93,7 @@ func NewClient(ctx context.Context, config *ClientConfig) (*Client, error) {
 		}
 
 		if config.Token == "" {
-			token, err := client.generateToken()
+			token, err := client.generateToken(ctx)
 			if err != nil {
 				return nil, fmt.Errorf("failed to generate token: %w", err)
 			}
@@ -94,37 +115,72 @@ func NewClient(ctx context.Context, config *ClientConfig) (*Client, error) {
 	return client, nil
 }
 
-// discoverThanosURL discovers the Thanos Querier URL from OpenShift
-func (c *Client) discoverThanosURL() (string, error) {
-	cmd := exec.Command("oc", "get", "route", "thanos-querier",
-		"-n", c.config.MonitoringNamespace,
-		"-o", "jsonpath={.spec.host}")
+// discoverThanosURL discovers the Thanos Querier URL from OpenShift using Kubernetes client
+func (c *Client) discoverThanosURL(ctx context.Context) (string, error) {
+	dynamicClient, err := dynamic.NewForConfig(c.config.KubeConfig)
+	if err != nil {
+		return "", fmt.Errorf("failed to create dynamic client: %w", err)
+	}
 
-	output, err := cmd.Output()
+	namespace := c.config.MonitoringNamespace
+	if namespace == "" {
+		namespace = "openshift-monitoring"
+	}
+
+	route, err := dynamicClient.Resource(routeGVR).Namespace(namespace).Get(ctx, "thanos-querier", metav1.GetOptions{})
 	if err != nil {
 		return "", fmt.Errorf("failed to get thanos-querier route: %w", err)
 	}
 
-	host := strings.TrimSpace(string(output))
+	host, found, err := unstructured.NestedString(route.Object, "spec", "host")
+	if err != nil || !found {
+		return "", fmt.Errorf("thanos-querier route host not found")
+	}
+
 	if host == "" {
-		return "", fmt.Errorf("thanos-querier route not found")
+		return "", fmt.Errorf("thanos-querier route host is empty")
 	}
 
 	return "https://" + host, nil
 }
 
-// generateToken generates a service account token
-func (c *Client) generateToken() (string, error) {
-	cmd := exec.Command("oc", "create", "token", c.config.ServiceAccountName,
-		"-n", c.config.MonitoringNamespace,
-		"--duration=1h")
-
-	output, err := cmd.Output()
+// generateToken generates a service account token using Kubernetes client
+func (c *Client) generateToken(ctx context.Context) (string, error) {
+	clientset, err := kubernetes.NewForConfig(c.config.KubeConfig)
 	if err != nil {
-		return "", fmt.Errorf("failed to create token: %w", err)
+		return "", fmt.Errorf("failed to create kubernetes client: %w", err)
 	}
 
-	token := strings.TrimSpace(string(output))
+	namespace := c.config.MonitoringNamespace
+	if namespace == "" {
+		namespace = "openshift-monitoring"
+	}
+
+	saName := c.config.ServiceAccountName
+	if saName == "" {
+		saName = "prometheus-k8s"
+	}
+
+	// Token expiration: 1 hour
+	expirationSeconds := int64(3600)
+
+	tokenRequest := &authenticationv1.TokenRequest{
+		Spec: authenticationv1.TokenRequestSpec{
+			ExpirationSeconds: &expirationSeconds,
+		},
+	}
+
+	tokenResponse, err := clientset.CoreV1().ServiceAccounts(namespace).CreateToken(
+		ctx,
+		saName,
+		tokenRequest,
+		metav1.CreateOptions{},
+	)
+	if err != nil {
+		return "", fmt.Errorf("failed to create token for %s/%s: %w", namespace, saName, err)
+	}
+
+	token := strings.TrimSpace(tokenResponse.Status.Token)
 	if token == "" {
 		return "", fmt.Errorf("empty token received")
 	}

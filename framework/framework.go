@@ -6,6 +6,8 @@ import (
 	"log/slog"
 	"sync"
 
+	"github.com/redhat/perf-tests-tempo/test/framework/config"
+
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
@@ -17,10 +19,11 @@ import (
 type Framework struct {
 	client        kubernetes.Interface
 	dynamicClient dynamic.Interface
-	config        *rest.Config
+	restConfig    *rest.Config
 	namespace     string
 	ctx           context.Context
 	logger        *slog.Logger
+	config        *config.Config
 
 	// Resource tracking
 	mu                      sync.Mutex
@@ -28,40 +31,71 @@ type Framework struct {
 	trackedClusterResources []TrackedResource
 }
 
-// New creates a new Framework instance with the specified namespace
-func New(namespace string) (*Framework, error) {
+// Option is a function that configures the Framework
+type Option func(*Framework)
+
+// WithLogger sets a custom logger for the framework
+func WithLogger(logger *slog.Logger) Option {
+	return func(f *Framework) {
+		f.logger = logger
+	}
+}
+
+// WithConfig sets a custom configuration for the framework
+func WithConfig(cfg *config.Config) Option {
+	return func(f *Framework) {
+		f.config = cfg
+	}
+}
+
+// New creates a new Framework instance with the specified namespace.
+// The context is used for all Kubernetes operations and should be cancelled
+// to stop any in-progress operations.
+func New(ctx context.Context, namespace string, opts ...Option) (*Framework, error) {
 	if namespace == "" {
-		return nil, fmt.Errorf("namespace is required")
+		return nil, ErrNamespaceRequired
 	}
 
-	config, err := rest.InClusterConfig()
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
+	restConfig, err := rest.InClusterConfig()
 	if err != nil {
-		config, err = clientcmd.BuildConfigFromFlags("", clientcmd.RecommendedHomeFile)
+		restConfig, err = clientcmd.BuildConfigFromFlags("", clientcmd.RecommendedHomeFile)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get kubernetes config: %w", err)
+			return nil, fmt.Errorf("%w: %v", ErrClusterConnection, err)
 		}
 	}
 
-	client, err := kubernetes.NewForConfig(config)
+	client, err := kubernetes.NewForConfig(restConfig)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create kubernetes client: %w", err)
+		return nil, fmt.Errorf("%w: failed to create kubernetes client: %v", ErrClusterConnection, err)
 	}
 
-	dynamicClient, err := dynamic.NewForConfig(config)
+	dynamicClient, err := dynamic.NewForConfig(restConfig)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create dynamic client: %w", err)
+		return nil, fmt.Errorf("%w: failed to create dynamic client: %v", ErrClusterConnection, err)
 	}
 
-	return &Framework{
+	f := &Framework{
 		client:                  client,
 		dynamicClient:           dynamicClient,
-		config:                  config,
+		restConfig:              restConfig,
 		namespace:               namespace,
-		ctx:                     context.Background(),
+		ctx:                     ctx,
 		logger:                  slog.Default(),
+		config:                  config.FromEnv(),
 		trackedCRs:              make([]TrackedResource, 0),
 		trackedClusterResources: make([]TrackedResource, 0),
-	}, nil
+	}
+
+	// Apply options
+	for _, opt := range opts {
+		opt(f)
+	}
+
+	return f, nil
 }
 
 // Namespace returns the namespace used by this framework instance
@@ -81,6 +115,11 @@ func (f *Framework) DynamicClient() dynamic.Interface {
 
 // Config returns the Kubernetes REST config
 func (f *Framework) Config() *rest.Config {
+	return f.restConfig
+}
+
+// FrameworkConfig returns the framework configuration
+func (f *Framework) FrameworkConfig() *config.Config {
 	return f.config
 }
 
