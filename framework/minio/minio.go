@@ -10,6 +10,7 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -52,7 +53,7 @@ func Setup(c Clients) error {
 	}
 
 	_, err := client.CoreV1().PersistentVolumeClaims(namespace).Create(ctx, pvc, metav1.CreateOptions{})
-	if err != nil {
+	if err != nil && !apierrors.IsAlreadyExists(err) {
 		return fmt.Errorf("failed to create MinIO PVC: %w", err)
 	}
 
@@ -72,7 +73,7 @@ func Setup(c Clients) error {
 	}
 
 	_, err = client.CoreV1().Secrets(namespace).Create(ctx, secret, metav1.CreateOptions{})
-	if err != nil {
+	if err != nil && !apierrors.IsAlreadyExists(err) {
 		return fmt.Errorf("failed to create MinIO secret: %w", err)
 	}
 
@@ -146,7 +147,7 @@ func Setup(c Clients) error {
 	}
 
 	_, err = client.AppsV1().Deployments(namespace).Create(ctx, deployment, metav1.CreateOptions{})
-	if err != nil {
+	if err != nil && !apierrors.IsAlreadyExists(err) {
 		return fmt.Errorf("failed to create MinIO deployment: %w", err)
 	}
 
@@ -172,7 +173,7 @@ func Setup(c Clients) error {
 	}
 
 	_, err = client.CoreV1().Services(namespace).Create(ctx, service, metav1.CreateOptions{})
-	if err != nil {
+	if err != nil && !apierrors.IsAlreadyExists(err) {
 		return fmt.Errorf("failed to create MinIO service: %w", err)
 	}
 
