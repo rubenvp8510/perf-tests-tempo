@@ -23,7 +23,7 @@ const (
 
 const (
 	// DefaultImage is the default xk6-tempo image
-	DefaultImage = "ghcr.io/rubenvp8510/xk6-tempo:latest"
+	DefaultImage = "quay.io/rvargasp/xk6-tempo:latest"
 
 	// ScriptsConfigMap is the name of the ConfigMap containing k6 scripts
 	ScriptsConfigMap = "k6-scripts"
