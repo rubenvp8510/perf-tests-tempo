@@ -6,6 +6,7 @@ import (
 
 	"github.com/redhat/perf-tests-tempo/test/framework/wait"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -34,11 +35,11 @@ func SetupStack(fw FrameworkOperations) error {
 	unstructuredObj.SetLabels(labels)
 
 	_, err = fw.DynamicClient().Resource(TempoStackGVR).Namespace(fw.Namespace()).Create(fw.Context(), unstructuredObj, metav1.CreateOptions{})
-	if err != nil {
+	if err != nil && !apierrors.IsAlreadyExists(err) {
 		return fmt.Errorf("failed to create TempoStack: %w", err)
 	}
 
-	// Track the created resource
+	// Track the created resource (even if it already exists, for cleanup)
 	fw.TrackCR(TempoStackGVR, fw.Namespace(), stackCR.Name)
 
 	// Wait for Tempo to be ready

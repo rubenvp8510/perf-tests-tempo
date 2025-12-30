@@ -188,11 +188,11 @@ func setupCollectorCR(fw FrameworkOperations) error {
 	collectorObj.SetLabels(labels)
 
 	_, err := fw.DynamicClient().Resource(CollectorGVR).Namespace(namespace).Create(fw.Context(), collectorObj, metav1.CreateOptions{})
-	if err != nil {
+	if err != nil && !apierrors.IsAlreadyExists(err) {
 		return fmt.Errorf("failed to create OpenTelemetryCollector: %w", err)
 	}
 
-	// Track the created resource
+	// Track the created resource (even if it already exists, for cleanup)
 	fw.TrackCR(CollectorGVR, namespace, "otel-collector")
 
 	return nil
