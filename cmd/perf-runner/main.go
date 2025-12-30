@@ -85,6 +85,10 @@ func main() {
 		<-sigCh
 		fmt.Println("\nReceived interrupt signal, cleaning up...")
 		cancel()
+		// Second interrupt force-exits
+		<-sigCh
+		fmt.Println("\nForce exit requested, terminating immediately...")
+		os.Exit(130) // 128 + SIGINT(2)
 	}()
 
 	// Create output directory
