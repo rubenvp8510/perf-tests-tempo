@@ -17,15 +17,24 @@ const config = getConfig();
 const endpoints = getEndpoints();
 const traceProfile = getProfile(config.ingestion.traceProfile);
 
+// Calculate throughput using xk6-tempo's built-in function
+const ingestionVUs = Math.floor(config.vus.min / 2);
+const throughput = tempo.calculateThroughput(
+    traceProfile,
+    config.ingestion.bytesPerSecond,
+    ingestionVUs
+);
+const tracesPerSecond = Math.ceil(throughput.totalTracesPerSec);
+
 // k6 options with two concurrent scenarios
 export const options = {
     scenarios: {
         ingestion: {
             executor: 'constant-arrival-rate',
-            rate: config.ingestion.tracesPerSecond,
+            rate: tracesPerSecond,
             timeUnit: '1s',
             duration: config.duration,
-            preAllocatedVUs: Math.floor(config.vus.min / 2),
+            preAllocatedVUs: ingestionVUs,
             maxVUs: Math.floor(config.vus.max / 2),
             exec: 'ingest',
         },
@@ -82,7 +91,7 @@ export function setup() {
   Description:       ${config.description}
 
   INGESTION:
-    Traces/second:   ${config.ingestion.tracesPerSecond}
+    Target Rate:     ${config.ingestion.mbPerSecond} MB/s (${tracesPerSecond} traces/sec)
     Trace Profile:   ${traceProfile.name} (${traceProfile.spans.min}-${traceProfile.spans.max} spans)
     Endpoint:        ${endpoints.ingestion}
 
@@ -99,13 +108,15 @@ export function setup() {
 `);
 
     return {
-        profile: traceProfile,
+        traceConfig: traceProfile,
     };
 }
 
 // Ingestion function - called by ingestion scenario
 export function ingest(data) {
-    const trace = tempo.generateTrace(data.profile);
+    // Generate trace using the configured profile
+    const trace = tempo.generateTrace(data.traceConfig);
+
     const response = ingestionClient.push(trace);
 
     if (response.error) {

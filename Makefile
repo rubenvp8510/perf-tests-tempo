@@ -58,7 +58,37 @@ deps-update: ## Update dependencies to latest
 	$(GO) get -u ./...
 	$(GO) mod tidy
 
-##@ k6 Load Tests
+##@ Profile-based Performance Tests
+# Set profiles: PROFILES=small,medium,large (comma-separated)
+# Set profiles directory: PROFILES_DIR=profiles
+# Set test type: TEST_TYPE=ingestion|query|combined
+
+PROFILES ?=
+PROFILES_DIR ?= profiles
+TEST_TYPE ?= combined
+OUTPUT_DIR ?= results
+
+.PHONY: perf-test
+perf-test: ## Run performance tests with specified profiles
+	@if [ -z "$(PROFILES)" ]; then \
+		$(GO) run ./cmd/perf-runner --profiles-dir=$(PROFILES_DIR) --test-type=$(TEST_TYPE) --output=$(OUTPUT_DIR); \
+	else \
+		$(GO) run ./cmd/perf-runner --profiles=$(PROFILES) --profiles-dir=$(PROFILES_DIR) --test-type=$(TEST_TYPE) --output=$(OUTPUT_DIR); \
+	fi
+
+.PHONY: perf-test-dry-run
+perf-test-dry-run: ## Dry run - show what would be executed
+	@if [ -z "$(PROFILES)" ]; then \
+		$(GO) run ./cmd/perf-runner --profiles-dir=$(PROFILES_DIR) --test-type=$(TEST_TYPE) --dry-run; \
+	else \
+		$(GO) run ./cmd/perf-runner --profiles=$(PROFILES) --profiles-dir=$(PROFILES_DIR) --test-type=$(TEST_TYPE) --dry-run; \
+	fi
+
+.PHONY: validate-profiles
+validate-profiles: ## Validate all profile YAML files
+	$(GO) run ./cmd/perf-runner --profiles-dir=$(PROFILES_DIR) --dry-run
+
+##@ k6 Load Tests (Standalone)
 # Set test size: K6_SIZE=small|medium|large|xlarge (default: medium)
 
 K6_SIZE ?= medium

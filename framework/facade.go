@@ -54,6 +54,11 @@ func (f *Framework) RunK6CombinedTest(size k6.Size) (*k6.Result, error) {
 	return k6.RunCombinedTest(f, size)
 }
 
+// RunK6ParallelTests runs ingestion and query tests as separate parallel Kubernetes Jobs
+func (f *Framework) RunK6ParallelTests(config *k6.Config) (*k6.ParallelResult, error) {
+	return k6.RunParallelTests(f, config)
+}
+
 // CollectMetrics collects performance metrics for the test namespace and exports to CSV
 func (f *Framework) CollectMetrics(testStart time.Time, outputPath string) error {
 	return metrics.CollectMetrics(f, testStart, outputPath)

@@ -1,0 +1,16 @@
+name: xlarge
+description: "Extreme load - capacity testing"
+
+tempo:
+  variant: stack
+
+k6:
+  duration: "5m"
+  vus:
+    min: 50
+    max: 200
+  ingestion:
+    mbPerSecond: 20
+    traceProfile: xlarge
+  query:
+    queriesPerSecond: 100

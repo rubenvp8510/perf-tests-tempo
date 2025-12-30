@@ -2,11 +2,11 @@
 // Tests trace ingestion throughput using xk6-tempo
 //
 // Usage:
-//   k6 run ingestion-test.js                           # Default: medium size
-//   k6 run -e SIZE=small ingestion-test.js             # Small load
-//   k6 run -e SIZE=large ingestion-test.js             # Large load
-//   k6 run -e SIZE=xlarge ingestion-test.js            # Extreme load
-//   k6 run -e TRACES_PER_SECOND=200 ingestion-test.js  # Custom rate
+//   k6 run ingestion-test.js                        # Default: medium size
+//   k6 run -e SIZE=small ingestion-test.js          # Small load
+//   k6 run -e SIZE=large ingestion-test.js          # Large load
+//   k6 run -e SIZE=xlarge ingestion-test.js         # Extreme load
+//   k6 run -e MB_PER_SECOND=5 ingestion-test.js     # Custom rate (MB/s)
 
 import tempo from 'k6/x/tempo';
 import { getConfig, getEndpoints, THRESHOLDS } from './lib/config.js';
@@ -17,12 +17,21 @@ const config = getConfig();
 const endpoints = getEndpoints();
 const traceProfile = getProfile(config.ingestion.traceProfile);
 
-// k6 options
+// Calculate throughput using xk6-tempo's built-in function
+// This estimates trace size based on the profile and calculates required rate
+const throughput = tempo.calculateThroughput(
+    traceProfile,
+    config.ingestion.bytesPerSecond,
+    config.vus.min
+);
+const tracesPerSecond = Math.ceil(throughput.totalTracesPerSec);
+
+// k6 options - rate calculated by xk6-tempo based on trace profile and target MB/s
 export const options = {
     scenarios: {
         ingestion: {
             executor: 'constant-arrival-rate',
-            rate: config.ingestion.tracesPerSecond,
+            rate: tracesPerSecond,
             timeUnit: '1s',
             duration: config.duration,
             preAllocatedVUs: config.vus.min,
@@ -51,7 +60,7 @@ export function setup() {
 ================================================================================
   Size:              ${config.name}
   Description:       ${config.description}
-  Traces/second:     ${config.ingestion.tracesPerSecond}
+  Target Rate:       ${config.ingestion.mbPerSecond} MB/s (${tracesPerSecond} traces/sec)
   Trace Profile:     ${traceProfile.name} (${traceProfile.spans.min}-${traceProfile.spans.max} spans)
   Duration:          ${config.duration}
   VUs:               ${config.vus.min} - ${config.vus.max}
@@ -61,14 +70,14 @@ export function setup() {
 `);
 
     return {
-        profile: traceProfile,
+        traceConfig: traceProfile,
     };
 }
 
 // Main test function - runs for each iteration
 export default function(data) {
     // Generate trace using the configured profile
-    const trace = tempo.generateTrace(data.profile);
+    const trace = tempo.generateTrace(data.traceConfig);
 
     // Push trace to Tempo
     const response = client.push(trace);

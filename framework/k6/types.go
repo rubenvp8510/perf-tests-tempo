@@ -41,9 +41,12 @@ type Config struct {
 	Image string
 
 	// Custom overrides (optional)
-	TracesPerSecond  int
+	MBPerSecond      float64
 	QueriesPerSecond int
 	Duration         string
+	VUsMin           int
+	VUsMax           int
+	TraceProfile     string
 
 	// Endpoints (auto-discovered if empty)
 	TempoEndpoint      string

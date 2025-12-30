@@ -119,6 +119,135 @@ func RunCombinedTest(c Clients, size Size) (*Result, error) {
 	return RunTest(c, TestCombined, &Config{Size: size})
 }
 
+// ParallelResult holds results from parallel ingestion and query tests
+type ParallelResult struct {
+	Ingestion *Result
+	Query     *Result
+	Duration  time.Duration
+}
+
+// Success returns true if both tests succeeded
+func (p *ParallelResult) Success() bool {
+	return p.Ingestion != nil && p.Query != nil &&
+		p.Ingestion.Success && p.Query.Success
+}
+
+// RunParallelTests runs ingestion and query tests as separate parallel Kubernetes Jobs
+func RunParallelTests(c Clients, config *Config) (*ParallelResult, error) {
+	startTime := time.Now()
+
+	// Set defaults
+	if config == nil {
+		config = &Config{Size: SizeMedium}
+	}
+	if config.Size == "" {
+		config.Size = SizeMedium
+	}
+	if config.Image == "" {
+		config.Image = DefaultImage
+	}
+
+	namespace := c.Namespace()
+
+	// Set default endpoints
+	if config.TempoEndpoint == "" {
+		config.TempoEndpoint = fmt.Sprintf("tempo-distributor.%s.svc.cluster.local:4317", namespace)
+	}
+	if config.TempoQueryEndpoint == "" {
+		config.TempoQueryEndpoint = fmt.Sprintf("http://tempo-query-frontend.%s.svc.cluster.local:3200", namespace)
+	}
+
+	fmt.Printf("\n🚀 Deploying parallel k6 tests (ingestion + query)\n")
+	fmt.Printf("   Namespace: %s\n", namespace)
+	fmt.Printf("   Image: %s\n", config.Image)
+	fmt.Printf("   Ingestion Endpoint: %s\n", config.TempoEndpoint)
+	fmt.Printf("   Query Endpoint: %s\n\n", config.TempoQueryEndpoint)
+
+	// Create ConfigMap with k6 scripts
+	if err := createScriptsConfigMap(c); err != nil {
+		return nil, fmt.Errorf("failed to create k6 scripts ConfigMap: %w", err)
+	}
+
+	// Create both jobs
+	ingestionJobName := fmt.Sprintf("k6-ingestion-%s", config.Size)
+	queryJobName := fmt.Sprintf("k6-query-%s", config.Size)
+
+	if err := createJob(c, ingestionJobName, TestIngestion, config); err != nil {
+		return nil, fmt.Errorf("failed to create ingestion Job: %w", err)
+	}
+
+	if err := createJob(c, queryJobName, TestQuery, config); err != nil {
+		return nil, fmt.Errorf("failed to create query Job: %w", err)
+	}
+
+	// Wait for both jobs to complete in parallel
+	fmt.Printf("⏳ Waiting for both k6 Jobs to complete (timeout: %s)...\n", JobTimeout)
+
+	type jobResult struct {
+		name    string
+		success bool
+		logs    string
+		err     error
+	}
+
+	results := make(chan jobResult, 2)
+
+	// Wait for ingestion job
+	go func() {
+		success, err := waitForJob(c, ingestionJobName)
+		logs, _ := getJobLogs(c, ingestionJobName)
+		results <- jobResult{name: "ingestion", success: success, logs: logs, err: err}
+	}()
+
+	// Wait for query job
+	go func() {
+		success, err := waitForJob(c, queryJobName)
+		logs, _ := getJobLogs(c, queryJobName)
+		results <- jobResult{name: "query", success: success, logs: logs, err: err}
+	}()
+
+	// Collect results
+	parallelResult := &ParallelResult{}
+	for i := 0; i < 2; i++ {
+		r := <-results
+		result := &Result{
+			Success: r.success,
+			Output:  r.logs,
+		}
+		if r.err != nil {
+			result.Error = r.err
+		} else if !r.success {
+			result.Error = fmt.Errorf("k6 %s test failed", r.name)
+		}
+
+		if r.name == "ingestion" {
+			parallelResult.Ingestion = result
+			if r.success {
+				fmt.Printf("✅ Ingestion test completed\n")
+			} else {
+				fmt.Printf("❌ Ingestion test failed\n")
+			}
+		} else {
+			parallelResult.Query = result
+			if r.success {
+				fmt.Printf("✅ Query test completed\n")
+			} else {
+				fmt.Printf("❌ Query test failed\n")
+			}
+		}
+	}
+
+	parallelResult.Duration = time.Since(startTime)
+
+	if parallelResult.Success() {
+		fmt.Printf("\n✅ Both tests completed successfully in %s\n", parallelResult.Duration.Round(time.Second))
+	} else {
+		fmt.Printf("\n❌ One or more tests failed (duration: %s)\n", parallelResult.Duration.Round(time.Second))
+	}
+
+	return parallelResult, nil
+}
+
 // createScriptsConfigMap creates a ConfigMap with all k6 test scripts
 func createScriptsConfigMap(c Clients) error {
 	scriptsDir := scriptsPath()
@@ -203,14 +332,23 @@ func createJob(c Clients, jobName string, testType TestType, config *Config) err
 	if config.TempoToken != "" {
 		env = append(env, corev1.EnvVar{Name: "TEMPO_TOKEN", Value: config.TempoToken})
 	}
-	if config.TracesPerSecond > 0 {
-		env = append(env, corev1.EnvVar{Name: "TRACES_PER_SECOND", Value: fmt.Sprintf("%d", config.TracesPerSecond)})
+	if config.MBPerSecond > 0 {
+		env = append(env, corev1.EnvVar{Name: "MB_PER_SECOND", Value: fmt.Sprintf("%f", config.MBPerSecond)})
 	}
 	if config.QueriesPerSecond > 0 {
 		env = append(env, corev1.EnvVar{Name: "QUERIES_PER_SECOND", Value: fmt.Sprintf("%d", config.QueriesPerSecond)})
 	}
 	if config.Duration != "" {
 		env = append(env, corev1.EnvVar{Name: "DURATION", Value: config.Duration})
+	}
+	if config.VUsMin > 0 {
+		env = append(env, corev1.EnvVar{Name: "VUS_MIN", Value: fmt.Sprintf("%d", config.VUsMin)})
+	}
+	if config.VUsMax > 0 {
+		env = append(env, corev1.EnvVar{Name: "VUS_MAX", Value: fmt.Sprintf("%d", config.VUsMax)})
+	}
+	if config.TraceProfile != "" {
+		env = append(env, corev1.EnvVar{Name: "TRACE_PROFILE", Value: config.TraceProfile})
 	}
 
 	// Build the script path inside the container

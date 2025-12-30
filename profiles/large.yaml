@@ -1,0 +1,16 @@
+name: large
+description: "Heavy load - stress testing"
+
+tempo:
+  variant: stack
+
+k6:
+  duration: "5m"
+  vus:
+    min: 20
+    max: 100
+  ingestion:
+    mbPerSecond: 5
+    traceProfile: large
+  query:
+    queriesPerSecond: 50

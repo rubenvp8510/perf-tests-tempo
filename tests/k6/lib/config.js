@@ -1,12 +1,16 @@
 // T-Shirt Size Configuration for k6 Performance Tests
 // This module defines load profiles for ingestion and query tests
+//
+// Ingestion rate is specified in MB/s and converted to bytes/sec for xk6-tempo.
+// The actual traces/sec rate is calculated by tempo.calculateThroughput() based on
+// the trace profile complexity.
 
 export const SIZES = {
     small: {
         name: 'small',
         description: 'Light load - suitable for development and CI',
         ingestion: {
-            tracesPerSecond: 10,
+            mbPerSecond: 0.1,
             traceProfile: 'small',  // 8-15 spans per trace
         },
         query: {
@@ -22,7 +26,7 @@ export const SIZES = {
         name: 'medium',
         description: 'Moderate load - typical production baseline',
         ingestion: {
-            tracesPerSecond: 50,
+            mbPerSecond: 1,
             traceProfile: 'medium',  // 25-40 spans per trace
         },
         query: {
@@ -38,7 +42,7 @@ export const SIZES = {
         name: 'large',
         description: 'Heavy load - stress testing',
         ingestion: {
-            tracesPerSecond: 100,
+            mbPerSecond: 5,
             traceProfile: 'large',  // 50-80 spans per trace
         },
         query: {
@@ -54,7 +58,7 @@ export const SIZES = {
         name: 'xlarge',
         description: 'Extreme load - capacity testing',
         ingestion: {
-            tracesPerSecond: 500,
+            mbPerSecond: 20,
             traceProfile: 'xlarge',  // 100-150 spans per trace
         },
         query: {
@@ -79,17 +83,29 @@ export function getConfig(sizeOverride) {
     }
 
     // Allow environment variable overrides
+    const mbPerSecond = parseFloat(__ENV.MB_PER_SECOND) || config.ingestion.mbPerSecond;
+    const traceProfile = __ENV.TRACE_PROFILE || config.ingestion.traceProfile;
+
+    // Convert MB/s to bytes/s for xk6-tempo's calculateThroughput()
+    const bytesPerSecond = Math.floor(mbPerSecond * 1024 * 1024);
+
     return {
         ...config,
         ingestion: {
             ...config.ingestion,
-            tracesPerSecond: parseInt(__ENV.TRACES_PER_SECOND) || config.ingestion.tracesPerSecond,
+            mbPerSecond: mbPerSecond,
+            traceProfile: traceProfile,
+            bytesPerSecond: bytesPerSecond,  // For tempo.calculateThroughput()
         },
         query: {
             ...config.query,
             queriesPerSecond: parseInt(__ENV.QUERIES_PER_SECOND) || config.query.queriesPerSecond,
         },
         duration: __ENV.DURATION || config.duration,
+        vus: {
+            min: parseInt(__ENV.VUS_MIN) || config.vus.min,
+            max: parseInt(__ENV.VUS_MAX) || config.vus.max,
+        },
     };
 }
 

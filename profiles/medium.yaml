@@ -1,0 +1,16 @@
+name: medium
+description: "Moderate load - typical production baseline"
+
+tempo:
+  variant: stack
+
+k6:
+  duration: "5m"
+  vus:
+    min: 10
+    max: 50
+  ingestion:
+    mbPerSecond: 1
+    traceProfile: medium
+  query:
+    queriesPerSecond: 25
