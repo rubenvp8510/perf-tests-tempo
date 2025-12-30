@@ -1,41 +1,119 @@
 # Tempo Performance Test Framework
 
-A Go framework for performance testing Tempo on Kubernetes/OpenShift clusters.
+A Go framework for performance testing [Tempo](https://grafana.com/oss/tempo/) distributed tracing backend on Kubernetes/OpenShift clusters.
+
+## Overview
+
+This tool automates the entire performance testing lifecycle:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           Performance Test Flow                              │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  1. SETUP                    2. TEST                    3. COLLECT          │
+│  ┌──────────────┐           ┌──────────────┐           ┌──────────────┐     │
+│  │ Create NS    │           │ k6 Ingestion │           │ k6 Logs      │     │
+│  │ Deploy MinIO │    ──►    │ Job (OTLP)   │    ──►    │ Prometheus   │     │
+│  │ Deploy Tempo │           │              │           │ Metrics      │     │
+│  │ Deploy OTel  │           │ k6 Query     │           │              │     │
+│  └──────────────┘           │ Job (HTTP)   │           └──────────────┘     │
+│                             └──────────────┘                                 │
+│                                    │                                         │
+│                                    ▼                                         │
+│                            4. CLEANUP                                        │
+│                            ┌──────────────┐                                  │
+│                            │ Delete CRs   │                                  │
+│                            │ Delete NS    │                                  │
+│                            └──────────────┘                                  │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
 
 ## Features
 
 - **YAML Profile Configuration**: Define test profiles in YAML files for easy customization
 - **Automated Deployment**: Deploy MinIO, Tempo (monolithic or stack), and OpenTelemetry Collector
 - **Parallel Test Execution**: Run ingestion and query tests as separate parallel Kubernetes Jobs
-- **Load Testing**: Integrated k6 load testing with MB/s-based throughput targeting
+- **MB/s-based Throughput**: Specify ingestion rate in MB/s, automatically calculated to traces/sec
 - **Metrics Collection**: Export performance metrics to CSV from Prometheus/Thanos
 - **Comprehensive Cleanup**: Automatic cleanup of all resources including finalizer handling
+
+## Architecture
+
+### Component Interaction
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              Kubernetes Cluster                              │
+│  ┌─────────────────────────────────────────────────────────────────────┐    │
+│  │                    Namespace: tempo-perf-{profile}                   │    │
+│  │                                                                      │    │
+│  │   ┌─────────────┐      ┌─────────────────┐      ┌──────────────┐    │    │
+│  │   │  k6 Job     │      │  OTel Collector │      │    Tempo     │    │    │
+│  │   │ (Ingestion) │─────►│                 │─────►│  (receives   │    │    │
+│  │   │             │ OTLP │  (receives and  │ OTLP │   traces)    │    │    │
+│  │   └─────────────┘ gRPC │   forwards)     │ gRPC │              │    │    │
+│  │                        └─────────────────┘      └──────┬───────┘    │    │
+│  │   ┌─────────────┐                                      │            │    │
+│  │   │  k6 Job     │                                      │            │    │
+│  │   │  (Query)    │──────────────────────────────────────┘            │    │
+│  │   │             │  HTTP (TraceQL queries)                           │    │
+│  │   └─────────────┘                                                   │    │
+│  │                                                                      │    │
+│  │   ┌─────────────┐      ┌─────────────────┐                          │    │
+│  │   │   MinIO     │◄─────│     Tempo       │                          │    │
+│  │   │  (storage)  │      │  (stores traces)│                          │    │
+│  │   └─────────────┘      └─────────────────┘                          │    │
+│  └─────────────────────────────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### k6 with xk6-tempo Extension
+
+The k6 tests use the [xk6-tempo](https://github.com/grafana/xk6-tempo) extension which provides:
+
+- **Trace Generation**: `tempo.generateTrace(profile)` creates realistic traces
+- **Throughput Calculation**: `tempo.calculateThroughput(profile, bytesPerSec, vus)` converts MB/s to traces/sec
+- **OTLP Ingestion**: Native gRPC client for pushing traces
+- **TraceQL Queries**: HTTP client for querying traces
+
+```javascript
+// How throughput is calculated in k6 scripts
+const throughput = tempo.calculateThroughput(
+    traceProfile,           // Defines spans/trace complexity
+    config.bytesPerSecond,  // Target MB/s converted to bytes
+    config.vus.min          // Number of virtual users
+);
+const tracesPerSecond = Math.ceil(throughput.totalTracesPerSec);
+```
 
 ## Prerequisites
 
 - Go 1.21+
 - Kubernetes/OpenShift cluster access (kubeconfig configured)
-- Tempo Operator installed
-- OpenTelemetry Operator installed
-- k6 with xk6-tempo extension (for standalone k6 tests)
+- [Tempo Operator](https://github.com/grafana/tempo-operator) installed
+- [OpenTelemetry Operator](https://github.com/open-telemetry/opentelemetry-operator) installed
+- k6 with xk6-tempo extension (for standalone k6 tests only)
 
 ## Installation
 
 ```bash
+git clone https://github.com/redhat/perf-tests-tempo.git
+cd perf-tests-tempo
 go mod download
 ```
 
 ## Quick Start
 
 ```bash
+# Dry run to see what would be executed
+make perf-test-dry-run
+
 # Run all profiles with default settings (combined ingestion + query tests)
 make perf-test
 
 # Run specific profiles
 make perf-test PROFILES=small,medium
-
-# Dry run to see what would be executed
-make perf-test-dry-run
 
 # Run only ingestion tests
 make perf-test TEST_TYPE=ingestion PROFILES=medium
@@ -46,7 +124,7 @@ make perf-test TEST_TYPE=query PROFILES=large
 
 ## CLI Runner
 
-The CLI runner (`cmd/perf-runner`) executes performance tests based on YAML profile configurations.
+The CLI runner (`cmd/perf-runner`) is the main entry point for running performance tests.
 
 ### Usage
 
@@ -60,7 +138,7 @@ go run ./cmd/perf-runner [flags]
 |------|---------|-------------|
 | `--profiles` | (all) | Comma-separated list of profiles to run (e.g., `small,medium`) |
 | `--profiles-dir` | `profiles` | Directory containing profile YAML files |
-| `--output` | `results` | Output directory for metrics CSV files |
+| `--output` | `results` | Output directory for logs and metrics |
 | `--test-type` | `combined` | Test type: `ingestion`, `query`, or `combined` |
 | `--dry-run` | `false` | Print what would be executed without running |
 | `--skip-cleanup` | `false` | Skip cleanup after tests (useful for debugging) |
@@ -89,7 +167,7 @@ go run ./cmd/perf-runner --profiles=medium --output=/tmp/results
 
 ## Profile Configuration
 
-Profiles are defined in YAML files in the `profiles/` directory.
+Profiles define the test parameters in YAML files located in the `profiles/` directory.
 
 ### Profile Schema
 
@@ -104,16 +182,39 @@ tempo:
     cpu: "1000m"
 
 k6:
-  duration: "5m"
+  duration: "5m"           # Test duration
   vus:
-    min: 10
-    max: 50
+    min: 10                # Minimum virtual users
+    max: 50                # Maximum virtual users
   ingestion:
     mbPerSecond: 1         # Target ingestion rate in MB/s
     traceProfile: medium   # Trace complexity: small, medium, large, xlarge
   query:
-    queriesPerSecond: 25
+    queriesPerSecond: 25   # Target query rate
 ```
+
+### Profile Fields Explained
+
+| Field | Description |
+|-------|-------------|
+| `tempo.variant` | `monolithic` (single pod) or `stack` (distributed components) |
+| `tempo.resources` | Optional CPU/memory limits; omit to use operator defaults |
+| `k6.duration` | How long the test runs (e.g., `5m`, `1h`) |
+| `k6.vus.min/max` | Virtual user range for k6 executor |
+| `k6.ingestion.mbPerSecond` | Target throughput in megabytes per second |
+| `k6.ingestion.traceProfile` | Trace complexity affecting spans per trace |
+| `k6.query.queriesPerSecond` | TraceQL queries per second |
+
+### Trace Profiles
+
+The `traceProfile` setting controls trace complexity:
+
+| Profile | Spans/Trace | Use Case |
+|---------|-------------|----------|
+| `small` | 8-15 | Simple microservice calls |
+| `medium` | 25-40 | Typical production traces |
+| `large` | 50-80 | Complex distributed transactions |
+| `xlarge` | 100-150 | Heavy batch processing |
 
 ### Built-in Profiles
 
@@ -135,6 +236,9 @@ description: "Custom high-throughput profile"
 
 tempo:
   variant: stack
+  resources:
+    memory: "16Gi"
+    cpu: "2000m"
 
 k6:
   duration: "10m"
@@ -148,7 +252,7 @@ k6:
     queriesPerSecond: 75
 ```
 
-Then run it:
+Run it:
 
 ```bash
 go run ./cmd/perf-runner --profiles=custom
@@ -156,19 +260,50 @@ go run ./cmd/perf-runner --profiles=custom
 
 ## Test Execution Flow
 
-When you run a profile, the following happens:
+When you run a profile, the following steps execute:
 
-1. **Create Namespace**: `tempo-perf-{profile-name}`
-2. **Check Prerequisites**: Verify Tempo and OpenTelemetry operators are installed
-3. **Deploy MinIO**: Object storage backend for Tempo
-4. **Deploy Tempo**: Using the configured variant (monolithic/stack) and resources
-5. **Deploy OTel Collector**: For trace ingestion
-6. **Run k6 Tests**:
-   - `combined`: Runs ingestion and query as parallel Kubernetes Jobs
-   - `ingestion`: Runs only ingestion test
-   - `query`: Runs only query test
-7. **Save Results**: Export k6 logs and Prometheus metrics
-8. **Cleanup**: Delete all resources and namespace
+### 1. Create Namespace
+Creates an isolated namespace `tempo-perf-{profile-name}` for all resources.
+
+### 2. Check Prerequisites
+Verifies that Tempo Operator and OpenTelemetry Operator are installed by checking for their CRDs.
+
+### 3. Deploy MinIO
+Deploys MinIO as the object storage backend for Tempo trace data:
+- Creates PVC for persistent storage
+- Deploys MinIO StatefulSet
+- Creates Service and Secret with credentials
+
+### 4. Deploy Tempo
+Deploys Tempo using the configured variant:
+- **Monolithic**: Single-pod deployment (TempoMonolithic CR)
+- **Stack**: Distributed deployment with separate components (TempoStack CR)
+
+### 5. Deploy OTel Collector
+Deploys OpenTelemetry Collector configured to:
+- Receive traces via OTLP gRPC (port 4317)
+- Forward traces to Tempo distributor
+
+### 6. Run k6 Tests
+Executes k6 load tests as Kubernetes Jobs:
+
+| Test Type | Jobs Created | Description |
+|-----------|--------------|-------------|
+| `combined` | 2 parallel jobs | Ingestion + Query run simultaneously |
+| `ingestion` | 1 job | Only trace ingestion |
+| `query` | 1 job | Only TraceQL queries |
+
+### 7. Save Results
+Exports test results to the output directory:
+- k6 job logs (stdout with metrics summary)
+- Prometheus metrics (CSV format)
+
+### 8. Cleanup
+Deletes all resources in reverse order:
+- Custom Resources (TempoMonolithic/TempoStack, OpenTelemetryCollector)
+- Wait for finalizers
+- Cluster-scoped resources (ClusterRoleBindings)
+- Namespace and all remaining resources
 
 ## Output Files
 
@@ -176,11 +311,9 @@ All output files are saved to the `--output` directory (default: `results/`):
 
 | File | Description |
 |------|-------------|
-| `{profile}-k6-ingestion.log` | k6 ingestion test output (summary, metrics) |
-| `{profile}-k6-query.log` | k6 query test output (summary, metrics) |
+| `{profile}-k6-ingestion.log` | k6 ingestion test output with metrics summary |
+| `{profile}-k6-query.log` | k6 query test output with metrics summary |
 | `{profile}-metrics.csv` | Prometheus metrics collected during test |
-
-For single test types (`--test-type=ingestion` or `--test-type=query`), only the corresponding log file is created.
 
 Example output structure:
 ```
@@ -193,53 +326,67 @@ results/
 └── medium-metrics.csv
 ```
 
+### k6 Log Contents
+
+The k6 logs contain the full test output including:
+- Test configuration summary
+- Real-time progress (iterations, data transfer)
+- Final metrics summary (requests/sec, latency percentiles, error rates)
+- Custom xk6-tempo metrics (traces sent, bytes ingested, query latencies)
+
 ## Makefile Targets
 
 ```bash
-make help              # Show all available targets
+make help                            # Show all available targets
 
 # Profile-based tests
-make perf-test                           # Run all profiles
-make perf-test PROFILES=small,medium     # Run specific profiles
-make perf-test TEST_TYPE=ingestion       # Run only ingestion
-make perf-test-dry-run                   # Preview without executing
-make validate-profiles                   # Validate YAML files
+make perf-test                       # Run all profiles
+make perf-test PROFILES=small,medium # Run specific profiles
+make perf-test TEST_TYPE=ingestion   # Run only ingestion tests
+make perf-test-dry-run               # Preview without executing
+make validate-profiles               # Validate all YAML files
 
-# Standalone k6 tests (against existing Tempo)
-make k6-ingestion K6_SIZE=medium         # Run ingestion test
-make k6-query K6_SIZE=large              # Run query test
-make k6-combined                         # Run combined test
+# Standalone k6 tests (requires existing Tempo instance)
+make k6-ingestion K6_SIZE=medium     # Run ingestion test
+make k6-query K6_SIZE=large          # Run query test
+make k6-combined                     # Run combined test
 
 # Development
-make test              # Run unit tests
-make check             # Run format-check + vet
-make format            # Format Go code
+make test                            # Run unit tests
+make check                           # Run format-check + vet
+make format                          # Format Go code
+make deps                            # Tidy dependencies
 ```
 
 ## Standalone k6 Tests
 
-Run k6 tests directly against an existing Tempo instance:
+Run k6 tests directly against an existing Tempo instance (without deploying infrastructure):
 
 ```bash
 # Set environment variables
 export TEMPO_ENDPOINT="tempo-distributor.tempo.svc.cluster.local:4317"
 export TEMPO_QUERY_ENDPOINT="http://tempo-query-frontend.tempo.svc.cluster.local:3200"
 
-# Run tests
-make k6-ingestion K6_SIZE=medium
-make k6-query K6_SIZE=large
-make k6-combined K6_SIZE=small
+# Run tests with different sizes
+make k6-ingestion K6_SIZE=small
+make k6-query K6_SIZE=medium
+make k6-combined K6_SIZE=large
 ```
+
+This requires k6 with the xk6-tempo extension installed locally.
 
 ## Framework API
 
-The framework can also be used programmatically:
+The framework can be used programmatically in Go:
 
 ```go
 package main
 
 import (
     "context"
+    "fmt"
+    "time"
+
     "github.com/redhat/perf-tests-tempo/test/framework"
     "github.com/redhat/perf-tests-tempo/test/framework/k6"
 )
@@ -247,22 +394,27 @@ import (
 func main() {
     ctx := context.Background()
 
-    // Create framework
-    fw, _ := framework.New(ctx, "my-perf-test")
+    // Create framework with namespace
+    fw, err := framework.New(ctx, "my-perf-test")
+    if err != nil {
+        panic(err)
+    }
     defer fw.Cleanup()
 
     // Check prerequisites
     prereqs, _ := fw.CheckPrerequisites()
     if !prereqs.AllMet {
-        panic("Prerequisites not met")
+        fmt.Println(prereqs.String())
+        return
     }
 
-    // Deploy stack
+    // Deploy infrastructure
     fw.SetupMinIO()
-    fw.SetupTempo("stack", nil)
+    fw.SetupTempo("stack", nil)  // or "monolithic"
     fw.SetupOTelCollector()
 
-    // Run parallel tests
+    // Run tests
+    testStart := time.Now()
     result, _ := fw.RunK6ParallelTests(&k6.Config{
         MBPerSecond:      1.0,
         QueriesPerSecond: 25,
@@ -273,55 +425,150 @@ func main() {
     })
 
     if result.Success() {
-        println("Tests passed!")
+        fmt.Println("Tests passed!")
+        // Collect metrics
+        fw.CollectMetrics(testStart, "results/metrics.csv")
     }
 }
 ```
 
-## Package Structure
+### Key Framework Methods
+
+| Method | Description |
+|--------|-------------|
+| `New(ctx, namespace)` | Create framework instance |
+| `CheckPrerequisites()` | Verify operators are installed |
+| `SetupMinIO()` | Deploy MinIO storage |
+| `SetupTempo(variant, resources)` | Deploy Tempo (monolithic/stack) |
+| `SetupOTelCollector()` | Deploy OTel Collector |
+| `RunK6Test(type, config)` | Run single k6 test |
+| `RunK6ParallelTests(config)` | Run ingestion + query in parallel |
+| `CollectMetrics(start, path)` | Export Prometheus metrics |
+| `Cleanup()` | Delete all resources |
+
+## Project Structure
 
 ```
-cmd/
-└── perf-runner/       # CLI entry point
-    └── main.go
-
-profiles/              # YAML profile configurations
-├── small.yaml
-├── medium.yaml
-├── large.yaml
-└── xlarge.yaml
-
-framework/
-├── framework.go       # Core Framework, New()
-├── types.go           # Interfaces, TrackedResource, ResourceConfig
-├── facade.go          # API methods (SetupMinIO, SetupTempo, etc.)
-├── prerequisites.go   # CheckPrerequisites() - operator verification
-├── monitoring.go      # EnableUserWorkloadMonitoring() - OpenShift monitoring
-├── namespace.go       # Namespace lifecycle
-├── cleanup.go         # Resource cleanup with finalizer handling
-├── profile/           # YAML profile loading
-├── tempo/             # Tempo deployment (monolithic + stack)
-├── minio/             # MinIO storage backend
-├── otel/              # OpenTelemetry Collector
-├── k6/                # Load testing runner (parallel jobs)
-├── wait/              # Readiness utilities
-└── metrics/           # Metrics collection and export
-
-tests/
-└── k6/                # k6 test scripts
-    ├── ingestion-test.js
-    ├── query-test.js
-    ├── combined-test.js
-    └── lib/           # Shared k6 utilities
-        ├── config.js
-        └── trace-profiles.js
+.
+├── cmd/
+│   └── perf-runner/           # CLI entry point
+│       └── main.go            # Main program, profile execution loop
+│
+├── profiles/                  # YAML profile configurations
+│   ├── small.yaml
+│   ├── medium.yaml
+│   ├── large.yaml
+│   └── xlarge.yaml
+│
+├── framework/                 # Go framework packages
+│   ├── framework.go           # Core Framework struct, New()
+│   ├── types.go               # Interfaces, ResourceConfig
+│   ├── facade.go              # Public API methods
+│   ├── prerequisites.go       # Operator verification
+│   ├── monitoring.go          # OpenShift user workload monitoring
+│   ├── namespace.go           # Namespace lifecycle
+│   ├── cleanup.go             # Resource cleanup with finalizers
+│   │
+│   ├── profile/               # YAML profile loading
+│   │   ├── types.go           # Profile struct definitions
+│   │   └── loader.go          # Load, validate YAML files
+│   │
+│   ├── tempo/                 # Tempo deployment
+│   │   ├── monolithic.go      # TempoMonolithic CR
+│   │   └── stack.go           # TempoStack CR
+│   │
+│   ├── minio/                 # MinIO deployment
+│   │   └── minio.go           # PVC, StatefulSet, Service, Secret
+│   │
+│   ├── otel/                  # OpenTelemetry Collector
+│   │   └── collector.go       # OpenTelemetryCollector CR
+│   │
+│   ├── k6/                    # k6 test runner
+│   │   ├── types.go           # Config, Result, TestType
+│   │   └── runner.go          # Job creation, log collection
+│   │
+│   ├── metrics/               # Metrics collection
+│   │   ├── collector.go       # Prometheus queries
+│   │   └── exporter.go        # CSV export
+│   │
+│   └── wait/                  # Wait utilities
+│       └── wait.go            # Pod ready, deployment ready
+│
+├── tests/
+│   └── k6/                    # k6 JavaScript test scripts
+│       ├── ingestion-test.js  # Trace ingestion test
+│       ├── query-test.js      # TraceQL query test
+│       ├── combined-test.js   # Both scenarios
+│       └── lib/
+│           ├── config.js      # Size configurations, env vars
+│           └── trace-profiles.js  # Trace complexity profiles
+│
+├── Makefile                   # Build and test targets
+├── go.mod                     # Go module definition
+└── README.md                  # This file
 ```
 
 ## Environment Variables
 
+### Framework Configuration
+
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `TEMPO_PERF_CR_DELETION_TIMEOUT` | `120s` | CR deletion timeout |
-| `TEMPO_PERF_POD_READY_TIMEOUT` | `120s` | Pod readiness timeout |
-| `TEMPO_PERF_JOB_TIMEOUT` | `30m` | k6 job timeout |
+| `TEMPO_PERF_CR_DELETION_TIMEOUT` | `120s` | Timeout for CR deletion |
+| `TEMPO_PERF_POD_READY_TIMEOUT` | `120s` | Timeout for pod readiness |
+| `TEMPO_PERF_JOB_TIMEOUT` | `30m` | Timeout for k6 job completion |
 | `TEMPO_PERF_MAX_CONCURRENT_QUERIES` | `5` | Prometheus query concurrency |
+
+### k6 Test Configuration
+
+These can override profile settings when running k6 directly:
+
+| Variable | Description |
+|----------|-------------|
+| `SIZE` | Test size: small, medium, large, xlarge |
+| `MB_PER_SECOND` | Override ingestion rate |
+| `QUERIES_PER_SECOND` | Override query rate |
+| `DURATION` | Override test duration |
+| `VUS_MIN` | Override minimum VUs |
+| `VUS_MAX` | Override maximum VUs |
+| `TRACE_PROFILE` | Override trace profile |
+| `TEMPO_ENDPOINT` | OTLP gRPC endpoint |
+| `TEMPO_QUERY_ENDPOINT` | HTTP query endpoint |
+
+## Troubleshooting
+
+### Common Issues
+
+**Prerequisites not met**
+```
+Error: prerequisites not met: Tempo=false, OTel=false
+```
+Install the required operators:
+- [Tempo Operator](https://github.com/grafana/tempo-operator)
+- [OpenTelemetry Operator](https://github.com/open-telemetry/opentelemetry-operator)
+
+**k6 job timeout**
+```
+Error: k6 test failed: context deadline exceeded
+```
+Increase the job timeout:
+```bash
+export TEMPO_PERF_JOB_TIMEOUT=60m
+```
+
+**Cleanup failures**
+```
+Warning: cleanup failed: ...
+```
+Use `--skip-cleanup` to preserve resources for debugging:
+```bash
+go run ./cmd/perf-runner --profiles=small --skip-cleanup
+kubectl get all -n tempo-perf-small
+```
+
+**No metrics collected**
+Ensure user workload monitoring is enabled (OpenShift) or Prometheus is accessible.
+
+## License
+
+Apache License 2.0
