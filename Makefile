@@ -39,10 +39,6 @@ check: format-check vet ## Run all checks
 test: ## Run all tests
 	$(GO) test -v ./...
 
-.PHONY: test-examples
-test-examples: ## Run example tests
-	$(GO) test -v ./examples/...
-
 .PHONY: test-race
 test-race: ## Run tests with race detector
 	$(GO) test -race ./...
