@@ -153,7 +153,21 @@ func runProfile(ctx context.Context, p *profile.Profile, testType k6.TestType, o
 		return result
 	}
 
-	// Always cleanup unless skipped
+	// Clean up any leftover resources from previous runs
+	fmt.Println("Cleaning up previous resources...")
+	if cleanupErr := fw.Cleanup(); cleanupErr != nil {
+		fmt.Printf("Warning: pre-cleanup failed (may be expected if namespace doesn't exist): %v\n", cleanupErr)
+	}
+
+	// Re-create framework after cleanup (namespace was deleted)
+	fw, err = framework.New(ctx, namespace)
+	if err != nil {
+		result.Error = fmt.Errorf("failed to re-create framework after cleanup: %w", err)
+		result.Duration = time.Since(startTime)
+		return result
+	}
+
+	// Cleanup after test unless skipped
 	if !skipCleanup {
 		defer func() {
 			fmt.Printf("\nCleaning up namespace %s...\n", namespace)
