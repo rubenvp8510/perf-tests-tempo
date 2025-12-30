@@ -167,8 +167,31 @@ When you run a profile, the following happens:
    - `combined`: Runs ingestion and query as parallel Kubernetes Jobs
    - `ingestion`: Runs only ingestion test
    - `query`: Runs only query test
-7. **Collect Metrics**: Export to `{output}/{profile}-metrics.csv`
+7. **Save Results**: Export k6 logs and Prometheus metrics
 8. **Cleanup**: Delete all resources and namespace
+
+## Output Files
+
+All output files are saved to the `--output` directory (default: `results/`):
+
+| File | Description |
+|------|-------------|
+| `{profile}-k6-ingestion.log` | k6 ingestion test output (summary, metrics) |
+| `{profile}-k6-query.log` | k6 query test output (summary, metrics) |
+| `{profile}-metrics.csv` | Prometheus metrics collected during test |
+
+For single test types (`--test-type=ingestion` or `--test-type=query`), only the corresponding log file is created.
+
+Example output structure:
+```
+results/
+├── small-k6-ingestion.log
+├── small-k6-query.log
+├── small-metrics.csv
+├── medium-k6-ingestion.log
+├── medium-k6-query.log
+└── medium-metrics.csv
+```
 
 ## Makefile Targets
 

@@ -214,6 +214,24 @@ func runProfile(ctx context.Context, p *profile.Profile, testType k6.TestType, o
 			return result
 		}
 		testSuccess = parallelResult.Success()
+
+		// Save k6 logs to files
+		if parallelResult.Ingestion != nil && parallelResult.Ingestion.Output != "" {
+			logFile := fmt.Sprintf("%s/%s-k6-ingestion.log", outputDir, p.Name)
+			if err := os.WriteFile(logFile, []byte(parallelResult.Ingestion.Output), 0644); err != nil {
+				fmt.Printf("Warning: failed to save ingestion logs: %v\n", err)
+			} else {
+				fmt.Printf("Saved ingestion logs to %s\n", logFile)
+			}
+		}
+		if parallelResult.Query != nil && parallelResult.Query.Output != "" {
+			logFile := fmt.Sprintf("%s/%s-k6-query.log", outputDir, p.Name)
+			if err := os.WriteFile(logFile, []byte(parallelResult.Query.Output), 0644); err != nil {
+				fmt.Printf("Warning: failed to save query logs: %v\n", err)
+			} else {
+				fmt.Printf("Saved query logs to %s\n", logFile)
+			}
+		}
 	} else {
 		// Run single test type
 		fmt.Printf("Running k6 %s test...\n", testType)
@@ -224,6 +242,16 @@ func runProfile(ctx context.Context, p *profile.Profile, testType k6.TestType, o
 			return result
 		}
 		testSuccess = k6Result.Success
+
+		// Save k6 logs to file
+		if k6Result.Output != "" {
+			logFile := fmt.Sprintf("%s/%s-k6-%s.log", outputDir, p.Name, testType)
+			if err := os.WriteFile(logFile, []byte(k6Result.Output), 0644); err != nil {
+				fmt.Printf("Warning: failed to save k6 logs: %v\n", err)
+			} else {
+				fmt.Printf("Saved k6 logs to %s\n", logFile)
+			}
+		}
 	}
 
 	if !testSuccess {
