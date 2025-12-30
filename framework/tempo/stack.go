@@ -69,7 +69,7 @@ func buildTempoStackCR(namespace string) *tempoapi.TempoStack {
 			Storage: tempoapi.ObjectStorageSpec{
 				Secret: tempoapi.ObjectStorageSecretSpec{
 					Type: tempoapi.ObjectStorageSecretS3,
-					Name: "s3-secret",
+					Name: "minio",
 				},
 			},
 			StorageSize: storageSize,
