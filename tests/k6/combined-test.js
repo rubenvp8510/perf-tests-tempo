@@ -9,21 +9,30 @@
 //   k6 run -e SIZE=xlarge combined-test.js            # Extreme load
 
 import tempo from 'k6/x/tempo';
-import { getConfig, getEndpoints, THRESHOLDS } from './lib/config.js';
+import { Counter } from 'k6/metrics';
+import { getConfig, getEndpoints, getTLSConfig, THRESHOLDS } from './lib/config.js';
 import { getProfile } from './lib/trace-profiles.js';
+
+// Create failure counters - must be initialized before options export
+// so the metrics exist even if there are no failures
+const ingestionFailures = new Counter('tempo_ingestion_failures_total');
+const queryFailures = new Counter('tempo_query_failures_total');
 
 // Get configuration based on SIZE environment variable
 const config = getConfig();
 const endpoints = getEndpoints();
+const tlsConfig = getTLSConfig();
 const traceProfile = getProfile(config.ingestion.traceProfile);
+
+// Build trace configuration for xk6-tempo
+const traceConfig = {
+    useTraceTree: true,
+    traceTree: traceProfile,
+};
 
 // Calculate throughput using xk6-tempo's built-in function
 const ingestionVUs = Math.floor(config.vus.min / 2);
-const throughput = tempo.calculateThroughput(
-    traceProfile,
-    config.ingestion.bytesPerSecond,
-    ingestionVUs
-);
+const throughput = tempo.calculateThroughput(traceConfig, config.ingestion.bytesPerSecond, ingestionVUs);
 const tracesPerSecond = Math.ceil(throughput.totalTracesPerSec);
 
 // k6 options with two concurrent scenarios
@@ -51,23 +60,35 @@ export const options = {
     thresholds: THRESHOLDS.combined,
 };
 
-// Initialize clients
-const ingestionClient = tempo.IngestionClient({
+// Initialize ingestion client (connects to OTel Collector, no TLS needed)
+const ingestionClient = tempo.IngestClient({
     endpoint: endpoints.ingestion,
-    protocol: 'grpc',
-    tenant: endpoints.tenant,
+    protocol: 'otlp-grpc',
     timeout: 30,
-    tls: {
-        insecure: true,
-    },
 });
 
-const queryClient = tempo.QueryClient({
+// Build query client configuration (connects to Tempo gateway with TLS)
+const queryClientConfig = {
     endpoint: endpoints.query,
     tenant: endpoints.tenant,
-    bearerToken: endpoints.token,
     timeout: 30,
-});
+};
+
+// Add TLS configuration for Tempo gateway
+if (tlsConfig.queryTLSEnabled) {
+    queryClientConfig.tls = {
+        caFile: tlsConfig.caFile,
+        insecureSkipVerify: tlsConfig.insecureSkipVerify,
+    };
+    if (tlsConfig.tokenFile) {
+        queryClientConfig.bearerTokenFile = tlsConfig.tokenFile;
+    }
+} else if (endpoints.token) {
+    queryClientConfig.bearerToken = endpoints.token;
+}
+
+// Initialize query client
+const queryClient = tempo.QueryClient(queryClientConfig);
 
 // Predefined queries
 const queries = [
@@ -90,15 +111,17 @@ export function setup() {
   Size:              ${config.name}
   Description:       ${config.description}
 
-  INGESTION:
-    Target Rate:     ${config.ingestion.mbPerSecond} MB/s (${tracesPerSecond} traces/sec)
+  INGESTION (via OTel Collector):
+    Target Rate:     ${config.ingestion.mbPerSecond} MB/s
+    Traces/sec:      ${tracesPerSecond} (${throughput.tracesPerVU.toFixed(2)} per VU)
     Trace Profile:   ${traceProfile.name} (${traceProfile.spans.min}-${traceProfile.spans.max} spans)
     Endpoint:        ${endpoints.ingestion}
 
-  QUERIES:
+  QUERIES (via Tempo Gateway):
     Queries/second:  ${config.query.queriesPerSecond}
     Query Count:     ${queries.length} different queries
     Endpoint:        ${endpoints.query}
+    TLS:             ${tlsConfig.queryTLSEnabled ? 'enabled' : 'disabled'}
 
   GENERAL:
     Duration:        ${config.duration}
@@ -115,12 +138,15 @@ export function setup() {
 // Ingestion function - called by ingestion scenario
 export function ingest(data) {
     // Generate trace using the configured profile
-    const trace = tempo.generateTrace(data.traceConfig);
+    const trace = tempo.generateTrace({
+        useTraceTree: true,
+        traceTree: data.traceConfig,
+    });
 
-    const response = ingestionClient.push(trace);
-
-    if (response.error) {
-        console.error(`Failed to push trace: ${response.error}`);
+    const err = ingestionClient.push(trace);
+    if (err) {
+        ingestionFailures.add(1);
+        console.error(`Failed to push trace: ${err}`);
     }
 }
 
@@ -128,28 +154,26 @@ export function ingest(data) {
 export function query() {
     const queryDef = queries[Math.floor(Math.random() * queries.length)];
 
-    const end = Date.now();
-    const start = end - (60 * 60 * 1000);
-
-    const searchResult = queryClient.search({
-        query: queryDef.query,
-        start: start,
-        end: end,
+    const result = queryClient.search(queryDef.query, {
+        start: '1h',
+        end: 'now',
         limit: queryDef.limit,
     });
 
-    if (searchResult.error) {
-        console.error(`Search failed: ${searchResult.error}`);
+    if (!result) {
+        queryFailures.add(1);
+        console.error('Search failed');
         return;
     }
 
-    if (searchResult.traces && searchResult.traces.length > 0) {
+    if (result.traces && result.traces.length > 0) {
         if (Math.random() < TRACE_FETCH_PROBABILITY) {
-            const traceId = searchResult.traces[0].traceId;
-            const traceResult = queryClient.getTrace(traceId);
+            const traceId = result.traces[0].traceID;
+            const fullTrace = queryClient.getTrace(traceId);
 
-            if (traceResult.error) {
-                console.error(`Trace fetch failed: ${traceResult.error}`);
+            if (!fullTrace) {
+                queryFailures.add(1);
+                console.error(`Trace fetch failed: ${traceId}`);
             }
         }
     }

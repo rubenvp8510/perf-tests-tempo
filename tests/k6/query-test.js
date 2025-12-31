@@ -9,11 +9,17 @@
 //   k6 run -e QUERIES_PER_SECOND=30 query-test.js     # Custom rate
 
 import tempo from 'k6/x/tempo';
-import { getConfig, getEndpoints, THRESHOLDS } from './lib/config.js';
+import { Counter } from 'k6/metrics';
+import { getConfig, getEndpoints, getTLSConfig, THRESHOLDS } from './lib/config.js';
+
+// Create failure counter - must be initialized before options export
+// so the metric exists even if there are no failures
+const queryFailures = new Counter('tempo_query_failures_total');
 
 // Get configuration based on SIZE environment variable
 const config = getConfig();
 const endpoints = getEndpoints();
+const tlsConfig = getTLSConfig();
 
 // k6 options
 export const options = {
@@ -30,13 +36,29 @@ export const options = {
     thresholds: THRESHOLDS.query,
 };
 
-// Initialize query client
-const client = tempo.QueryClient({
+// Build query client configuration (connects to Tempo gateway with TLS)
+const clientConfig = {
     endpoint: endpoints.query,
     tenant: endpoints.tenant,
-    bearerToken: endpoints.token,
     timeout: 30,
-});
+};
+
+// Add TLS configuration for Tempo gateway
+if (tlsConfig.queryTLSEnabled) {
+    clientConfig.tls = {
+        caFile: tlsConfig.caFile,
+        insecureSkipVerify: tlsConfig.insecureSkipVerify,
+    };
+    // Use bearer token from file for authentication
+    if (tlsConfig.tokenFile) {
+        clientConfig.bearerTokenFile = tlsConfig.tokenFile;
+    }
+} else if (endpoints.token) {
+    clientConfig.bearerToken = endpoints.token;
+}
+
+// Initialize query client
+const client = tempo.QueryClient(clientConfig);
 
 // Predefined queries to execute
 // These match the services defined in trace-profiles.js
@@ -76,8 +98,9 @@ export function setup() {
   Queries/second:    ${config.query.queriesPerSecond}
   Duration:          ${config.duration}
   VUs:               ${config.vus.min} - ${config.vus.max}
-  Endpoint:          ${endpoints.query}
+  Endpoint:          ${endpoints.query} (Tempo Gateway)
   Tenant:            ${endpoints.tenant || '(default)'}
+  TLS:               ${tlsConfig.queryTLSEnabled ? 'enabled' : 'disabled'}
   Query Count:       ${queries.length} different queries
   Trace Fetch Prob:  ${TRACE_FETCH_PROBABILITY * 100}%
 ================================================================================
@@ -91,31 +114,28 @@ export default function() {
     // Select a random query
     const queryDef = queries[Math.floor(Math.random() * queries.length)];
 
-    // Calculate time window (last 1 hour)
-    const end = Date.now();
-    const start = end - (60 * 60 * 1000);  // 1 hour ago
-
-    // Execute search
-    const searchResult = client.search({
-        query: queryDef.query,
-        start: start,
-        end: end,
+    // Execute search with relative time window
+    const result = client.search(queryDef.query, {
+        start: '1h',
+        end: 'now',
         limit: queryDef.limit,
     });
 
-    if (searchResult.error) {
-        console.error(`Search failed: ${searchResult.error}`);
+    if (!result) {
+        queryFailures.add(1);
+        console.error('Search failed');
         return;
     }
 
     // Optionally fetch full trace details (simulates real user behavior)
-    if (searchResult.traces && searchResult.traces.length > 0) {
+    if (result.traces && result.traces.length > 0) {
         if (Math.random() < TRACE_FETCH_PROBABILITY) {
-            const traceId = searchResult.traces[0].traceId;
-            const traceResult = client.getTrace(traceId);
+            const traceId = result.traces[0].traceID;
+            const fullTrace = client.getTrace(traceId);
 
-            if (traceResult.error) {
-                console.error(`Trace fetch failed: ${traceResult.error}`);
+            if (!fullTrace) {
+                queryFailures.add(1);
+                console.error(`Trace fetch failed: ${traceId}`);
             }
         }
     }

@@ -34,15 +34,22 @@ type FrameworkOperations interface {
 	GetManagedLabels() map[string]string
 }
 
+// Tempo CR names (must match tempo package)
+const (
+	MonolithicCRName = "simplest"
+	StackCRName      = "tempostack"
+)
+
 // SetupCollector deploys OpenTelemetry Collector with RBAC
-func SetupCollector(fw FrameworkOperations) error {
+// tempoVariant should be "monolithic" or "stack" to determine the gateway endpoint
+func SetupCollector(fw FrameworkOperations, tempoVariant string) error {
 	// Deploy RBAC first
 	if err := setupRBAC(fw); err != nil {
 		return fmt.Errorf("failed to setup OTel Collector RBAC: %w", err)
 	}
 
 	// Deploy Collector CR
-	if err := setupCollectorCR(fw); err != nil {
+	if err := setupCollectorCR(fw, tempoVariant); err != nil {
 		return fmt.Errorf("failed to setup OTel Collector CR: %w", err)
 	}
 
@@ -171,11 +178,22 @@ func setupRBAC(fw FrameworkOperations) error {
 }
 
 // setupCollectorCR sets up the OpenTelemetryCollector CR
-func setupCollectorCR(fw FrameworkOperations) error {
+func setupCollectorCR(fw FrameworkOperations, tempoVariant string) error {
 	namespace := fw.Namespace()
 
+	// Delete existing collector if present to ensure clean configuration
+	err := fw.DynamicClient().Resource(CollectorGVR).Namespace(namespace).Delete(fw.Context(), "otel-collector", metav1.DeleteOptions{})
+	if err != nil && !apierrors.IsNotFound(err) {
+		return fmt.Errorf("failed to delete existing OpenTelemetryCollector: %w", err)
+	}
+	if err == nil {
+		// Wait a bit for the old collector to be deleted
+		fw.Logger().Info("Deleted existing OpenTelemetryCollector, waiting for cleanup...")
+		time.Sleep(5 * time.Second)
+	}
+
 	// Build OpenTelemetryCollector CR programmatically
-	collectorObj := buildCollectorCR(namespace)
+	collectorObj := buildCollectorCR(namespace, tempoVariant)
 
 	// Add managed labels
 	labels := collectorObj.GetLabels()
@@ -187,12 +205,13 @@ func setupCollectorCR(fw FrameworkOperations) error {
 	}
 	collectorObj.SetLabels(labels)
 
-	_, err := fw.DynamicClient().Resource(CollectorGVR).Namespace(namespace).Create(fw.Context(), collectorObj, metav1.CreateOptions{})
-	if err != nil && !apierrors.IsAlreadyExists(err) {
+	// Create the collector CR
+	_, err = fw.DynamicClient().Resource(CollectorGVR).Namespace(namespace).Create(fw.Context(), collectorObj, metav1.CreateOptions{})
+	if err != nil {
 		return fmt.Errorf("failed to create OpenTelemetryCollector: %w", err)
 	}
 
-	// Track the created resource (even if it already exists, for cleanup)
+	// Track the created resource for cleanup
 	fw.TrackCR(CollectorGVR, namespace, "otel-collector")
 
 	return nil
@@ -236,8 +255,18 @@ func waitForCollectorReady(fw FrameworkOperations, timeout time.Duration) error 
 }
 
 // buildCollectorCR builds an OpenTelemetryCollector CR programmatically
-func buildCollectorCR(namespace string) *unstructured.Unstructured {
-	tempoGatewayHost := fmt.Sprintf("tempo-simplest-gateway.%s.svc.cluster.local", namespace)
+func buildCollectorCR(namespace string, tempoVariant string) *unstructured.Unstructured {
+	// Determine Tempo gateway host based on variant
+	var crName string
+	switch tempoVariant {
+	case "stack":
+		crName = StackCRName
+	case "monolithic":
+		crName = MonolithicCRName
+	default:
+		crName = MonolithicCRName
+	}
+	tempoGatewayHost := fmt.Sprintf("tempo-%s-gateway.%s.svc.cluster.local", crName, namespace)
 
 	return &unstructured.Unstructured{
 		Object: map[string]interface{}{
@@ -266,7 +295,7 @@ func buildCollectorCR(namespace string) *unstructured.Unstructured {
 					},
 					"exporters": map[string]interface{}{
 						"otlp": map[string]interface{}{
-							"endpoint": fmt.Sprintf("%s:4317", tempoGatewayHost),
+							"endpoint": fmt.Sprintf("%s:8090", tempoGatewayHost),
 							"tls": map[string]interface{}{
 								"ca_file": "/var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt",
 							},

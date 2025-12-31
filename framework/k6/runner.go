@@ -48,19 +48,28 @@ func RunTest(c Clients, testType TestType, config *Config) (*Result, error) {
 
 	namespace := c.Namespace()
 
-	// Set default endpoints (internal cluster DNS)
-	if config.TempoEndpoint == "" {
-		config.TempoEndpoint = fmt.Sprintf("tempo-distributor.%s.svc.cluster.local:4317", namespace)
+	// Set default endpoints based on Tempo variant (using gateway for multitenancy)
+	if config.TempoEndpoint == "" || config.TempoQueryEndpoint == "" {
+		ingestion, query := getDefaultEndpoints(config.TempoVariant, namespace)
+		if config.TempoEndpoint == "" {
+			config.TempoEndpoint = ingestion
+		}
+		if config.TempoQueryEndpoint == "" {
+			config.TempoQueryEndpoint = query
+		}
 	}
-	if config.TempoQueryEndpoint == "" {
-		config.TempoQueryEndpoint = fmt.Sprintf("http://tempo-query-frontend.%s.svc.cluster.local:3200", namespace)
+	// Default tenant for multitenancy mode
+	if config.TempoTenant == "" {
+		config.TempoTenant = DefaultTenant
 	}
 
 	fmt.Printf("\n🚀 Deploying k6 %s test (size: %s)\n", testType, config.Size)
 	fmt.Printf("   Namespace: %s\n", namespace)
+	fmt.Printf("   Tempo Variant: %s\n", config.TempoVariant)
 	fmt.Printf("   Image: %s\n", config.Image)
 	fmt.Printf("   Ingestion Endpoint: %s\n", config.TempoEndpoint)
-	fmt.Printf("   Query Endpoint: %s\n\n", config.TempoQueryEndpoint)
+	fmt.Printf("   Query Endpoint: %s\n", config.TempoQueryEndpoint)
+	fmt.Printf("   Tenant: %s\n\n", config.TempoTenant)
 
 	// Create ConfigMap with k6 scripts
 	if err := createScriptsConfigMap(c); err != nil {
@@ -149,19 +158,28 @@ func RunParallelTests(c Clients, config *Config) (*ParallelResult, error) {
 
 	namespace := c.Namespace()
 
-	// Set default endpoints
-	if config.TempoEndpoint == "" {
-		config.TempoEndpoint = fmt.Sprintf("tempo-distributor.%s.svc.cluster.local:4317", namespace)
+	// Set default endpoints based on Tempo variant (using gateway for multitenancy)
+	if config.TempoEndpoint == "" || config.TempoQueryEndpoint == "" {
+		ingestion, query := getDefaultEndpoints(config.TempoVariant, namespace)
+		if config.TempoEndpoint == "" {
+			config.TempoEndpoint = ingestion
+		}
+		if config.TempoQueryEndpoint == "" {
+			config.TempoQueryEndpoint = query
+		}
 	}
-	if config.TempoQueryEndpoint == "" {
-		config.TempoQueryEndpoint = fmt.Sprintf("http://tempo-query-frontend.%s.svc.cluster.local:3200", namespace)
+	// Default tenant for multitenancy mode
+	if config.TempoTenant == "" {
+		config.TempoTenant = DefaultTenant
 	}
 
 	fmt.Printf("\n🚀 Deploying parallel k6 tests (ingestion + query)\n")
 	fmt.Printf("   Namespace: %s\n", namespace)
+	fmt.Printf("   Tempo Variant: %s\n", config.TempoVariant)
 	fmt.Printf("   Image: %s\n", config.Image)
 	fmt.Printf("   Ingestion Endpoint: %s\n", config.TempoEndpoint)
-	fmt.Printf("   Query Endpoint: %s\n\n", config.TempoQueryEndpoint)
+	fmt.Printf("   Query Endpoint: %s\n", config.TempoQueryEndpoint)
+	fmt.Printf("   Tenant: %s\n\n", config.TempoTenant)
 
 	// Create ConfigMap with k6 scripts
 	if err := createScriptsConfigMap(c); err != nil {
@@ -324,6 +342,10 @@ func createJob(c Clients, jobName string, testType TestType, config *Config) err
 		{Name: "SIZE", Value: string(config.Size)},
 		{Name: "TEMPO_ENDPOINT", Value: config.TempoEndpoint},
 		{Name: "TEMPO_QUERY_ENDPOINT", Value: config.TempoQueryEndpoint},
+		// TLS configuration for query (gateway) - ingestion goes through OTel Collector (no TLS)
+		{Name: "TEMPO_QUERY_TLS_ENABLED", Value: "true"},
+		{Name: "TEMPO_TLS_CA_FILE", Value: ServiceAccountCAPath},
+		{Name: "TEMPO_TOKEN_FILE", Value: ServiceAccountTokenPath},
 	}
 
 	if config.TempoTenant != "" {
@@ -403,6 +425,10 @@ func createJob(c Clients, jobName string, testType TestType, config *Config) err
 									MountPath: "/k6-scripts",
 									ReadOnly:  true,
 								},
+								{
+									Name:      "scripts",
+									MountPath: "/scripts",
+								},
 							},
 							Resources: corev1.ResourceRequirements{
 								Requests: corev1.ResourceList{
@@ -425,6 +451,12 @@ func createJob(c Clients, jobName string, testType TestType, config *Config) err
 										Name: ScriptsConfigMap,
 									},
 								},
+							},
+						},
+						{
+							Name: "scripts",
+							VolumeSource: corev1.VolumeSource{
+								EmptyDir: &corev1.EmptyDirVolumeSource{},
 							},
 						},
 					},
@@ -519,4 +551,31 @@ func getJobLogs(c Clients, jobName string) (string, error) {
 	}
 
 	return logs.String(), nil
+}
+
+// getDefaultEndpoints returns the default ingestion and query endpoints
+// based on the Tempo deployment variant.
+//
+// Ingestion goes through the OpenTelemetry Collector (no TLS needed in-cluster)
+// Queries go directly to the Tempo gateway (with TLS/auth)
+func getDefaultEndpoints(variant TempoVariant, namespace string) (ingestion, query string) {
+	var crName string
+	switch variant {
+	case TempoStack:
+		crName = StackCRName
+	case TempoMonolithic:
+		crName = MonolithicCRName
+	default:
+		crName = MonolithicCRName
+	}
+
+	// Ingestion through OpenTelemetry Collector (handles auth to Tempo)
+	otelCollectorHost := fmt.Sprintf("otel-collector-collector.%s.svc.cluster.local", namespace)
+	ingestion = fmt.Sprintf("%s:4317", otelCollectorHost)
+
+	// Query through Tempo gateway (with TLS/auth)
+	gatewayHost := fmt.Sprintf("tempo-%s-gateway.%s.svc.cluster.local", crName, namespace)
+	query = fmt.Sprintf("https://%s:8080", gatewayHost)
+
+	return ingestion, query
 }

@@ -30,8 +30,9 @@ func (f *Framework) SetupTempo(variant string, resources *ResourceConfig) error 
 }
 
 // SetupOTelCollector deploys OpenTelemetry Collector with RBAC
-func (f *Framework) SetupOTelCollector() error {
-	return otel.SetupCollector(f)
+// tempoVariant should be "monolithic" or "stack" to configure the correct Tempo gateway endpoint
+func (f *Framework) SetupOTelCollector(tempoVariant string) error {
+	return otel.SetupCollector(f, tempoVariant)
 }
 
 // RunK6Test deploys and runs a k6 test as a Kubernetes Job

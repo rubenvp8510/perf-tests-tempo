@@ -119,6 +119,19 @@ export function getEndpoints() {
     };
 }
 
+// Get TLS configuration from environment
+// Query TLS is for Tempo gateway, ingestion goes through OTel Collector (no TLS)
+export function getTLSConfig() {
+    const queryTLSEnabled = __ENV.TEMPO_QUERY_TLS_ENABLED === 'true';
+    return {
+        // Query endpoint TLS (Tempo gateway)
+        queryTLSEnabled: queryTLSEnabled,
+        caFile: __ENV.TEMPO_TLS_CA_FILE || '',
+        tokenFile: __ENV.TEMPO_TOKEN_FILE || '',
+        insecureSkipVerify: __ENV.TEMPO_TLS_INSECURE === 'true',
+    };
+}
+
 // Thresholds for test validation
 export const THRESHOLDS = {
     ingestion: {
@@ -141,4 +154,4 @@ export const THRESHOLDS = {
     },
 };
 
-export default { SIZES, getConfig, getEndpoints, THRESHOLDS };
+export default { SIZES, getConfig, getEndpoints, getTLSConfig, THRESHOLDS };

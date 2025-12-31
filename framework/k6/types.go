@@ -21,6 +21,24 @@ const (
 	SizeXLarge Size = "xlarge"
 )
 
+// TempoVariant represents the type of Tempo deployment
+type TempoVariant string
+
+const (
+	// TempoMonolithic is the single-pod Tempo deployment
+	TempoMonolithic TempoVariant = "monolithic"
+	// TempoStack is the distributed Tempo deployment
+	TempoStack TempoVariant = "stack"
+)
+
+// CR names used by the framework
+const (
+	// MonolithicCRName is the name of the TempoMonolithic CR created by the framework
+	MonolithicCRName = "simplest"
+	// StackCRName is the name of the TempoStack CR created by the framework
+	StackCRName = "tempostack"
+)
+
 const (
 	// DefaultImage is the default xk6-tempo image
 	DefaultImage = "quay.io/rvargasp/xk6-tempo:latest"
@@ -30,12 +48,23 @@ const (
 
 	// JobTimeout is the maximum time to wait for a k6 job to complete
 	JobTimeout = 30 * time.Minute
+
+	// DefaultTenant is the default tenant ID for multitenancy mode
+	DefaultTenant = "tenant-1"
+
+	// TLS paths for service account credentials (OpenShift)
+	ServiceAccountTokenPath = "/var/run/secrets/kubernetes.io/serviceaccount/token"
+	ServiceAccountCAPath    = "/var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt"
 )
 
 // Config holds configuration for k6 test execution
 type Config struct {
 	// Size is the t-shirt size (small, medium, large, xlarge)
 	Size Size
+
+	// TempoVariant is the Tempo deployment type (monolithic or stack)
+	// Used to auto-discover endpoints if not explicitly set
+	TempoVariant TempoVariant
 
 	// Image is the k6 container image (optional, defaults to xk6-tempo image)
 	Image string
@@ -48,7 +77,7 @@ type Config struct {
 	VUsMax           int
 	TraceProfile     string
 
-	// Endpoints (auto-discovered if empty)
+	// Endpoints (auto-discovered based on TempoVariant if empty)
 	TempoEndpoint      string
 	TempoQueryEndpoint string
 	TempoTenant        string

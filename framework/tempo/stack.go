@@ -66,6 +66,9 @@ func buildTempoStackCR(namespace string) *tempoapi.TempoStack {
 						Enabled: true,
 					},
 				},
+				Gateway: tempoapi.TempoGatewaySpec{
+					Enabled: true,
+				},
 			},
 			Storage: tempoapi.ObjectStorageSpec{
 				Secret: tempoapi.ObjectStorageSecretSpec{
@@ -74,6 +77,15 @@ func buildTempoStackCR(namespace string) *tempoapi.TempoStack {
 				},
 			},
 			StorageSize: storageSize,
+			Tenants: &tempoapi.TenantsSpec{
+				Mode: tempoapi.ModeOpenShift,
+				Authentication: []tempoapi.AuthenticationSpec{
+					{
+						TenantName: "tenant-1",
+						TenantID:   "tenant-1",
+					},
+				},
+			},
 			Observability: tempoapi.ObservabilitySpec{
 				Metrics: tempoapi.MetricsConfigSpec{
 					CreatePrometheusRules: true,

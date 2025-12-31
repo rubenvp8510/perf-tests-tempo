@@ -209,9 +209,9 @@ func runProfile(ctx context.Context, p *profile.Profile, testType k6.TestType, o
 		return result
 	}
 
-	// Setup OTel Collector
+	// Setup OTel Collector (pass Tempo variant for correct gateway endpoint)
 	fmt.Println("Setting up OTel Collector...")
-	if err := fw.SetupOTelCollector(); err != nil {
+	if err := fw.SetupOTelCollector(p.Tempo.Variant); err != nil {
 		result.Error = fmt.Errorf("failed to setup OTel Collector: %w", err)
 		result.Duration = time.Since(startTime)
 		return result
@@ -312,6 +312,7 @@ func profileToResourceConfig(p *profile.Profile) *framework.ResourceConfig {
 
 func profileToK6Config(p *profile.Profile) *k6.Config {
 	return &k6.Config{
+		TempoVariant:     k6.TempoVariant(p.Tempo.Variant),
 		MBPerSecond:      p.K6.Ingestion.MBPerSecond,
 		QueriesPerSecond: p.K6.Query.QueriesPerSecond,
 		Duration:         p.K6.Duration,
