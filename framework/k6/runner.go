@@ -141,6 +141,9 @@ func (p *ParallelResult) Success() bool {
 		p.Ingestion.Success && p.Query.Success
 }
 
+// ServiceCAConfigMap is the name of the ConfigMap for OpenShift service CA
+const ServiceCAConfigMap = "k6-service-ca"
+
 // RunParallelTests runs ingestion and query tests as separate parallel Kubernetes Jobs
 func RunParallelTests(c Clients, config *Config) (*ParallelResult, error) {
 	startTime := time.Now()
@@ -184,6 +187,11 @@ func RunParallelTests(c Clients, config *Config) (*ParallelResult, error) {
 	// Create ConfigMap with k6 scripts
 	if err := createScriptsConfigMap(c); err != nil {
 		return nil, fmt.Errorf("failed to create k6 scripts ConfigMap: %w", err)
+	}
+
+	// Create ConfigMap for OpenShift service CA (for TLS)
+	if err := createServiceCAConfigMap(c); err != nil {
+		return nil, fmt.Errorf("failed to create service CA ConfigMap: %w", err)
 	}
 
 	// Create both jobs
@@ -320,6 +328,46 @@ func createScriptsConfigMap(c Clients) error {
 	return nil
 }
 
+// createServiceCAConfigMap creates a ConfigMap that OpenShift will inject with the service CA
+func createServiceCAConfigMap(c Clients) error {
+	namespace := c.Namespace()
+	client := c.Client()
+	ctx := c.Context()
+
+	configMap := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      ServiceCAConfigMap,
+			Namespace: namespace,
+			Labels: map[string]string{
+				"app":       "k6-perf-test",
+				"component": "service-ca",
+			},
+			Annotations: map[string]string{
+				// This annotation tells OpenShift to inject the service-serving CA bundle
+				"service.beta.openshift.io/inject-cabundle": "true",
+			},
+		},
+		// Data will be populated by OpenShift service-ca operator
+		Data: map[string]string{},
+	}
+
+	// Delete existing ConfigMap if it exists
+	_ = client.CoreV1().ConfigMaps(namespace).Delete(ctx, ServiceCAConfigMap, metav1.DeleteOptions{})
+	time.Sleep(1 * time.Second)
+
+	// Create new ConfigMap
+	_, err := client.CoreV1().ConfigMaps(namespace).Create(ctx, configMap, metav1.CreateOptions{})
+	if err != nil {
+		return fmt.Errorf("failed to create service CA ConfigMap: %w", err)
+	}
+
+	// Wait a bit for the CA bundle to be injected
+	time.Sleep(2 * time.Second)
+
+	fmt.Printf("📦 Created ConfigMap %s for service CA\n", ServiceCAConfigMap)
+	return nil
+}
+
 // createJob creates a Kubernetes Job to run the k6 test
 func createJob(c Clients, jobName string, testType TestType, config *Config) error {
 	namespace := c.Namespace()
@@ -338,13 +386,15 @@ func createJob(c Clients, jobName string, testType TestType, config *Config) err
 	time.Sleep(2 * time.Second)
 
 	// Build environment variables
+	// The service CA is mounted from the ConfigMap at /etc/ssl/certs/service-ca.crt
+	serviceCAMountPath := "/etc/ssl/certs/service-ca.crt"
 	env := []corev1.EnvVar{
 		{Name: "SIZE", Value: string(config.Size)},
 		{Name: "TEMPO_ENDPOINT", Value: config.TempoEndpoint},
 		{Name: "TEMPO_QUERY_ENDPOINT", Value: config.TempoQueryEndpoint},
 		// TLS configuration for query (gateway) - ingestion goes through OTel Collector (no TLS)
 		{Name: "TEMPO_QUERY_TLS_ENABLED", Value: "true"},
-		{Name: "TEMPO_TLS_CA_FILE", Value: ServiceAccountCAPath},
+		{Name: "TEMPO_TLS_CA_FILE", Value: serviceCAMountPath},
 		{Name: "TEMPO_TOKEN_FILE", Value: ServiceAccountTokenPath},
 	}
 
@@ -429,6 +479,11 @@ func createJob(c Clients, jobName string, testType TestType, config *Config) err
 									Name:      "scripts",
 									MountPath: "/scripts",
 								},
+								{
+									Name:      "service-ca",
+									MountPath: "/etc/ssl/certs",
+									ReadOnly:  true,
+								},
 							},
 							Resources: corev1.ResourceRequirements{
 								Requests: corev1.ResourceList{
@@ -457,6 +512,16 @@ func createJob(c Clients, jobName string, testType TestType, config *Config) err
 							Name: "scripts",
 							VolumeSource: corev1.VolumeSource{
 								EmptyDir: &corev1.EmptyDirVolumeSource{},
+							},
+						},
+						{
+							Name: "service-ca",
+							VolumeSource: corev1.VolumeSource{
+								ConfigMap: &corev1.ConfigMapVolumeSource{
+									LocalObjectReference: corev1.LocalObjectReference{
+										Name: ServiceCAConfigMap,
+									},
+								},
 							},
 						},
 					},
@@ -557,7 +622,7 @@ func getJobLogs(c Clients, jobName string) (string, error) {
 // based on the Tempo deployment variant.
 //
 // Ingestion goes through the OpenTelemetry Collector (no TLS needed in-cluster)
-// Queries go directly to the Tempo gateway (with TLS/auth)
+// Queries go directly to the Tempo gateway (with TLS/auth and multitenancy path)
 func getDefaultEndpoints(variant TempoVariant, namespace string) (ingestion, query string) {
 	var crName string
 	switch variant {
