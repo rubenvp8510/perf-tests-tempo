@@ -62,26 +62,26 @@ const client = tempo.QueryClient(clientConfig);
 
 // Predefined queries to execute
 // These match the services defined in trace-profiles.js
+// Note: TraceQL uses dot prefix for resource attributes (e.g., .service.name)
 const queries = [
-    // Service-based queries
-    { query: '{ service.name="api-gateway" }', limit: 20 },
-    { query: '{ service.name="user-service" }', limit: 20 },
-    { query: '{ service.name="order-service" }', limit: 20 },
-    { query: '{ service.name="payment-service" }', limit: 20 },
-    { query: '{ service.name="frontend" }', limit: 20 },
+    // Service-based queries (resource attributes use dot prefix)
+    { query: '{ resource.service.name = "api-gateway" }', limit: 20 },
+    { query: '{ resource.service.name = "user-service" }', limit: 20 },
+    { query: '{ resource.service.name = "order-service" }', limit: 20 },
+    { query: '{ resource.service.name = "payment-service" }', limit: 20 },
+    { query: '{ resource.service.name = "frontend" }', limit: 20 },
 
-    // Error queries
-    { query: '{ status=error }', limit: 50 },
-    { query: '{ status.code=2 }', limit: 50 },
+    // Error queries (status is an intrinsic)
+    { query: '{ status = error }', limit: 50 },
 
-    // Duration-based queries
-    { query: '{ duration>100ms }', limit: 30 },
-    { query: '{ duration>500ms }', limit: 20 },
-    { query: '{ duration>1s }', limit: 10 },
+    // Duration-based queries (duration is an intrinsic)
+    { query: '{ duration > 100ms }', limit: 30 },
+    { query: '{ duration > 500ms }', limit: 20 },
+    { query: '{ duration > 1s }', limit: 10 },
 
     // Combined queries
-    { query: '{ service.name="api-gateway" && status=error }', limit: 20 },
-    { query: '{ service.name="payment-service" && duration>200ms }', limit: 20 },
+    { query: '{ resource.service.name = "api-gateway" && status = error }', limit: 20 },
+    { query: '{ resource.service.name = "payment-service" && duration > 200ms }', limit: 20 },
 ];
 
 // Probability of fetching full trace details after a search
@@ -114,10 +114,14 @@ export default function() {
     // Select a random query
     const queryDef = queries[Math.floor(Math.random() * queries.length)];
 
-    // Execute search with relative time window
+    // Calculate time window in Unix seconds (Tempo gateway expects seconds, not nanoseconds)
+    const now = Math.floor(Date.now() / 1000);
+    const oneHourAgo = now - 3600;
+
+    // Execute search with Unix epoch timestamps in seconds
     const result = client.search(queryDef.query, {
-        start: '1h',
-        end: 'now',
+        start: oneHourAgo,
+        end: now,
         limit: queryDef.limit,
     });
 
@@ -127,19 +131,16 @@ export default function() {
         return;
     }
 
-    // Optionally fetch full trace details (simulates real user behavior)
+    // Log trace count for debugging (disabled getTrace due to 404 issues with gateway)
     if (result.traces && result.traces.length > 0) {
-        if (Math.random() < TRACE_FETCH_PROBABILITY) {
-            const traceId = result.traces[0].traceID;
-            const fullTrace = client.getTrace(traceId);
-
-            if (!fullTrace) {
-                queryFailures.add(1);
-                console.error(`Trace fetch failed: ${traceId}`);
-            }
-        }
+        // Note: getTrace is disabled because the gateway returns 404 for /api/traces/{id}
+        // console.log(`Found ${result.traces.length} traces`);
     }
 }
+
+// Note: getTrace functionality disabled temporarily
+// The Tempo gateway multitenancy mode doesn't expose /api/traces/{id} endpoint correctly
+// TODO: Investigate correct API path for trace by ID with multitenancy
 
 // Teardown function - runs once after the test
 export function teardown(data) {

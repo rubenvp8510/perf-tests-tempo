@@ -133,6 +133,8 @@ export function getTLSConfig() {
 }
 
 // Thresholds for test validation
+// Note: tempo_query_* metrics are only recorded by QueryWorkload, not direct API calls
+// For direct API usage, we rely on k6's built-in iteration metrics and custom counters
 export const THRESHOLDS = {
     ingestion: {
         'tempo_ingestion_bytes_total': ['rate>0'],
@@ -140,16 +142,14 @@ export const THRESHOLDS = {
         'tempo_ingestion_failures_total': ['rate<1'],
     },
     query: {
-        'tempo_query_duration_seconds': ['p(95)<2'],
-        'tempo_query_requests_total': ['rate>0'],
+        // Using custom failure counter instead of tempo_query_* metrics
+        // since direct Search API doesn't record those metrics
         'tempo_query_failures_total': ['rate<1'],
     },
     combined: {
         'tempo_ingestion_bytes_total': ['rate>0'],
         'tempo_ingestion_traces_total': ['rate>0'],
         'tempo_ingestion_failures_total': ['rate<1'],
-        'tempo_query_duration_seconds': ['p(95)<2'],
-        'tempo_query_requests_total': ['rate>0'],
         'tempo_query_failures_total': ['rate<1'],
     },
 };
