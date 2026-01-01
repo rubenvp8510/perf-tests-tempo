@@ -12,6 +12,8 @@ import (
 
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -144,6 +146,84 @@ func (p *ParallelResult) Success() bool {
 // ServiceCAConfigMap is the name of the ConfigMap for OpenShift service CA
 const ServiceCAConfigMap = "k6-service-ca"
 
+// K6ServiceAccount is the name of the ServiceAccount for k6 pods
+const K6ServiceAccount = "k6-query-sa"
+
+// setupK6RBAC creates ServiceAccount and RBAC for k6 query pods to access Tempo
+func setupK6RBAC(c Clients) error {
+	namespace := c.Namespace()
+	client := c.Client()
+	ctx := c.Context()
+
+	// Create ServiceAccount
+	sa := &corev1.ServiceAccount{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      K6ServiceAccount,
+			Namespace: namespace,
+			Labels: map[string]string{
+				"app": "k6-perf-test",
+			},
+		},
+	}
+	_, err := client.CoreV1().ServiceAccounts(namespace).Create(ctx, sa, metav1.CreateOptions{})
+	if err != nil && !apierrors.IsAlreadyExists(err) {
+		return fmt.Errorf("failed to create ServiceAccount: %w", err)
+	}
+
+	// Create ClusterRole for reading traces from tenant-1
+	clusterRoleName := fmt.Sprintf("allow-read-traces-%s", namespace)
+	clusterRole := &rbacv1.ClusterRole{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: clusterRoleName,
+			Labels: map[string]string{
+				"app": "k6-perf-test",
+			},
+		},
+		Rules: []rbacv1.PolicyRule{
+			{
+				APIGroups:     []string{"tempo.grafana.com"},
+				Resources:     []string{DefaultTenant}, // tenant-1
+				ResourceNames: []string{"traces"},
+				Verbs:         []string{"get"},
+			},
+		},
+	}
+	_, err = client.RbacV1().ClusterRoles().Create(ctx, clusterRole, metav1.CreateOptions{})
+	if err != nil && !apierrors.IsAlreadyExists(err) {
+		return fmt.Errorf("failed to create ClusterRole: %w", err)
+	}
+
+	// Create ClusterRoleBinding
+	clusterRoleBindingName := fmt.Sprintf("allow-read-traces-%s", namespace)
+	clusterRoleBinding := &rbacv1.ClusterRoleBinding{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: clusterRoleBindingName,
+			Labels: map[string]string{
+				"app": "k6-perf-test",
+			},
+		},
+		RoleRef: rbacv1.RoleRef{
+			APIGroup: "rbac.authorization.k8s.io",
+			Kind:     "ClusterRole",
+			Name:     clusterRoleName,
+		},
+		Subjects: []rbacv1.Subject{
+			{
+				Kind:      "ServiceAccount",
+				Name:      K6ServiceAccount,
+				Namespace: namespace,
+			},
+		},
+	}
+	_, err = client.RbacV1().ClusterRoleBindings().Create(ctx, clusterRoleBinding, metav1.CreateOptions{})
+	if err != nil && !apierrors.IsAlreadyExists(err) {
+		return fmt.Errorf("failed to create ClusterRoleBinding: %w", err)
+	}
+
+	fmt.Printf("🔐 Created RBAC for k6 query (ServiceAccount: %s)\n", K6ServiceAccount)
+	return nil
+}
+
 // RunParallelTests runs ingestion and query tests as separate parallel Kubernetes Jobs
 func RunParallelTests(c Clients, config *Config) (*ParallelResult, error) {
 	startTime := time.Now()
@@ -192,6 +272,11 @@ func RunParallelTests(c Clients, config *Config) (*ParallelResult, error) {
 	// Create ConfigMap for OpenShift service CA (for TLS)
 	if err := createServiceCAConfigMap(c); err != nil {
 		return nil, fmt.Errorf("failed to create service CA ConfigMap: %w", err)
+	}
+
+	// Setup RBAC for k6 query pods
+	if err := setupK6RBAC(c); err != nil {
+		return nil, fmt.Errorf("failed to setup k6 RBAC: %w", err)
 	}
 
 	// Create both jobs
@@ -451,7 +536,8 @@ func createJob(c Clients, jobName string, testType TestType, config *Config) err
 					},
 				},
 				Spec: corev1.PodSpec{
-					RestartPolicy: corev1.RestartPolicyNever,
+					RestartPolicy:      corev1.RestartPolicyNever,
+					ServiceAccountName: K6ServiceAccount,
 					Containers: []corev1.Container{
 						{
 							Name:  "k6",
@@ -639,8 +725,10 @@ func getDefaultEndpoints(variant TempoVariant, namespace string) (ingestion, que
 	ingestion = fmt.Sprintf("%s:4317", otelCollectorHost)
 
 	// Query through Tempo gateway (with TLS/auth)
+	// For multitenancy, the Observatorium API routes are:
+	// /api/traces/v1/{tenant}/tempo/api/... for Tempo native API
 	gatewayHost := fmt.Sprintf("tempo-%s-gateway.%s.svc.cluster.local", crName, namespace)
-	query = fmt.Sprintf("https://%s:8080", gatewayHost)
+	query = fmt.Sprintf("https://%s:8080/api/traces/v1/%s/tempo", gatewayHost, DefaultTenant)
 
 	return ingestion, query
 }
