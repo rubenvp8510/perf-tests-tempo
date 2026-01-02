@@ -112,14 +112,17 @@ make perf-test-dry-run
 # Run all profiles with default settings (combined ingestion + query tests)
 make perf-test
 
-# Run specific profiles
+# Run LokiStack-style profiles (recommended)
+make perf-test PROFILES=1x.extra-small,1x.small
+
+# Run specific legacy profiles
 make perf-test PROFILES=small,medium
 
 # Run only ingestion tests
-make perf-test TEST_TYPE=ingestion PROFILES=medium
+make perf-test TEST_TYPE=ingestion PROFILES=1x.small
 
 # Run only query tests
-make perf-test TEST_TYPE=query PROFILES=large
+make perf-test TEST_TYPE=query PROFILES=1x.medium
 ```
 
 ## CLI Runner
@@ -217,6 +220,19 @@ The `traceProfile` setting controls trace complexity:
 | `xlarge` | 100-150 | Heavy batch processing |
 
 ### Built-in Profiles
+
+#### LokiStack-Style Profiles (Recommended)
+
+These profiles follow the [LokiStack sizing conventions](https://docs.redhat.com/en/documentation/red_hat_openshift_logging/6.2/html/configuring_logging/configuring-lokistack-storage) for consistent sizing across observability components:
+
+| Profile | MB/s | GB/day | Queries/s | VUs | Tempo Variant | Description |
+|---------|------|--------|-----------|-----|---------------|-------------|
+| 1x.demo | 0.05 | ~4 | 2 | 2-5 | monolithic | Demo environment, no HA |
+| 1x.extra-small | 1.2 | ~100 | 5 | 5-20 | stack | Small clusters, limited workloads |
+| 1x.small | 5.8 | ~500 | 25 | 20-80 | stack | Production, moderate workloads |
+| 1x.medium | 23 | ~2000 | 100 | 50-200 | stack | Production, high workloads |
+
+#### Legacy Profiles
 
 | Profile | MB/s | Queries/s | VUs | Description |
 |---------|------|-----------|-----|-------------|
@@ -455,10 +471,14 @@ func main() {
 │       └── main.go            # Main program, profile execution loop
 │
 ├── profiles/                  # YAML profile configurations
-│   ├── small.yaml
-│   ├── medium.yaml
-│   ├── large.yaml
-│   └── xlarge.yaml
+│   ├── 1x.demo.yaml           # LokiStack-style: demo (no HA)
+│   ├── 1x.extra-small.yaml    # LokiStack-style: ~100GB/day
+│   ├── 1x.small.yaml          # LokiStack-style: ~500GB/day
+│   ├── 1x.medium.yaml         # LokiStack-style: ~2TB/day
+│   ├── small.yaml             # Legacy: light load
+│   ├── medium.yaml            # Legacy: moderate load
+│   ├── large.yaml             # Legacy: stress testing
+│   └── xlarge.yaml            # Legacy: capacity testing
 │
 ├── framework/                 # Go framework packages
 │   ├── framework.go           # Core Framework struct, New()
