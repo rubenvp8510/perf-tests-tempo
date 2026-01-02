@@ -133,10 +133,10 @@ type k6SummaryJSON struct {
 }
 
 type k6MetricData struct {
-	Type     string             `json:"type"`
-	Contains string             `json:"contains"`
-	Values   k6MetricValues     `json:"values"`
-	Thresholds map[string]bool  `json:"thresholds,omitempty"`
+	Type       string          `json:"type"`
+	Contains   string          `json:"contains"`
+	Values     k6MetricValues  `json:"values"`
+	Thresholds map[string]bool `json:"thresholds,omitempty"`
 }
 
 type k6MetricValues struct {

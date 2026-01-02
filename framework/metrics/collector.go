@@ -152,3 +152,91 @@ func countDataPoints(results []MetricResult) int {
 	}
 	return total
 }
+
+// CollectSummaryMetrics collects summary metrics (P99/max/avg over full test duration) using instant queries
+func (c *Client) CollectSummaryMetrics(ctx context.Context, evalTime time.Time) ([]MetricResult, error) {
+	queries := GetSummaryQueries(c.config.Namespace)
+
+	fmt.Printf("📊 Collecting %d summary metrics...\n", len(queries))
+
+	var results []MetricResult
+
+	for i, query := range queries {
+		if ctx.Err() != nil {
+			return results, ctx.Err()
+		}
+
+		metricResults, err := c.collectInstantMetric(ctx, query, evalTime)
+		if err != nil {
+			fmt.Printf("[%d/%d] ⚠️  %s: %v\n", i+1, len(queries), query.Name, err)
+			results = append(results, MetricResult{
+				QueryID:     query.ID,
+				MetricName:  query.Name,
+				Description: query.Description,
+				Category:    query.Category,
+				Labels:      map[string]string{},
+				DataPoints:  []DataPoint{},
+				Error:       err,
+			})
+			continue
+		}
+
+		results = append(results, metricResults...)
+		fmt.Printf("[%d/%d] ✅ %s: %d series\n", i+1, len(queries), query.Name, len(metricResults))
+	}
+
+	fmt.Println()
+	return results, nil
+}
+
+// collectInstantMetric collects a single metric using instant query
+func (c *Client) collectInstantMetric(ctx context.Context, query MetricQuery, evalTime time.Time) ([]MetricResult, error) {
+	resp, err := c.Query(ctx, query.Query, evalTime)
+	if err != nil {
+		return nil, fmt.Errorf("query failed: %w", err)
+	}
+
+	if len(resp.Data.Result) == 0 {
+		return nil, fmt.Errorf("no data returned (metric may not exist)")
+	}
+
+	results := make([]MetricResult, 0, len(resp.Data.Result))
+
+	for _, result := range resp.Data.Result {
+		// Instant queries return a single value in result.Value
+		if len(result.Value) < 2 {
+			continue
+		}
+
+		timestamp, ok := result.Value[0].(float64)
+		if !ok {
+			continue
+		}
+
+		valueStr, ok := result.Value[1].(string)
+		if !ok {
+			continue
+		}
+
+		floatValue, err := strconv.ParseFloat(valueStr, 64)
+		if err != nil {
+			continue
+		}
+
+		results = append(results, MetricResult{
+			QueryID:     query.ID,
+			MetricName:  query.Name,
+			Description: query.Description,
+			Category:    query.Category,
+			Labels:      result.Metric,
+			DataPoints: []DataPoint{
+				{
+					Timestamp: time.Unix(int64(timestamp), 0),
+					Value:     floatValue,
+				},
+			},
+		})
+	}
+
+	return results, nil
+}

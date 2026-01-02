@@ -25,10 +25,22 @@ func (f *Framework) SetupMinIO() error {
 
 // SetupTempo deploys Tempo (monolithic or stack) with optional resource configuration
 // variant: "monolithic" or "stack"
-// resources: optional resource configuration (only applies to monolithic)
+// resources: optional resource configuration
 func (f *Framework) SetupTempo(variant string, resources *ResourceConfig) error {
-	// ResourceConfig types are structurally identical, cast directly
-	return tempo.Setup(f, variant, (*tempo.ResourceConfig)(resources))
+	// Convert framework.ResourceConfig to tempo.ResourceConfig
+	var tempoConfig *tempo.ResourceConfig
+	if resources != nil {
+		tempoConfig = &tempo.ResourceConfig{
+			Profile:   resources.Profile,
+			Resources: resources.Resources,
+		}
+		if resources.Overrides != nil {
+			tempoConfig.Overrides = &tempo.TempoOverrides{
+				MaxTracesPerUser: resources.Overrides.MaxTracesPerUser,
+			}
+		}
+	}
+	return tempo.Setup(f, variant, tempoConfig)
 }
 
 // SetupOTelCollector deploys OpenTelemetry Collector with RBAC

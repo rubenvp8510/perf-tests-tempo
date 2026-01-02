@@ -34,6 +34,8 @@ type DashboardData struct {
 	Categories []CategorySection
 	// For comparison mode
 	ComparisonSummary *ComparisonSummary
+	// Resource statistics (avg, max, P95, P99)
+	ResourceSummary *ResourceSummary
 }
 
 // TestSummary provides high-level test information
@@ -132,4 +134,21 @@ type CSVRecord struct {
 	Timestamp   time.Time
 	Value       float64
 	Labels      map[string]string
+}
+
+// ResourceSummary contains aggregated statistics for resource metrics
+type ResourceSummary struct {
+	Memory []ComponentStats
+	CPU    []ComponentStats
+}
+
+// ComponentStats contains statistics for a single component
+type ComponentStats struct {
+	Component string
+	Avg       float64
+	Max       float64
+	Min       float64
+	P95       float64
+	P99       float64
+	Unit      string
 }

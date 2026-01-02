@@ -78,9 +78,17 @@ func CollectMetrics(np NamespaceProvider, testStart time.Time, outputPath string
 	}
 
 	// Collect all metrics from test start to now
-	results, err := client.CollectAllMetrics(ctx, testStart, time.Now())
+	endTime := time.Now()
+	results, err := client.CollectAllMetrics(ctx, testStart, endTime)
 	if err != nil {
 		return fmt.Errorf("failed to collect metrics: %w", err)
+	}
+
+	// Collect summary metrics (P99/max/avg over full test duration)
+	summaryResults, err := client.CollectSummaryMetrics(ctx, endTime)
+	if err != nil {
+		fmt.Printf("⚠️  Warning: failed to collect summary metrics: %v\n", err)
+		// Continue without summary metrics
 	}
 
 	// Export to CSV
@@ -89,7 +97,73 @@ func CollectMetrics(np NamespaceProvider, testStart time.Time, outputPath string
 		return fmt.Errorf("failed to export metrics: %w", err)
 	}
 
+	// Export summary metrics to JSON
+	if len(summaryResults) > 0 {
+		summaryPath := outputPath[:len(outputPath)-len(filepath.Ext(outputPath))] + "-summary.json"
+		if err := exportSummaryMetrics(summaryResults, summaryPath); err != nil {
+			fmt.Printf("⚠️  Warning: failed to export summary metrics: %v\n", err)
+		} else {
+			fmt.Printf("📊 Summary metrics exported to %s\n", summaryPath)
+		}
+	}
+
 	fmt.Printf("✅ Metrics collection complete: %d data series exported\n\n", len(results))
+	return nil
+}
+
+// SummaryMetricsExport represents the JSON export of summary metrics
+type SummaryMetricsExport struct {
+	ExportedAt string               `json:"exported_at"`
+	Duration   string               `json:"duration"`
+	Metrics    []SummaryMetricValue `json:"metrics"`
+}
+
+// SummaryMetricValue represents a single summary metric value
+type SummaryMetricValue struct {
+	Name        string            `json:"name"`
+	Description string            `json:"description"`
+	Value       float64           `json:"value"`
+	Labels      map[string]string `json:"labels,omitempty"`
+}
+
+// exportSummaryMetrics exports summary metrics to a JSON file
+func exportSummaryMetrics(results []MetricResult, outputPath string) error {
+	duration := os.Getenv("DURATION")
+	if duration == "" {
+		duration = "5m"
+	}
+
+	export := SummaryMetricsExport{
+		ExportedAt: time.Now().UTC().Format(time.RFC3339),
+		Duration:   duration,
+		Metrics:    make([]SummaryMetricValue, 0, len(results)),
+	}
+
+	for _, result := range results {
+		if result.Error != nil || len(result.DataPoints) == 0 {
+			continue
+		}
+
+		export.Metrics = append(export.Metrics, SummaryMetricValue{
+			Name:        result.MetricName,
+			Description: result.Description,
+			Value:       result.DataPoints[0].Value,
+			Labels:      result.Labels,
+		})
+	}
+
+	file, err := os.Create(outputPath)
+	if err != nil {
+		return fmt.Errorf("failed to create output file: %w", err)
+	}
+	defer file.Close()
+
+	encoder := json.NewEncoder(file)
+	encoder.SetIndent("", "  ")
+	if err := encoder.Encode(export); err != nil {
+		return fmt.Errorf("failed to encode summary metrics: %w", err)
+	}
+
 	return nil
 }
 
@@ -110,16 +184,16 @@ type K6MetricsExport struct {
 	TestType   string `json:"test_type,omitempty"`
 
 	// Query metrics
-	QueryRequestsTotal   float64            `json:"query_requests_total,omitempty"`
-	QueryFailuresTotal   float64            `json:"query_failures_total,omitempty"`
-	QuerySpansReturned   *k6.MetricStats    `json:"query_spans_returned,omitempty"`
-	QueryDurationSeconds *k6.MetricStats    `json:"query_duration_seconds,omitempty"`
+	QueryRequestsTotal   float64         `json:"query_requests_total,omitempty"`
+	QueryFailuresTotal   float64         `json:"query_failures_total,omitempty"`
+	QuerySpansReturned   *k6.MetricStats `json:"query_spans_returned,omitempty"`
+	QueryDurationSeconds *k6.MetricStats `json:"query_duration_seconds,omitempty"`
 
 	// Ingestion metrics
-	IngestionBytesTotal  float64            `json:"ingestion_bytes_total,omitempty"`
-	IngestionTracesTotal float64            `json:"ingestion_traces_total,omitempty"`
-	IngestionRateBPS     float64            `json:"ingestion_rate_bps,omitempty"`
-	IngestionDuration    *k6.MetricStats    `json:"ingestion_duration,omitempty"`
+	IngestionBytesTotal  float64         `json:"ingestion_bytes_total,omitempty"`
+	IngestionTracesTotal float64         `json:"ingestion_traces_total,omitempty"`
+	IngestionRateBPS     float64         `json:"ingestion_rate_bps,omitempty"`
+	IngestionDuration    *k6.MetricStats `json:"ingestion_duration,omitempty"`
 }
 
 // ExportK6Metrics exports k6 metrics to a JSON file

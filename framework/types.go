@@ -35,6 +35,17 @@ type ResourceConfig struct {
 
 	// Custom resources (used when Profile is empty)
 	Resources *corev1.ResourceRequirements
+
+	// Overrides contains Tempo limits configuration
+	Overrides *TempoOverrides
+}
+
+// TempoOverrides defines Tempo limits and overrides
+type TempoOverrides struct {
+	// MaxTracesPerUser limits the number of active traces per user.
+	// Set to 0 for unlimited (prevents "max live traces reached" errors).
+	// If nil/not set, uses Tempo's default.
+	MaxTracesPerUser *int
 }
 
 // Clients provides access to Kubernetes clients

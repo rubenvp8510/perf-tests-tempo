@@ -3,6 +3,9 @@ description: "Medium - ~2TB/day ingestion, HA enabled, production ready for high
 
 tempo:
   variant: stack
+  overrides:
+    # Set to 0 for unlimited traces (prevents "max live traces reached" errors during load tests)
+    maxTracesPerUser: 0
 
 k6:
   vus:

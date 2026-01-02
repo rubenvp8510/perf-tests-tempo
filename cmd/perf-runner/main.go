@@ -375,11 +375,12 @@ func runProfile(ctx context.Context, p *profile.Profile, testType k6.TestType, o
 }
 
 func profileToResourceConfig(p *profile.Profile) *framework.ResourceConfig {
-	if !p.Tempo.HasResources() {
-		return nil // Use operator defaults
-	}
-	return &framework.ResourceConfig{
-		Resources: &corev1.ResourceRequirements{
+	config := &framework.ResourceConfig{}
+	hasConfig := false
+
+	// Add resources if specified
+	if p.Tempo.HasResources() {
+		config.Resources = &corev1.ResourceRequirements{
 			Limits: corev1.ResourceList{
 				corev1.ResourceMemory: resource.MustParse(p.Tempo.Resources.Memory),
 				corev1.ResourceCPU:    resource.MustParse(p.Tempo.Resources.CPU),
@@ -388,8 +389,41 @@ func profileToResourceConfig(p *profile.Profile) *framework.ResourceConfig {
 				corev1.ResourceMemory: resource.MustParse(p.Tempo.Resources.Memory),
 				corev1.ResourceCPU:    resource.MustParse(p.Tempo.Resources.CPU),
 			},
-		},
+		}
+		hasConfig = true
 	}
+
+	// Get max traces per user from env var (takes precedence) or profile
+	maxTracesPerUser := getMaxTracesPerUser(p)
+	if maxTracesPerUser != nil {
+		config.Overrides = &framework.TempoOverrides{
+			MaxTracesPerUser: maxTracesPerUser,
+		}
+		hasConfig = true
+	}
+
+	if !hasConfig {
+		return nil // Use operator defaults
+	}
+	return config
+}
+
+// getMaxTracesPerUser returns the max traces per user setting from env var or profile
+func getMaxTracesPerUser(p *profile.Profile) *int {
+	// Environment variable takes precedence
+	if envVal := os.Getenv("MAX_TRACES_PER_USER"); envVal != "" {
+		var val int
+		if _, err := fmt.Sscanf(envVal, "%d", &val); err == nil {
+			return &val
+		}
+	}
+
+	// Fall back to profile setting
+	if p.Tempo.Overrides != nil && p.Tempo.Overrides.MaxTracesPerUser != nil {
+		return p.Tempo.Overrides.MaxTracesPerUser
+	}
+
+	return nil
 }
 
 func profileToK6Config(p *profile.Profile) *k6.Config {
@@ -426,6 +460,19 @@ func printProfileSummary(p *profile.Profile, testType k6.TestType) {
 	} else {
 		fmt.Printf("    Resources: (operator defaults)\n")
 	}
+
+	// Show max traces per user setting
+	maxTraces := getMaxTracesPerUser(p)
+	if maxTraces != nil {
+		if *maxTraces == 0 {
+			fmt.Printf("    MaxTracesPerUser: 0 (unlimited)\n")
+		} else {
+			fmt.Printf("    MaxTracesPerUser: %d\n", *maxTraces)
+		}
+	} else {
+		fmt.Printf("    MaxTracesPerUser: (Tempo default)\n")
+	}
+
 	fmt.Printf("  K6 (%s test):\n", testType)
 	fmt.Printf("    Duration: %s\n", duration)
 	fmt.Printf("    VUs: %d-%d\n", p.K6.VUs.Min, p.K6.VUs.Max)

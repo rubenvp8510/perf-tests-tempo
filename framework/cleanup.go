@@ -15,7 +15,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-
 // Cleanup removes all resources created by the framework
 func (f *Framework) Cleanup() error {
 	f.logger.Info("starting cleanup", "namespace", f.namespace)

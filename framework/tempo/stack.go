@@ -1,6 +1,7 @@
 package tempo
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -11,12 +12,13 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	tempoapi "github.com/grafana/tempo-operator/api/tempo/v1alpha1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 )
 
 // SetupStack deploys Tempo Stack
-func SetupStack(fw FrameworkOperations) error {
+func SetupStack(fw FrameworkOperations, resources *ResourceConfig) error {
 	// Build TempoStack CR using typed API
-	stackCR := buildTempoStackCR(fw.Namespace())
+	stackCR := buildTempoStackCR(fw.Namespace(), resources)
 
 	// Convert to unstructured for dynamic client
 	unstructuredObj, err := toUnstructured(stackCR)
@@ -47,10 +49,10 @@ func SetupStack(fw FrameworkOperations) error {
 }
 
 // buildTempoStackCR builds a TempoStack CR using typed API
-func buildTempoStackCR(namespace string) *tempoapi.TempoStack {
+func buildTempoStackCR(namespace string, resources *ResourceConfig) *tempoapi.TempoStack {
 	storageSize := resource.MustParse("10Gi")
 
-	return &tempoapi.TempoStack{
+	stackCR := &tempoapi.TempoStack{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "tempo.grafana.com/v1alpha1",
 			Kind:       "TempoStack",
@@ -94,4 +96,25 @@ func buildTempoStackCR(namespace string) *tempoapi.TempoStack {
 			},
 		},
 	}
+
+	// Add extra config with overrides if configured
+	if resources != nil && resources.Overrides != nil && resources.Overrides.MaxTracesPerUser != nil {
+		extraConfig := map[string]interface{}{
+			"overrides": map[string]interface{}{
+				"defaults": map[string]interface{}{
+					"ingestion": map[string]interface{}{
+						"max_traces_per_user": *resources.Overrides.MaxTracesPerUser,
+					},
+				},
+			},
+		}
+		extraConfigJSON, _ := json.Marshal(extraConfig)
+		stackCR.Spec.ExtraConfig = &tempoapi.ExtraConfigSpec{
+			Tempo: apiextensionsv1.JSON{
+				Raw: extraConfigJSON,
+			},
+		}
+	}
+
+	return stackCR
 }

@@ -104,18 +104,24 @@ func getProfileResources(profile string) *corev1.ResourceRequirements {
 // buildTempoMonolithicCR builds a TempoMonolithic CR using typed API
 func buildTempoMonolithicCR(namespace string, resources *ResourceConfig) *tempoapi.TempoMonolithic {
 	// Build extra config as JSON
-	extraConfigJSON, _ := json.Marshal(map[string]interface{}{
+	extraConfig := map[string]interface{}{
 		"ingester": map[string]interface{}{
 			"max_block_duration": "10m",
 		},
-		"overrides": map[string]interface{}{
+	}
+
+	// Add overrides if configured
+	if resources != nil && resources.Overrides != nil && resources.Overrides.MaxTracesPerUser != nil {
+		extraConfig["overrides"] = map[string]interface{}{
 			"defaults": map[string]interface{}{
 				"ingestion": map[string]interface{}{
-					"max_traces_per_user": 0,
+					"max_traces_per_user": *resources.Overrides.MaxTracesPerUser,
 				},
 			},
-		},
-	})
+		}
+	}
+
+	extraConfigJSON, _ := json.Marshal(extraConfig)
 
 	tempoCR := &tempoapi.TempoMonolithic{
 		TypeMeta: metav1.TypeMeta{

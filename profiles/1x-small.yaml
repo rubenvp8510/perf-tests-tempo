@@ -3,6 +3,10 @@ description: "Small - ~500GB/day ingestion, HA enabled, production ready for mod
 
 tempo:
   variant: stack
+  overrides:
+    # Set to 0 for unlimited traces (prevents "max live traces reached" errors during load tests)
+    # Remove or set to a specific value to use limits
+    maxTracesPerUser: 0
 
 k6:
   vus:

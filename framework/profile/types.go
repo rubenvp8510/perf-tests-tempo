@@ -23,6 +23,17 @@ type TempoConfig struct {
 	// Resources defines CPU and memory for Tempo pods (optional)
 	// If not specified, Tempo will use operator defaults
 	Resources *ResourceSpec `yaml:"resources,omitempty"`
+
+	// Overrides defines Tempo overrides configuration (optional)
+	Overrides *TempoOverrides `yaml:"overrides,omitempty"`
+}
+
+// TempoOverrides defines Tempo limits and overrides
+type TempoOverrides struct {
+	// MaxTracesPerUser limits the number of active traces per user.
+	// Set to 0 for unlimited (prevents "max live traces reached" errors).
+	// If nil/not set, uses Tempo's default (which may cause rejections under load).
+	MaxTracesPerUser *int `yaml:"maxTracesPerUser,omitempty"`
 }
 
 // HasResources returns true if custom resources are configured

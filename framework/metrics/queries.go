@@ -2,6 +2,7 @@ package metrics
 
 import (
 	"fmt"
+	"os"
 )
 
 // MetricQuery represents a single PromQL query with metadata
@@ -128,44 +129,44 @@ func GetAllQueries(namespace string) []MetricQuery {
 		},
 		{
 			ID:          "14",
-			Name:        "storage_request_duration_read_p99",
-			Description: "P99 latency of storage read operations",
-			Query:       fmt.Sprintf(`histogram_quantile(0.99, sum(rate(tempodb_backend_request_duration_seconds_bucket{namespace="%s",operation="GET"}[1m])) by (le))`, namespace),
+			Name:        "backend_read_latency_p99",
+			Description: "P99 latency of backend read operations (all operations)",
+			Query:       fmt.Sprintf(`histogram_quantile(0.99, sum(rate(tempodb_backend_request_duration_seconds_bucket{namespace="%s"}[1m])) by (le))`, namespace),
 			Category:    "storage",
 			Type:        "range",
 		},
 		{
 			ID:          "15",
-			Name:        "storage_request_duration_write_p99",
-			Description: "P99 latency of retention operations",
-			Query:       fmt.Sprintf(`histogram_quantile(0.99, sum(rate(tempodb_retention_duration_seconds_bucket{namespace="%s"}[1m])) by (le))`, namespace),
+			Name:        "blocklist_poll_duration_p99",
+			Description: "P99 blocklist poll duration (storage access patterns)",
+			Query:       fmt.Sprintf(`histogram_quantile(0.99, sum(rate(tempodb_blocklist_poll_duration_seconds_bucket{namespace="%s"}[1m])) by (le))`, namespace),
 			Category:    "storage",
 			Type:        "range",
 		},
 
-		// Cache Metrics (using blocklist poll as proxy when cache not configured)
+		// Storage Block Metrics
 		{
 			ID:          "16",
-			Name:        "cache_hit_ratio",
-			Description: "Blocklist poll duration p99 (proxy for storage access patterns)",
-			Query:       fmt.Sprintf(`histogram_quantile(0.99, sum(rate(tempodb_blocklist_poll_duration_seconds_bucket{namespace="%s"}[1m])) by (le))`, namespace),
-			Category:    "cache",
+			Name:        "blocklist_length",
+			Description: "Number of blocks in the blocklist per tenant",
+			Query:       fmt.Sprintf(`sum(tempodb_blocklist_length{namespace="%s"}) by (tenant)`, namespace),
+			Category:    "storage",
 			Type:        "range",
 		},
 		{
 			ID:          "17",
-			Name:        "cache_hits_by_type",
-			Description: "Backend hedged roundtrips rate (storage access optimization)",
-			Query:       fmt.Sprintf(`sum(rate(tempodb_backend_hedged_roundtrips_total{namespace="%s"}[1m])) by (pod)`, namespace),
-			Category:    "cache",
+			Name:        "compaction_bytes_written",
+			Description: "Rate of bytes written during compaction",
+			Query:       fmt.Sprintf(`sum(rate(tempodb_compaction_bytes_written_total{namespace="%s"}[1m]))`, namespace),
+			Category:    "storage",
 			Type:        "range",
 		},
 		{
 			ID:          "18",
-			Name:        "cache_misses_by_type",
-			Description: "Blocklist poll rate by pod",
-			Query:       fmt.Sprintf(`sum(rate(tempodb_blocklist_poll_duration_seconds_count{namespace="%s"}[1m])) by (pod)`, namespace),
-			Category:    "cache",
+			Name:        "bloom_filter_reads",
+			Description: "Rate of bloom filter reads (query optimization)",
+			Query:       fmt.Sprintf(`sum(rate(tempodb_bloom_filter_reads_total{namespace="%s"}[1m]))`, namespace),
+			Category:    "storage",
 			Type:        "range",
 		},
 
@@ -259,11 +260,93 @@ func GetAllQueries(namespace string) []MetricQuery {
 			Type:     "range",
 		},
 
+		// Max Resource Metrics (simpler than P99, always works)
+		{
+			ID:          "25",
+			Name:        "memory_max_by_component",
+			Description: "Max memory usage by Tempo component over 5-minute windows",
+			Query: fmt.Sprintf(`max by (component) (
+  max_over_time(
+    sum by (component) (
+      label_replace(
+        label_replace(
+          label_replace(
+            label_replace(
+              label_replace(
+                label_replace(
+                  container_memory_working_set_bytes{namespace="%s", container=~"tempo.*", container!=""},
+                  "component", "distributor", "pod", ".*-distributor-.*"
+                ),
+                "component", "ingester", "pod", ".*-ingester-.*"
+              ),
+              "component", "querier", "pod", ".*-querier-.*"
+            ),
+            "component", "compactor", "pod", ".*-compactor-.*"
+          ),
+          "component", "gateway", "pod", ".*-gateway-.*"
+        ),
+        "component", "query-frontend", "pod", ".*-query-frontend-.*"
+      )
+    )[5m:]
+  )
+)`, namespace),
+			Category: "resources",
+			Type:     "range",
+		},
+		{
+			ID:          "26",
+			Name:        "cpu_max_by_component",
+			Description: "Max CPU usage by Tempo component over 5-minute windows",
+			Query: fmt.Sprintf(`max by (component) (
+  max_over_time(
+    sum by (component) (
+      label_replace(
+        label_replace(
+          label_replace(
+            label_replace(
+              label_replace(
+                label_replace(
+                  rate(container_cpu_usage_seconds_total{namespace="%s", container=~"tempo.*", container!=""}[1m]),
+                  "component", "distributor", "pod", ".*-distributor-.*"
+                ),
+                "component", "ingester", "pod", ".*-ingester-.*"
+              ),
+              "component", "querier", "pod", ".*-querier-.*"
+            ),
+            "component", "compactor", "pod", ".*-compactor-.*"
+          ),
+          "component", "gateway", "pod", ".*-gateway-.*"
+        ),
+        "component", "query-frontend", "pod", ".*-query-frontend-.*"
+      )
+    )[5m:]
+  )
+)`, namespace),
+			Category: "resources",
+			Type:     "range",
+		},
+		{
+			ID:          "27",
+			Name:        "memory_max_total",
+			Description: "Max total memory usage over 5-minute windows",
+			Query:       fmt.Sprintf(`max_over_time(sum(container_memory_working_set_bytes{namespace="%s", container=~"tempo.*"})[5m:])`, namespace),
+			Category:    "resources",
+			Type:        "range",
+		},
+		{
+			ID:          "28",
+			Name:        "cpu_max_total",
+			Description: "Max total CPU usage over 5-minute windows",
+			Query:       fmt.Sprintf(`max_over_time(sum(rate(container_cpu_usage_seconds_total{namespace="%s", container=~"tempo.*", container!=""}[1m]))[5m:])`, namespace),
+			Category:    "resources",
+			Type:        "range",
+		},
+
 		// Query Performance Metrics (Tempo-internal)
 		// Note: k6 metrics (query_failures_rate, total_queries_rate, spans_returned_sum, query_latency_p90/p99)
 		// are exported to separate JSON files since OpenShift doesn't support Prometheus remote write receiver
 		{
-			ID:          "25",
+			ID:          "29",
 			Name:        "query_frontend_queue_duration_p99",
 			Description: "Query frontend queue wait time p99",
 			Query:       fmt.Sprintf(`histogram_quantile(0.99, sum(rate(tempo_query_frontend_queue_duration_seconds_bucket{namespace="%s"}[1m])) by (le))`, namespace),
@@ -271,7 +354,7 @@ func GetAllQueries(namespace string) []MetricQuery {
 			Type:        "range",
 		},
 		{
-			ID:          "26",
+			ID:          "30",
 			Name:        "query_frontend_retries_rate",
 			Description: "Query frontend retries rate (indicates query issues)",
 			Query:       fmt.Sprintf(`sum(rate(tempo_query_frontend_retries_count{namespace="%s"}[1m]))`, namespace),
@@ -281,7 +364,7 @@ func GetAllQueries(namespace string) []MetricQuery {
 
 		// Querier Specific Metrics
 		{
-			ID:          "27",
+			ID:          "31",
 			Name:        "querier_queue_length",
 			Description: "Number of queries waiting in query frontend queue",
 			Query:       fmt.Sprintf(`sum(tempo_query_frontend_queue_length{namespace="%s"}) by (pod)`, namespace),
@@ -289,7 +372,7 @@ func GetAllQueries(namespace string) []MetricQuery {
 			Type:        "range",
 		},
 		{
-			ID:          "28",
+			ID:          "32",
 			Name:        "querier_jobs_in_progress",
 			Description: "Total queries processed by query frontend",
 			Query:       fmt.Sprintf(`sum(rate(tempo_query_frontend_queries_total{namespace="%s"}[1m])) by (pod)`, namespace),
@@ -299,4 +382,123 @@ func GetAllQueries(namespace string) []MetricQuery {
 	}
 
 	return queries
+}
+
+// GetSummaryQueries returns instant queries for summary metrics (P99 over full test duration)
+// These are executed once at the end of the test to get aggregate values
+func GetSummaryQueries(namespace string) []MetricQuery {
+	// Get duration from env var, default to 5m
+	duration := os.Getenv("DURATION")
+	if duration == "" {
+		duration = "5m"
+	}
+
+	return []MetricQuery{
+		{
+			ID:          "summary_1",
+			Name:        "summary_memory_p99_total",
+			Description: fmt.Sprintf("P99 total memory usage over the entire test (%s)", duration),
+			Query:       fmt.Sprintf(`quantile_over_time(0.99, sum(container_memory_working_set_bytes{namespace="%s", container=~"tempo.*"})[%s:])`, namespace, duration),
+			Category:    "summary",
+			Type:        "instant",
+		},
+		{
+			ID:          "summary_2",
+			Name:        "summary_cpu_p99_total",
+			Description: fmt.Sprintf("P99 total CPU usage over the entire test (%s)", duration),
+			Query:       fmt.Sprintf(`quantile_over_time(0.99, sum(rate(container_cpu_usage_seconds_total{namespace="%s", container=~"tempo.*", container!=""}[1m]))[%s:])`, namespace, duration),
+			Category:    "summary",
+			Type:        "instant",
+		},
+		{
+			ID:          "summary_3",
+			Name:        "summary_memory_p99_by_component",
+			Description: fmt.Sprintf("P99 memory by component over the entire test (%s)", duration),
+			Query: fmt.Sprintf(`quantile_over_time(0.99,
+  sum by (component) (
+    label_replace(
+      label_replace(
+        label_replace(
+          label_replace(
+            label_replace(
+              label_replace(
+                container_memory_working_set_bytes{namespace="%s", container=~"tempo.*", container!=""},
+                "component", "distributor", "pod", ".*-distributor-.*"
+              ),
+              "component", "ingester", "pod", ".*-ingester-.*"
+            ),
+            "component", "querier", "pod", ".*-querier-.*"
+          ),
+          "component", "compactor", "pod", ".*-compactor-.*"
+        ),
+        "component", "gateway", "pod", ".*-gateway-.*"
+      ),
+      "component", "query-frontend", "pod", ".*-query-frontend-.*"
+    )
+  )[%s:])`, namespace, duration),
+			Category: "summary",
+			Type:     "instant",
+		},
+		{
+			ID:          "summary_4",
+			Name:        "summary_cpu_p99_by_component",
+			Description: fmt.Sprintf("P99 CPU by component over the entire test (%s)", duration),
+			Query: fmt.Sprintf(`quantile_over_time(0.99,
+  sum by (component) (
+    label_replace(
+      label_replace(
+        label_replace(
+          label_replace(
+            label_replace(
+              label_replace(
+                rate(container_cpu_usage_seconds_total{namespace="%s", container=~"tempo.*", container!=""}[1m]),
+                "component", "distributor", "pod", ".*-distributor-.*"
+              ),
+              "component", "ingester", "pod", ".*-ingester-.*"
+            ),
+            "component", "querier", "pod", ".*-querier-.*"
+          ),
+          "component", "compactor", "pod", ".*-compactor-.*"
+        ),
+        "component", "gateway", "pod", ".*-gateway-.*"
+      ),
+      "component", "query-frontend", "pod", ".*-query-frontend-.*"
+    )
+  )[%s:])`, namespace, duration),
+			Category: "summary",
+			Type:     "instant",
+		},
+		{
+			ID:          "summary_5",
+			Name:        "summary_memory_max_total",
+			Description: fmt.Sprintf("Max total memory usage over the entire test (%s)", duration),
+			Query:       fmt.Sprintf(`max_over_time(sum(container_memory_working_set_bytes{namespace="%s", container=~"tempo.*"})[%s:])`, namespace, duration),
+			Category:    "summary",
+			Type:        "instant",
+		},
+		{
+			ID:          "summary_6",
+			Name:        "summary_cpu_max_total",
+			Description: fmt.Sprintf("Max total CPU usage over the entire test (%s)", duration),
+			Query:       fmt.Sprintf(`max_over_time(sum(rate(container_cpu_usage_seconds_total{namespace="%s", container=~"tempo.*", container!=""}[1m]))[%s:])`, namespace, duration),
+			Category:    "summary",
+			Type:        "instant",
+		},
+		{
+			ID:          "summary_7",
+			Name:        "summary_memory_avg_total",
+			Description: fmt.Sprintf("Average total memory usage over the entire test (%s)", duration),
+			Query:       fmt.Sprintf(`avg_over_time(sum(container_memory_working_set_bytes{namespace="%s", container=~"tempo.*"})[%s:])`, namespace, duration),
+			Category:    "summary",
+			Type:        "instant",
+		},
+		{
+			ID:          "summary_8",
+			Name:        "summary_cpu_avg_total",
+			Description: fmt.Sprintf("Average total CPU usage over the entire test (%s)", duration),
+			Query:       fmt.Sprintf(`avg_over_time(sum(rate(container_cpu_usage_seconds_total{namespace="%s", container=~"tempo.*", container!=""}[1m]))[%s:])`, namespace, duration),
+			Category:    "summary",
+			Type:        "instant",
+		},
+	}
 }

@@ -241,10 +241,14 @@ func (g *Generator) buildDashboardData(metrics []MetricSeries, runName string) *
 	// Calculate summary
 	summary := g.buildSummary(metrics)
 
+	// Calculate resource statistics
+	resourceSummary := g.buildResourceSummary(metrics)
+
 	return &DashboardData{
-		Config:     g.config,
-		Summary:    summary,
-		Categories: sections,
+		Config:          g.config,
+		Summary:         summary,
+		Categories:      sections,
+		ResourceSummary: resourceSummary,
 	}
 }
 
@@ -451,4 +455,140 @@ func GenerateComparison(csvPaths []string, outputPath string, config DashboardCo
 		return err
 	}
 	return gen.GenerateComparison(csvPaths, outputPath)
+}
+
+// buildResourceSummary calculates statistics for resource metrics
+func (g *Generator) buildResourceSummary(metrics []MetricSeries) *ResourceSummary {
+	summary := &ResourceSummary{
+		Memory: []ComponentStats{},
+		CPU:    []ComponentStats{},
+	}
+
+	// Collect values by component for memory and CPU
+	memoryByComponent := make(map[string][]float64)
+	cpuByComponent := make(map[string][]float64)
+
+	for _, m := range metrics {
+		// Handle memory_usage_by_component
+		if m.Name == "memory_usage_by_component" {
+			component := m.Labels["component"]
+			if component == "" {
+				component = "total"
+			}
+			for _, dp := range m.DataPoints {
+				memoryByComponent[component] = append(memoryByComponent[component], dp.Value)
+			}
+		}
+
+		// Handle cpu_usage_by_component
+		if m.Name == "cpu_usage_by_component" {
+			component := m.Labels["component"]
+			if component == "" {
+				component = "total"
+			}
+			for _, dp := range m.DataPoints {
+				cpuByComponent[component] = append(cpuByComponent[component], dp.Value)
+			}
+		}
+
+		// Handle totals
+		if m.Name == "memory_usage_total" {
+			for _, dp := range m.DataPoints {
+				memoryByComponent["total"] = append(memoryByComponent["total"], dp.Value)
+			}
+		}
+		if m.Name == "cpu_usage_total" {
+			for _, dp := range m.DataPoints {
+				cpuByComponent["total"] = append(cpuByComponent["total"], dp.Value)
+			}
+		}
+	}
+
+	// Calculate stats for memory
+	for component, values := range memoryByComponent {
+		if len(values) == 0 {
+			continue
+		}
+		stats := calculateStats(values)
+		stats.Component = component
+		stats.Unit = "bytes"
+		summary.Memory = append(summary.Memory, stats)
+	}
+
+	// Calculate stats for CPU
+	for component, values := range cpuByComponent {
+		if len(values) == 0 {
+			continue
+		}
+		stats := calculateStats(values)
+		stats.Component = component
+		stats.Unit = "cores"
+		summary.CPU = append(summary.CPU, stats)
+	}
+
+	// Sort by component name (total first, then alphabetical)
+	sortStats := func(stats []ComponentStats) {
+		sort.Slice(stats, func(i, j int) bool {
+			if stats[i].Component == "total" {
+				return true
+			}
+			if stats[j].Component == "total" {
+				return false
+			}
+			return stats[i].Component < stats[j].Component
+		})
+	}
+	sortStats(summary.Memory)
+	sortStats(summary.CPU)
+
+	return summary
+}
+
+// calculateStats computes avg, max, min, P95, P99 from a slice of values
+func calculateStats(values []float64) ComponentStats {
+	if len(values) == 0 {
+		return ComponentStats{}
+	}
+
+	// Sort for percentile calculations
+	sorted := make([]float64, len(values))
+	copy(sorted, values)
+	sort.Float64s(sorted)
+
+	// Calculate sum for average
+	var sum float64
+	for _, v := range sorted {
+		sum += v
+	}
+
+	stats := ComponentStats{
+		Avg: sum / float64(len(sorted)),
+		Min: sorted[0],
+		Max: sorted[len(sorted)-1],
+		P95: percentile(sorted, 0.95),
+		P99: percentile(sorted, 0.99),
+	}
+
+	return stats
+}
+
+// percentile calculates the p-th percentile of a sorted slice
+func percentile(sorted []float64, p float64) float64 {
+	if len(sorted) == 0 {
+		return 0
+	}
+	if len(sorted) == 1 {
+		return sorted[0]
+	}
+
+	// Use linear interpolation
+	index := p * float64(len(sorted)-1)
+	lower := int(index)
+	upper := lower + 1
+	if upper >= len(sorted) {
+		return sorted[len(sorted)-1]
+	}
+
+	fraction := index - float64(lower)
+	return sorted[lower] + fraction*(sorted[upper]-sorted[lower])
 }

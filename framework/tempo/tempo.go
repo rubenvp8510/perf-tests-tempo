@@ -27,6 +27,17 @@ type ResourceConfig = struct {
 
 	// Custom resources (used when Profile is empty)
 	Resources *corev1.ResourceRequirements
+
+	// Overrides contains Tempo limits configuration
+	Overrides *TempoOverrides
+}
+
+// TempoOverrides defines Tempo limits and overrides
+type TempoOverrides struct {
+	// MaxTracesPerUser limits the number of active traces per user.
+	// Set to 0 for unlimited (prevents "max live traces reached" errors).
+	// If nil/not set, uses Tempo's default.
+	MaxTracesPerUser *int
 }
 
 // FrameworkOperations provides access to framework capabilities needed by tempo
@@ -42,16 +53,13 @@ type FrameworkOperations interface {
 
 // Setup deploys Tempo (monolithic or stack) with optional resource configuration
 // variant: "monolithic" or "stack"
-// resources: optional resource configuration (only applies to monolithic)
+// resources: optional resource configuration
 func Setup(fw FrameworkOperations, variant string, resources *ResourceConfig) error {
 	switch variant {
 	case "monolithic":
 		return SetupMonolithic(fw, resources)
 	case "stack":
-		if resources != nil {
-			fw.Logger().Warn("resources configuration is not supported for stack variant")
-		}
-		return SetupStack(fw)
+		return SetupStack(fw, resources)
 	default:
 		return fmt.Errorf("invalid tempo variant: %s (must be 'monolithic' or 'stack')", variant)
 	}

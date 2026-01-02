@@ -373,6 +373,68 @@
         </section>
         {{ end }}
 
+        {{ if .ResourceSummary }}
+        <!-- Resource Summary Statistics -->
+        <section class="category-section" id="resource-summary">
+            <div class="category-header">
+                <h2>Resource Summary (for capacity planning)</h2>
+            </div>
+            <p class="category-description">Statistics calculated from collected data. Use P99 for limits, Avg for requests.</p>
+
+            {{ if gt (len .ResourceSummary.Memory) 0 }}
+            <h3 style="margin: 20px 0 10px 0; color: var(--accent);">Memory</h3>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Component</th>
+                        <th>Average</th>
+                        <th>P95</th>
+                        <th>P99</th>
+                        <th>Max</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{ range .ResourceSummary.Memory }}
+                    <tr>
+                        <td><strong>{{ .Component }}</strong></td>
+                        <td>{{ formatBytes .Avg }}</td>
+                        <td>{{ formatBytes .P95 }}</td>
+                        <td style="color: var(--accent); font-weight: bold;">{{ formatBytes .P99 }}</td>
+                        <td>{{ formatBytes .Max }}</td>
+                    </tr>
+                    {{ end }}
+                </tbody>
+            </table>
+            {{ end }}
+
+            {{ if gt (len .ResourceSummary.CPU) 0 }}
+            <h3 style="margin: 30px 0 10px 0; color: var(--accent);">CPU</h3>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Component</th>
+                        <th>Average</th>
+                        <th>P95</th>
+                        <th>P99</th>
+                        <th>Max</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{ range .ResourceSummary.CPU }}
+                    <tr>
+                        <td><strong>{{ .Component }}</strong></td>
+                        <td>{{ printf "%.3f" .Avg }} cores</td>
+                        <td>{{ printf "%.3f" .P95 }} cores</td>
+                        <td style="color: var(--accent); font-weight: bold;">{{ printf "%.3f" .P99 }} cores</td>
+                        <td>{{ printf "%.3f" .Max }} cores</td>
+                    </tr>
+                    {{ end }}
+                </tbody>
+            </table>
+            {{ end }}
+        </section>
+        {{ end }}
+
         <!-- Category Navigation -->
         <nav class="nav-tabs">
             {{ range .Categories }}
