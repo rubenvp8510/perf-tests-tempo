@@ -1,4 +1,4 @@
-name: 1x.demo
+name: 1x-demo
 description: "Demo environment - minimal resources, no HA, not for production"
 
 tempo:

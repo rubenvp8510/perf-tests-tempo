@@ -1,4 +1,4 @@
-name: 1x.medium
+name: 1x-medium
 description: "Medium - ~2TB/day ingestion, HA enabled, production ready for high workloads"
 
 tempo:

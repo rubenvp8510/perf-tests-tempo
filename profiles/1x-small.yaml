@@ -1,4 +1,4 @@
-name: 1x.small
+name: 1x-small
 description: "Small - ~500GB/day ingestion, HA enabled, production ready for moderate workloads"
 
 tempo:

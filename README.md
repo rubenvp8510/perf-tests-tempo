@@ -113,16 +113,16 @@ make perf-test-dry-run
 make perf-test
 
 # Run LokiStack-style profiles (recommended)
-make perf-test PROFILES=1x.extra-small,1x.small
+make perf-test PROFILES=1x-extra-small,1x-small
 
 # Run specific legacy profiles
 make perf-test PROFILES=small,medium
 
 # Run only ingestion tests
-make perf-test TEST_TYPE=ingestion PROFILES=1x.small
+make perf-test TEST_TYPE=ingestion PROFILES=1x-small
 
 # Run only query tests
-make perf-test TEST_TYPE=query PROFILES=1x.medium
+make perf-test TEST_TYPE=query PROFILES=1x-medium
 ```
 
 ## CLI Runner
@@ -227,10 +227,10 @@ These profiles follow the [LokiStack sizing conventions](https://docs.redhat.com
 
 | Profile | MB/s | GB/day | Queries/s | VUs | Tempo Variant | Description |
 |---------|------|--------|-----------|-----|---------------|-------------|
-| 1x.demo | 0.05 | ~4 | 2 | 2-5 | monolithic | Demo environment, no HA |
-| 1x.extra-small | 1.2 | ~100 | 5 | 5-20 | stack | Small clusters, limited workloads |
-| 1x.small | 5.8 | ~500 | 25 | 20-80 | stack | Production, moderate workloads |
-| 1x.medium | 23 | ~2000 | 100 | 50-200 | stack | Production, high workloads |
+| 1x-demo | 0.05 | ~4 | 2 | 2-5 | monolithic | Demo environment, no HA |
+| 1x-extra-small | 1.2 | ~100 | 5 | 5-20 | stack | Small clusters, limited workloads |
+| 1x-small | 5.8 | ~500 | 25 | 20-80 | stack | Production, moderate workloads |
+| 1x-medium | 23 | ~2000 | 100 | 50-200 | stack | Production, high workloads |
 
 #### Legacy Profiles
 
@@ -471,10 +471,10 @@ func main() {
 │       └── main.go            # Main program, profile execution loop
 │
 ├── profiles/                  # YAML profile configurations
-│   ├── 1x.demo.yaml           # LokiStack-style: demo (no HA)
-│   ├── 1x.extra-small.yaml    # LokiStack-style: ~100GB/day
-│   ├── 1x.small.yaml          # LokiStack-style: ~500GB/day
-│   ├── 1x.medium.yaml         # LokiStack-style: ~2TB/day
+│   ├── 1x-demo.yaml           # LokiStack-style: demo (no HA)
+│   ├── 1x-extra-small.yaml    # LokiStack-style: ~100GB/day
+│   ├── 1x-small.yaml          # LokiStack-style: ~500GB/day
+│   ├── 1x-medium.yaml         # LokiStack-style: ~2TB/day
 │   ├── small.yaml             # Legacy: light load
 │   ├── medium.yaml            # Legacy: moderate load
 │   ├── large.yaml             # Legacy: stress testing
@@ -558,7 +558,7 @@ These environment variables control test execution:
 Example:
 ```bash
 # Run a 30-minute test
-DURATION=30m go run ./cmd/perf-runner --profiles=1x.small
+DURATION=30m go run ./cmd/perf-runner --profiles=1x-small
 ```
 
 ## Troubleshooting
