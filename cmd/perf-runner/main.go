@@ -393,11 +393,17 @@ func profileToResourceConfig(p *profile.Profile) *framework.ResourceConfig {
 }
 
 func profileToK6Config(p *profile.Profile) *k6.Config {
+	// Get duration from DURATION env var, default to 5m
+	duration := os.Getenv("DURATION")
+	if duration == "" {
+		duration = "5m"
+	}
+
 	return &k6.Config{
 		TempoVariant:     k6.TempoVariant(p.Tempo.Variant),
 		MBPerSecond:      p.K6.Ingestion.MBPerSecond,
 		QueriesPerSecond: p.K6.Query.QueriesPerSecond,
-		Duration:         p.K6.Duration,
+		Duration:         duration,
 		VUsMin:           p.K6.VUs.Min,
 		VUsMax:           p.K6.VUs.Max,
 		TraceProfile:     p.K6.Ingestion.TraceProfile,
@@ -405,6 +411,12 @@ func profileToK6Config(p *profile.Profile) *k6.Config {
 }
 
 func printProfileSummary(p *profile.Profile, testType k6.TestType) {
+	// Get effective duration
+	duration := os.Getenv("DURATION")
+	if duration == "" {
+		duration = "5m"
+	}
+
 	fmt.Printf("\nProfile: %s\n", p.Name)
 	fmt.Printf("  Description: %s\n", p.Description)
 	fmt.Printf("  Tempo:\n")
@@ -415,7 +427,7 @@ func printProfileSummary(p *profile.Profile, testType k6.TestType) {
 		fmt.Printf("    Resources: (operator defaults)\n")
 	}
 	fmt.Printf("  K6 (%s test):\n", testType)
-	fmt.Printf("    Duration: %s\n", p.K6.Duration)
+	fmt.Printf("    Duration: %s\n", duration)
 	fmt.Printf("    VUs: %d-%d\n", p.K6.VUs.Min, p.K6.VUs.Max)
 	fmt.Printf("    Ingestion: %.1f MB/s\n", p.K6.Ingestion.MBPerSecond)
 	fmt.Printf("    Queries/sec: %d\n", p.K6.Query.QueriesPerSecond)
