@@ -100,15 +100,32 @@ func RunTest(c Clients, testType TestType, config *Config) (*Result, error) {
 
 	duration := time.Since(startTime)
 
+	// Parse k6 metrics from the JSON summary in the logs
+	k6Metrics := ParseK6Metrics(logs)
+
 	result := &Result{
 		Success:  success,
 		Output:   logs,
 		Duration: duration,
+		Metrics:  k6Metrics,
 	}
 
 	if !success {
 		result.Error = fmt.Errorf("k6 test failed")
 		return result, result.Error
+	}
+
+	// Print k6 metrics summary if available
+	if k6Metrics != nil {
+		fmt.Println("\n📊 k6 Metrics Summary:")
+		if k6Metrics.QueryRequestsTotal > 0 {
+			fmt.Printf("   Query Requests: %.0f (failures: %.0f)\n", k6Metrics.QueryRequestsTotal, k6Metrics.QueryFailuresTotal)
+			fmt.Printf("   Query Latency P99: %.3fs\n", k6Metrics.QueryDurationSeconds.P99)
+		}
+		if k6Metrics.IngestionTracesTotal > 0 {
+			fmt.Printf("   Traces Ingested: %.0f\n", k6Metrics.IngestionTracesTotal)
+			fmt.Printf("   Ingestion Rate: %.2f MB/s\n", k6Metrics.IngestionRateBPS/1024/1024)
+		}
 	}
 
 	fmt.Printf("\n✅ k6 test completed in %s\n", duration.Round(time.Second))
@@ -508,8 +525,24 @@ func createJob(c Clients, jobName string, testType TestType, config *Config) err
 		env = append(env, corev1.EnvVar{Name: "TRACE_PROFILE", Value: config.TraceProfile})
 	}
 
+	// Prometheus remote write configuration for exporting k6 metrics
+	if config.PrometheusRWURL != "" {
+		env = append(env,
+			corev1.EnvVar{Name: "K6_PROMETHEUS_RW_SERVER_URL", Value: config.PrometheusRWURL},
+			corev1.EnvVar{Name: "K6_PROMETHEUS_RW_TREND_AS_NATIVE_HISTOGRAM", Value: "true"},
+			corev1.EnvVar{Name: "K6_PROMETHEUS_RW_STALE_MARKERS", Value: "true"},
+		)
+	}
+
 	// Build the script path inside the container
 	scriptName := fmt.Sprintf("%s-test.js", testType)
+
+	// Build k6 run command with JSON summary export
+	// Always export summary to JSON for metrics parsing
+	k6RunCmd := fmt.Sprintf("k6 run --summary-export=/tmp/summary.json %s", scriptName)
+	if config.PrometheusRWURL != "" {
+		k6RunCmd = fmt.Sprintf("k6 run -o experimental-prometheus-rw --summary-export=/tmp/summary.json %s", scriptName)
+	}
 
 	backoffLimit := int32(0)
 	ttlSeconds := int32(3600) // Keep job for 1 hour after completion
@@ -551,8 +584,13 @@ func createJob(c Clients, jobName string, testType TestType, config *Config) err
 									cp /k6-scripts/lib-trace-profiles.js /scripts/lib/trace-profiles.js
 									cp /k6-scripts/%s /scripts/%s
 									cd /scripts
-									k6 run %s
-								`, scriptName, scriptName, scriptName),
+									%s
+									exit_code=$?
+									echo "===K6_SUMMARY_JSON_START==="
+									cat /tmp/summary.json 2>/dev/null || echo "{}"
+									echo "===K6_SUMMARY_JSON_END==="
+									exit $exit_code
+								`, scriptName, scriptName, k6RunCmd),
 							},
 							Env: env,
 							VolumeMounts: []corev1.VolumeMount{

@@ -20,12 +20,14 @@ import (
 
 func main() {
 	var (
-		profilesFlag = flag.String("profiles", "", "Comma-separated list of profiles to run (e.g., small,medium)")
-		profilesDir  = flag.String("profiles-dir", "profiles", "Directory containing profile YAML files")
-		outputDir    = flag.String("output", "results", "Output directory for metrics")
-		testType     = flag.String("test-type", "combined", "Test type: ingestion, query, combined")
-		dryRun       = flag.Bool("dry-run", false, "Print what would be executed without running")
-		skipCleanup  = flag.Bool("skip-cleanup", false, "Skip cleanup after tests (useful for debugging)")
+		profilesFlag      = flag.String("profiles", "", "Comma-separated list of profiles to run (e.g., small,medium)")
+		profilesDir       = flag.String("profiles-dir", "profiles", "Directory containing profile YAML files")
+		outputDir         = flag.String("output", "results", "Output directory for metrics")
+		testType          = flag.String("test-type", "combined", "Test type: ingestion, query, combined")
+		dryRun            = flag.Bool("dry-run", false, "Print what would be executed without running")
+		skipCleanup       = flag.Bool("skip-cleanup", false, "Skip cleanup after tests (useful for debugging)")
+		checkMetrics      = flag.Bool("check-metrics", false, "Check and report metric availability after collection")
+		generateDashboard = flag.Bool("generate-dashboard", false, "Generate HTML dashboard after metrics collection")
 	)
 	flag.Parse()
 
@@ -108,7 +110,7 @@ func main() {
 		default:
 		}
 
-		result := runProfile(ctx, p, tt, *outputDir, *skipCleanup)
+		result := runProfile(ctx, p, tt, *outputDir, *skipCleanup, *checkMetrics, *generateDashboard)
 		results[p.Name] = result
 
 		if result.Error != nil {
@@ -135,7 +137,7 @@ type RunResult struct {
 	Error    error
 }
 
-func runProfile(ctx context.Context, p *profile.Profile, testType k6.TestType, outputDir string, skipCleanup bool) *RunResult {
+func runProfile(ctx context.Context, p *profile.Profile, testType k6.TestType, outputDir string, skipCleanup, checkMetrics, generateDashboard bool) *RunResult {
 	startTime := time.Now()
 	result := &RunResult{Profile: p.Name}
 
@@ -217,11 +219,28 @@ func runProfile(ctx context.Context, p *profile.Profile, testType k6.TestType, o
 		return result
 	}
 
+	// Setup Tempo monitoring (ServiceMonitor verification and PodMonitor fallback)
+	fmt.Println("Setting up Tempo monitoring...")
+	if err := fw.SetupTempoMonitoring(p.Tempo.Variant); err != nil {
+		fmt.Printf("Warning: failed to setup Tempo monitoring: %v\n", err)
+		// Continue anyway - metrics may still work
+	}
+
+	// Setup k6 Prometheus metrics export
+	fmt.Println("Setting up k6 Prometheus metrics...")
+	prometheusRWURL, err := fw.SetupK6PrometheusMetrics()
+	if err != nil {
+		fmt.Printf("Warning: failed to setup k6 Prometheus metrics: %v\n", err)
+		// Continue anyway - k6 will just not export to Prometheus
+	}
+
 	// Run k6 test(s)
 	testStartTime := time.Now()
 	k6Config := profileToK6Config(p)
+	k6Config.PrometheusRWURL = prometheusRWURL
 
 	var testSuccess bool
+	var k6Metrics *k6.K6Metrics
 	if testType == k6.TestCombined {
 		// Run ingestion and query as separate parallel jobs
 		fmt.Println("Running parallel k6 tests (ingestion + query as separate jobs)...")
@@ -233,13 +252,20 @@ func runProfile(ctx context.Context, p *profile.Profile, testType k6.TestType, o
 		}
 		testSuccess = parallelResult.Success()
 
-		// Save k6 logs to files
+		// Save k6 logs to files and collect metrics
 		if parallelResult.Ingestion != nil && parallelResult.Ingestion.Output != "" {
 			logFile := fmt.Sprintf("%s/%s-k6-ingestion.log", outputDir, p.Name)
 			if err := os.WriteFile(logFile, []byte(parallelResult.Ingestion.Output), 0644); err != nil {
 				fmt.Printf("Warning: failed to save ingestion logs: %v\n", err)
 			} else {
 				fmt.Printf("Saved ingestion logs to %s\n", logFile)
+			}
+			// Export ingestion k6 metrics
+			if parallelResult.Ingestion.Metrics != nil {
+				metricsFile := fmt.Sprintf("%s/%s-k6-ingestion-metrics.json", outputDir, p.Name)
+				if err := fw.ExportK6Metrics(parallelResult.Ingestion.Metrics, metricsFile, "ingestion"); err != nil {
+					fmt.Printf("Warning: failed to export ingestion k6 metrics: %v\n", err)
+				}
 			}
 		}
 		if parallelResult.Query != nil && parallelResult.Query.Output != "" {
@@ -248,6 +274,14 @@ func runProfile(ctx context.Context, p *profile.Profile, testType k6.TestType, o
 				fmt.Printf("Warning: failed to save query logs: %v\n", err)
 			} else {
 				fmt.Printf("Saved query logs to %s\n", logFile)
+			}
+			// Export query k6 metrics
+			if parallelResult.Query.Metrics != nil {
+				k6Metrics = parallelResult.Query.Metrics // Keep for dashboard
+				metricsFile := fmt.Sprintf("%s/%s-k6-query-metrics.json", outputDir, p.Name)
+				if err := fw.ExportK6Metrics(parallelResult.Query.Metrics, metricsFile, "query"); err != nil {
+					fmt.Printf("Warning: failed to export query k6 metrics: %v\n", err)
+				}
 			}
 		}
 	} else {
@@ -260,6 +294,7 @@ func runProfile(ctx context.Context, p *profile.Profile, testType k6.TestType, o
 			return result
 		}
 		testSuccess = k6Result.Success
+		k6Metrics = k6Result.Metrics
 
 		// Save k6 logs to file
 		if k6Result.Output != "" {
@@ -270,6 +305,19 @@ func runProfile(ctx context.Context, p *profile.Profile, testType k6.TestType, o
 				fmt.Printf("Saved k6 logs to %s\n", logFile)
 			}
 		}
+
+		// Export k6 metrics to JSON
+		if k6Metrics != nil {
+			metricsFile := fmt.Sprintf("%s/%s-k6-%s-metrics.json", outputDir, p.Name, testType)
+			if err := fw.ExportK6Metrics(k6Metrics, metricsFile, string(testType)); err != nil {
+				fmt.Printf("Warning: failed to export k6 metrics: %v\n", err)
+			}
+		}
+	}
+
+	// Log k6 metrics availability
+	if k6Metrics != nil {
+		fmt.Println("✅ k6 metrics parsed from JSON summary")
 	}
 
 	if !testSuccess {
@@ -283,6 +331,40 @@ func runProfile(ctx context.Context, p *profile.Profile, testType k6.TestType, o
 	fmt.Printf("Collecting metrics to %s...\n", metricsFile)
 	if err := fw.CollectMetrics(testStartTime, metricsFile); err != nil {
 		fmt.Printf("Warning: failed to collect metrics: %v\n", err)
+	}
+
+	// Check metric availability if requested
+	if checkMetrics {
+		fmt.Println("\nChecking metric availability...")
+		testDuration := time.Since(testStartTime)
+		report, err := fw.CheckMetricAvailability(testDuration)
+		if err != nil {
+			fmt.Printf("Warning: failed to check metric availability: %v\n", err)
+		} else {
+			fw.PrintMetricAvailabilityReport(report)
+
+			// Print diagnostic hints if there are missing metrics
+			if report.MissingMetrics > 0 {
+				issues := fw.DiagnoseMetricIssues(report)
+				if len(issues) > 0 {
+					fmt.Println("\nDiagnostic hints:")
+					for _, issue := range issues {
+						fmt.Printf("  ⚠️  %s\n", issue)
+					}
+				}
+			}
+		}
+	}
+
+	// Generate dashboard if requested
+	if generateDashboard {
+		dashboardFile := fmt.Sprintf("%s/%s-dashboard.html", outputDir, p.Name)
+		fmt.Printf("Generating dashboard to %s...\n", dashboardFile)
+		if err := fw.GenerateDashboard(metricsFile, dashboardFile, p.Name); err != nil {
+			fmt.Printf("Warning: failed to generate dashboard: %v\n", err)
+		} else {
+			fmt.Printf("Dashboard generated: %s\n", dashboardFile)
+		}
 	}
 
 	result.Success = true

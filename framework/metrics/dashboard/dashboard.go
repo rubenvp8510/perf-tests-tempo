@@ -4,6 +4,7 @@ import (
 	"encoding/csv"
 	"fmt"
 	"html/template"
+	"math"
 	"os"
 	"path/filepath"
 	"sort"
@@ -167,6 +168,11 @@ func parseCSV(csvPath string) ([]MetricSeries, error) {
 		val, err := strconv.ParseFloat(record[5], 64)
 		if err != nil {
 			continue // skip rows with invalid values
+		}
+
+		// Skip NaN and Inf values (can't be serialized to JSON)
+		if math.IsNaN(val) || math.IsInf(val, 0) {
+			continue
 		}
 
 		labels := parseLabels(record[6])

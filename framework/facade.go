@@ -1,10 +1,12 @@
 package framework
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/redhat/perf-tests-tempo/test/framework/k6"
 	"github.com/redhat/perf-tests-tempo/test/framework/metrics"
+	"github.com/redhat/perf-tests-tempo/test/framework/metrics/dashboard"
 	"github.com/redhat/perf-tests-tempo/test/framework/minio"
 	"github.com/redhat/perf-tests-tempo/test/framework/otel"
 	"github.com/redhat/perf-tests-tempo/test/framework/tempo"
@@ -33,6 +35,21 @@ func (f *Framework) SetupTempo(variant string, resources *ResourceConfig) error 
 // tempoVariant should be "monolithic" or "stack" to configure the correct Tempo gateway endpoint
 func (f *Framework) SetupOTelCollector(tempoVariant string) error {
 	return otel.SetupCollector(f, tempoVariant)
+}
+
+// SetupTempoMonitoring verifies ServiceMonitors and creates PodMonitor fallback if needed
+func (f *Framework) SetupTempoMonitoring(variant string) error {
+	return tempo.SetupTempoMonitoring(f, variant)
+}
+
+// SetupK6PrometheusMetrics enables k6 to export metrics to Prometheus
+// Returns the remote write URL to configure in k6.Config.PrometheusRWURL
+func (f *Framework) SetupK6PrometheusMetrics() (string, error) {
+	url, err := k6.SetupK6PrometheusMetrics(f.ctx, f.client)
+	if err != nil {
+		return "", fmt.Errorf("failed to setup k6 Prometheus metrics: %w", err)
+	}
+	return url, nil
 }
 
 // RunK6Test deploys and runs a k6 test as a Kubernetes Job
@@ -70,6 +87,11 @@ func (f *Framework) CollectMetricsWithDuration(duration time.Duration, outputPat
 	return metrics.CollectMetricsWithDuration(f, duration, outputPath)
 }
 
+// ExportK6Metrics exports k6 metrics to a JSON file
+func (f *Framework) ExportK6Metrics(k6Metrics *k6.K6Metrics, outputPath string, testType string) error {
+	return metrics.ExportK6Metrics(k6Metrics, outputPath, testType)
+}
+
 // WaitForPodsReady waits for pods matching the selector to be ready
 func (f *Framework) WaitForPodsReady(selector labels.Selector, timeout time.Duration, minReady int) error {
 	return wait.ForPodsReady(f, selector, timeout, minReady)
@@ -88,4 +110,30 @@ func (f *Framework) WaitForPodsTerminated(selector labels.Selector, timeout time
 // WaitForTempoPodsReady waits for Tempo pods using multiple label selectors
 func (f *Framework) WaitForTempoPodsReady(timeout time.Duration) error {
 	return wait.ForTempoPodsReady(f, timeout)
+}
+
+// GenerateDashboard generates an HTML dashboard from a metrics CSV file
+func (f *Framework) GenerateDashboard(csvPath, outputPath, profileName string) error {
+	config := dashboard.DashboardConfig{
+		Title:       "Tempo Performance Test Report",
+		ProfileName: profileName,
+		TestType:    "combined",
+		GeneratedAt: time.Now(),
+	}
+	return dashboard.Generate(csvPath, outputPath, config)
+}
+
+// CheckMetricAvailability checks which metrics are available in Prometheus
+func (f *Framework) CheckMetricAvailability(duration time.Duration) (*metrics.AvailabilityReport, error) {
+	return metrics.CheckMetricAvailability(f, duration)
+}
+
+// PrintMetricAvailabilityReport prints a human-readable availability report
+func (f *Framework) PrintMetricAvailabilityReport(report *metrics.AvailabilityReport) {
+	metrics.PrintAvailabilityReport(report)
+}
+
+// DiagnoseMetricIssues provides diagnostic information about missing metrics
+func (f *Framework) DiagnoseMetricIssues(report *metrics.AvailabilityReport) []string {
+	return metrics.DiagnoseMetricIssues(report)
 }

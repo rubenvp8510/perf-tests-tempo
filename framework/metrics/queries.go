@@ -275,69 +275,29 @@ func GetAllQueries(namespace string) []MetricQuery {
 			Type:     "range",
 		},
 
-		// Query Performance Metrics (from k6 xk6-tempo extension - requires k6 test with Prometheus export)
+		// Query Performance Metrics (Tempo-internal)
+		// Note: k6 metrics (query_failures_rate, total_queries_rate, spans_returned_sum, query_latency_p90/p99)
+		// are exported to separate JSON files since OpenShift doesn't support Prometheus remote write receiver
 		{
 			ID:          "25",
-			Name:        "query_failures_rate",
-			Description: "Rate of failed k6 queries per second (requires k6 test)",
-			Query:       fmt.Sprintf(`sum(rate(tempo_query_failures_total{namespace="%s"}[1m]))`, namespace),
+			Name:        "query_frontend_queue_duration_p99",
+			Description: "Query frontend queue wait time p99",
+			Query:       fmt.Sprintf(`histogram_quantile(0.99, sum(rate(tempo_query_frontend_queue_duration_seconds_bucket{namespace="%s"}[1m])) by (le))`, namespace),
 			Category:    "query_performance",
 			Type:        "range",
 		},
 		{
 			ID:          "26",
-			Name:        "total_queries_rate",
-			Description: "Total k6 query rate per second (requires k6 test)",
-			Query:       fmt.Sprintf(`sum(rate(tempo_query_requests_total{namespace="%s"}[1m]))`, namespace),
-			Category:    "query_performance",
-			Type:        "range",
-		},
-		{
-			ID:          "27",
-			Name:        "spans_returned_sum",
-			Description: "Traces returned by k6 queries (requires k6 test)",
-			Query:       fmt.Sprintf(`sum(rate(tempo_query_traces_returned_total{namespace="%s"}[1m]))`, namespace),
-			Category:    "query_performance",
-			Type:        "range",
-		},
-		{
-			ID:          "28",
-			Name:        "spans_returned_count",
-			Description: "Query frontend queue wait time p99 (proxy for query load)",
-			Query:       fmt.Sprintf(`histogram_quantile(0.99, sum(rate(tempo_query_frontend_queue_duration_seconds_bucket{namespace="%s"}[1m])) by (le))`, namespace),
-			Category:    "query_performance",
-			Type:        "range",
-		},
-
-		// Query Latency Time-Series (from k6 xk6-tempo extension - requires k6 test with Prometheus export)
-		{
-			ID:          "29",
-			Name:        "query_latency_p90",
-			Description: "90th percentile k6 query latency (requires k6 test)",
-			Query:       fmt.Sprintf(`histogram_quantile(0.90, sum(rate(tempo_query_duration_seconds_bucket{namespace="%s"}[1m])) by (le))`, namespace),
-			Category:    "query_latency",
-			Type:        "range",
-		},
-		{
-			ID:          "30",
-			Name:        "query_latency_p99",
-			Description: "99th percentile k6 query latency (requires k6 test)",
-			Query:       fmt.Sprintf(`histogram_quantile(0.99, sum(rate(tempo_query_duration_seconds_bucket{namespace="%s"}[1m])) by (le))`, namespace),
-			Category:    "query_latency",
-			Type:        "range",
-		},
-		{
-			ID:          "31",
-			Name:        "query_failures_timeseries",
+			Name:        "query_frontend_retries_rate",
 			Description: "Query frontend retries rate (indicates query issues)",
 			Query:       fmt.Sprintf(`sum(rate(tempo_query_frontend_retries_count{namespace="%s"}[1m]))`, namespace),
-			Category:    "query_latency",
+			Category:    "query_performance",
 			Type:        "range",
 		},
 
 		// Querier Specific Metrics
 		{
-			ID:          "32",
+			ID:          "27",
 			Name:        "querier_queue_length",
 			Description: "Number of queries waiting in query frontend queue",
 			Query:       fmt.Sprintf(`sum(tempo_query_frontend_queue_length{namespace="%s"}) by (pod)`, namespace),
@@ -345,7 +305,7 @@ func GetAllQueries(namespace string) []MetricQuery {
 			Type:        "range",
 		},
 		{
-			ID:          "33",
+			ID:          "28",
 			Name:        "querier_jobs_in_progress",
 			Description: "Total queries processed by query frontend",
 			Query:       fmt.Sprintf(`sum(rate(tempo_query_frontend_queries_total{namespace="%s"}[1m])) by (pod)`, namespace),

@@ -104,6 +104,33 @@ k6-query: ## Run k6 query test
 k6-combined: ## Run k6 combined test
 	SIZE=$(K6_SIZE) k6 run tests/k6/combined-test.js
 
+##@ Dashboard
+
+.PHONY: dashboard
+dashboard: ## Generate HTML dashboard from CSV: make dashboard CSV=results/small-metrics.csv
+	@if [ -z "$(CSV)" ]; then \
+		echo "Usage: make dashboard CSV=results/small-metrics.csv"; \
+		exit 1; \
+	fi
+	$(GO) run ./cmd/dashboard --input=$(CSV)
+
+.PHONY: dashboards
+dashboards: ## Generate dashboards for all CSV files in results/
+	@for csv in results/*-metrics.csv; do \
+		if [ -f "$$csv" ]; then \
+			echo "Generating dashboard for $$csv..."; \
+			$(GO) run ./cmd/dashboard --input=$$csv; \
+		fi \
+	done
+
+.PHONY: compare
+compare: ## Compare runs: make compare FILES="results/small-metrics.csv,results/medium-metrics.csv"
+	@if [ -z "$(FILES)" ]; then \
+		echo "Usage: make compare FILES=\"results/small-metrics.csv,results/medium-metrics.csv\""; \
+		exit 1; \
+	fi
+	$(GO) run ./cmd/dashboard --compare=$(FILES)
+
 ##@ Cleanup
 
 .PHONY: clean

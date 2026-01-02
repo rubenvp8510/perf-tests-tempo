@@ -103,6 +103,7 @@ func formatValue(value float64, unit string) string {
 func toJSON(v interface{}) template.JS {
 	b, err := json.Marshal(v)
 	if err != nil {
+		fmt.Printf("toJSON error: %v, type: %T\n", err, v)
 		return template.JS("null")
 	}
 	return template.JS(b)

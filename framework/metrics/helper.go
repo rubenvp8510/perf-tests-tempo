@@ -2,11 +2,13 @@ package metrics
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 	"time"
 
+	"github.com/redhat/perf-tests-tempo/test/framework/k6"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 )
@@ -100,4 +102,70 @@ func CollectMetrics(np NamespaceProvider, testStart time.Time, outputPath string
 func CollectMetricsWithDuration(np NamespaceProvider, duration time.Duration, outputPath string) error {
 	testStart := time.Now().Add(-duration)
 	return CollectMetrics(np, testStart, outputPath)
+}
+
+// K6MetricsExport is the JSON structure for k6 metrics export
+type K6MetricsExport struct {
+	ExportedAt string `json:"exported_at"`
+	TestType   string `json:"test_type,omitempty"`
+
+	// Query metrics
+	QueryRequestsTotal   float64            `json:"query_requests_total,omitempty"`
+	QueryFailuresTotal   float64            `json:"query_failures_total,omitempty"`
+	QuerySpansReturned   *k6.MetricStats    `json:"query_spans_returned,omitempty"`
+	QueryDurationSeconds *k6.MetricStats    `json:"query_duration_seconds,omitempty"`
+
+	// Ingestion metrics
+	IngestionBytesTotal  float64            `json:"ingestion_bytes_total,omitempty"`
+	IngestionTracesTotal float64            `json:"ingestion_traces_total,omitempty"`
+	IngestionRateBPS     float64            `json:"ingestion_rate_bps,omitempty"`
+	IngestionDuration    *k6.MetricStats    `json:"ingestion_duration,omitempty"`
+}
+
+// ExportK6Metrics exports k6 metrics to a JSON file
+func ExportK6Metrics(metrics *k6.K6Metrics, outputPath string, testType string) error {
+	if metrics == nil {
+		return nil // Nothing to export
+	}
+
+	// Create output directory if needed
+	if err := os.MkdirAll(filepath.Dir(outputPath), 0755); err != nil {
+		return fmt.Errorf("failed to create output directory: %w", err)
+	}
+
+	export := K6MetricsExport{
+		ExportedAt:           time.Now().UTC().Format(time.RFC3339),
+		TestType:             testType,
+		QueryRequestsTotal:   metrics.QueryRequestsTotal,
+		QueryFailuresTotal:   metrics.QueryFailuresTotal,
+		IngestionBytesTotal:  metrics.IngestionBytesTotal,
+		IngestionTracesTotal: metrics.IngestionTracesTotal,
+		IngestionRateBPS:     metrics.IngestionRateBPS,
+	}
+
+	// Only include non-empty stats
+	if metrics.QuerySpansReturned.Avg > 0 || metrics.QuerySpansReturned.Max > 0 {
+		export.QuerySpansReturned = &metrics.QuerySpansReturned
+	}
+	if metrics.QueryDurationSeconds.Avg > 0 || metrics.QueryDurationSeconds.Max > 0 {
+		export.QueryDurationSeconds = &metrics.QueryDurationSeconds
+	}
+	if metrics.IngestionDuration.Avg > 0 || metrics.IngestionDuration.Max > 0 {
+		export.IngestionDuration = &metrics.IngestionDuration
+	}
+
+	file, err := os.Create(outputPath)
+	if err != nil {
+		return fmt.Errorf("failed to create output file: %w", err)
+	}
+	defer file.Close()
+
+	encoder := json.NewEncoder(file)
+	encoder.SetIndent("", "  ")
+	if err := encoder.Encode(export); err != nil {
+		return fmt.Errorf("failed to encode k6 metrics: %w", err)
+	}
+
+	fmt.Printf("📊 Exported k6 metrics to %s\n", outputPath)
+	return nil
 }

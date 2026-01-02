@@ -161,6 +161,23 @@ var (
 	}
 )
 
+// Monitoring resources
+var (
+	// ServiceMonitor is the GVR for Prometheus ServiceMonitor resources
+	ServiceMonitor = schema.GroupVersionResource{
+		Group:    "monitoring.coreos.com",
+		Version:  "v1",
+		Resource: "servicemonitors",
+	}
+
+	// PodMonitor is the GVR for Prometheus PodMonitor resources
+	PodMonitor = schema.GroupVersionResource{
+		Group:    "monitoring.coreos.com",
+		Version:  "v1",
+		Resource: "podmonitors",
+	}
+)
+
 // CRD names for prerequisite checks
 const (
 	// TempoMonolithicCRD is the full name of the TempoMonolithic CRD
