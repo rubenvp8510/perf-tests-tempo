@@ -1,7 +1,6 @@
 package tempo
 
 import (
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -12,7 +11,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	tempoapi "github.com/grafana/tempo-operator/api/tempo/v1alpha1"
-	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 )
 
 // SetupStack deploys Tempo Stack
@@ -97,21 +95,13 @@ func buildTempoStackCR(namespace string, resources *ResourceConfig) *tempoapi.Te
 		},
 	}
 
-	// Add extra config with overrides if configured
+	// Add limits if configured
 	if resources != nil && resources.Overrides != nil && resources.Overrides.MaxTracesPerUser != nil {
-		extraConfig := map[string]interface{}{
-			"overrides": map[string]interface{}{
-				"defaults": map[string]interface{}{
-					"ingestion": map[string]interface{}{
-						"max_traces_per_user": *resources.Overrides.MaxTracesPerUser,
-					},
+		stackCR.Spec.LimitSpec = tempoapi.LimitSpec{
+			Global: tempoapi.RateLimitSpec{
+				Ingestion: tempoapi.IngestionLimitSpec{
+					MaxTracesPerUser: resources.Overrides.MaxTracesPerUser,
 				},
-			},
-		}
-		extraConfigJSON, _ := json.Marshal(extraConfig)
-		stackCR.Spec.ExtraConfig = &tempoapi.ExtraConfigSpec{
-			Tempo: apiextensionsv1.JSON{
-				Raw: extraConfigJSON,
 			},
 		}
 	}
