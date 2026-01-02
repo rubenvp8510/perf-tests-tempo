@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ .Config.Title }} - Performance Report</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <style>
+        :root {
+            --bg-primary: #1a1a2e;
+            --bg-secondary: #16213e;
+            --bg-card: #0f3460;
+            --text-primary: #eee;
+            --text-secondary: #aaa;
+            --accent: #e94560;
+            --accent-secondary: #0f4c75;
+            --success: #2ecc71;
+            --warning: #f1c40f;
+            --error: #e74c3c;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .container { max-width: 1800px; margin: 0 auto; padding: 20px; }
+
+        header {
+            background: var(--bg-secondary);
+            padding: 30px 0;
+            margin-bottom: 30px;
+            border-bottom: 3px solid var(--accent);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        h1 { font-size: 2rem; font-weight: 600; }
+        h2 { font-size: 1.5rem; margin-bottom: 20px; color: var(--accent); }
+        h3 { font-size: 1.1rem; margin-bottom: 10px; }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .summary-card {
+            background: var(--bg-card);
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            transition: transform 0.2s;
+        }
+
+        .summary-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .summary-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .summary-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .category-section {
+            margin-bottom: 40px;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 25px;
+        }
+
+        .category-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .category-description {
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+            font-size: 0.95rem;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 20px;
+        }
+
+        .chart-card {
+            background: var(--bg-card);
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .chart-title {
+            font-size: 1rem;
+            margin-bottom: 5px;
+        }
+
+        .chart-description {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            margin-bottom: 15px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 280px;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            position: sticky;
+            top: 0;
+            background: var(--bg-primary);
+            padding: 15px 0;
+            z-index: 100;
+        }
+
+        .nav-tab {
+            padding: 10px 20px;
+            background: var(--bg-secondary);
+            border: none;
+            border-radius: 6px;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+        }
+
+        .nav-tab:hover, .nav-tab.active {
+            background: var(--accent);
+        }
+
+        .metadata {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .badge-profile {
+            background: var(--accent);
+            color: white;
+        }
+
+        .badge-test {
+            background: var(--accent-secondary);
+            color: white;
+        }
+
+        {{ if .Config.CompareMode }}
+        .comparison-legend {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: var(--bg-card);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--bg-primary);
+        }
+
+        .comparison-table th {
+            background: var(--bg-secondary);
+            font-weight: 600;
+        }
+
+        .change-positive {
+            color: var(--error);
+        }
+
+        .change-negative {
+            color: var(--success);
+        }
+        {{ end }}
+
+        /* Print styles */
+        @media print {
+            body {
+                background: white;
+                color: black;
+            }
+
+            :root {
+                --bg-primary: white;
+                --bg-secondary: #f5f5f5;
+                --bg-card: #fafafa;
+                --text-primary: #333;
+                --text-secondary: #666;
+                --accent: #e94560;
+            }
+
+            .nav-tabs {
+                display: none;
+            }
+
+            .category-section {
+                break-inside: avoid;
+                page-break-inside: avoid;
+            }
+
+            .chart-card {
+                break-inside: avoid;
+                page-break-inside: avoid;
+            }
+
+            .charts-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            header {
+                border-bottom-color: var(--accent);
+            }
+
+            .summary-card {
+                border: 1px solid #ddd;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header-content {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+
+        .no-data {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 200px;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        .print-button {
+            padding: 10px 20px;
+            background: var(--accent);
+            border: none;
+            border-radius: 6px;
+            color: white;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .print-button:hover {
+            opacity: 0.9;
+        }
+
+        @media print {
+            .print-button {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container header-content">
+            <div>
+                <h1>{{ .Config.Title }}</h1>
+                <p class="metadata">
+                    <span class="badge badge-profile">{{ .Config.ProfileName }}</span>
+                    <span class="badge badge-test">{{ .Config.TestType }}</span>
+                    &nbsp;&bull;&nbsp;
+                    Generated: {{ .Config.GeneratedAt.Format "2006-01-02 15:04:05" }}
+                    {{ if gt .Config.TestDuration 0 }}
+                    &nbsp;&bull;&nbsp;
+                    Duration: {{ formatDuration .Config.TestDuration }}
+                    {{ end }}
+                </p>
+            </div>
+            <button class="print-button" onclick="window.print()">Export to PDF</button>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Summary Cards -->
+        <section class="summary-grid">
+            <div class="summary-card">
+                <div class="summary-value">{{ .Summary.TotalMetrics }}</div>
+                <div class="summary-label">Metric Series</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-value">{{ .Summary.TotalDataPoints }}</div>
+                <div class="summary-label">Data Points</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-value">{{ formatTime .Summary.TimeRange.Start }}</div>
+                <div class="summary-label">Start Time</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-value">{{ formatTime .Summary.TimeRange.End }}</div>
+                <div class="summary-label">End Time</div>
+            </div>
+            {{ if gt .Summary.Errors 0 }}
+            <div class="summary-card" style="border: 2px solid var(--error);">
+                <div class="summary-value" style="color: var(--error);">{{ .Summary.Errors }}</div>
+                <div class="summary-label">Collection Errors</div>
+            </div>
+            {{ end }}
+        </section>
+
+        {{ if .Config.CompareMode }}
+        <!-- Comparison Legend -->
+        <section class="comparison-legend">
+            {{ range $index, $name := .Config.RunNames }}
+            <div class="legend-item">
+                <div class="legend-color" style="background: {{ getRunColor $index }};"></div>
+                <span>{{ $name }}</span>
+            </div>
+            {{ end }}
+        </section>
+        {{ end }}
+
+        <!-- Category Navigation -->
+        <nav class="nav-tabs">
+            {{ range .Categories }}
+            <button class="nav-tab" onclick="scrollToCategory('{{ .Name }}')">{{ .Title }}</button>
+            {{ end }}
+        </nav>
+
+        <!-- Category Sections -->
+        {{ range .Categories }}
+        <section class="category-section" id="category-{{ .Name }}">
+            <div class="category-header">
+                <h2>{{ .Title }}</h2>
+            </div>
+            <p class="category-description">{{ .Description }}</p>
+
+            <div class="charts-grid">
+                {{ range .Charts }}
+                <div class="chart-card">
+                    <h3 class="chart-title">{{ .Title }}</h3>
+                    <p class="chart-description">{{ .Description }}</p>
+                    <div class="chart-container">
+                        {{ if gt (len .Series) 0 }}
+                        <canvas id="chart-{{ .ID }}"></canvas>
+                        {{ else }}
+                        <div class="no-data">No data available for this metric</div>
+                        {{ end }}
+                    </div>
+                </div>
+                {{ end }}
+            </div>
+        </section>
+        {{ end }}
+
+        {{ if and .Config.CompareMode .ComparisonSummary }}
+        <!-- Comparison Summary Table -->
+        <section class="category-section">
+            <h2>Comparison Summary</h2>
+            <p class="category-description">Key metrics compared across test runs</p>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Metric</th>
+                        {{ range .ComparisonSummary.RunNames }}
+                        <th>{{ . }}</th>
+                        {{ end }}
+                        <th>Change</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{ range .ComparisonSummary.KeyMetrics }}
+                    <tr>
+                        <td>{{ .Name }}</td>
+                        {{ range .Values }}
+                        <td>{{ formatValue .Value $.Unit }}</td>
+                        {{ end }}
+                        <td>
+                            {{ with (index .Values (sub (len .Values) 1)) }}
+                            {{ if gt .Change 0 }}
+                            <span class="change-positive">+{{ printf "%.1f" .Change }}%</span>
+                            {{ else if lt .Change 0 }}
+                            <span class="change-negative">{{ printf "%.1f" .Change }}%</span>
+                            {{ else }}
+                            <span>0%</span>
+                            {{ end }}
+                            {{ end }}
+                        </td>
+                    </tr>
+                    {{ end }}
+                </tbody>
+            </table>
+        </section>
+        {{ end }}
+    </main>
+
+    <footer style="text-align: center; padding: 40px 20px; color: var(--text-secondary); font-size: 0.85rem;">
+        <p>Generated by Tempo Performance Test Framework</p>
+    </footer>
+
+    <script>
+        // Chart data embedded from Go template
+        const chartConfigs = {{ toJSON .Categories }};
+
+        // Color palettes
+        const defaultColors = [
+            'rgba(233, 69, 96, 1)',    // accent red
+            'rgba(52, 152, 219, 1)',   // blue
+            'rgba(46, 204, 113, 1)',   // green
+            'rgba(241, 196, 15, 1)',   // yellow
+            'rgba(155, 89, 182, 1)',   // purple
+            'rgba(230, 126, 34, 1)',   // orange
+            'rgba(26, 188, 156, 1)',   // teal
+            'rgba(149, 165, 166, 1)',  // gray
+        ];
+
+        const runColors = [
+            'rgba(233, 69, 96, 1)',    // Run 1: red
+            'rgba(52, 152, 219, 1)',   // Run 2: blue
+            'rgba(46, 204, 113, 1)',   // Run 3: green
+            'rgba(241, 196, 15, 1)',   // Run 4: yellow
+        ];
+
+        function getColor(index, alpha = 1) {
+            const color = defaultColors[index % defaultColors.length];
+            return alpha === 1 ? color : color.replace(', 1)', `, ${alpha})`);
+        }
+
+        function getRunColor(index, alpha = 1) {
+            const color = runColors[index % runColors.length];
+            return alpha === 1 ? color : color.replace(', 1)', `, ${alpha})`);
+        }
+
+        function formatValue(value, unit) {
+            if (unit === 'bytes') {
+                if (value >= 1e9) return (value / 1e9).toFixed(2) + ' GB';
+                if (value >= 1e6) return (value / 1e6).toFixed(2) + ' MB';
+                if (value >= 1e3) return (value / 1e3).toFixed(2) + ' KB';
+                return value.toFixed(0) + ' B';
+            }
+            if (unit === 'seconds') {
+                if (value < 0.001) return (value * 1e6).toFixed(0) + ' µs';
+                if (value < 1) return (value * 1000).toFixed(2) + ' ms';
+                return value.toFixed(3) + ' s';
+            }
+            if (unit === 'percent') {
+                return (value * 100).toFixed(1) + '%';
+            }
+            if (value >= 1e6) return (value / 1e6).toFixed(2) + 'M';
+            if (value >= 1e3) return (value / 1e3).toFixed(2) + 'K';
+            return value.toLocaleString(undefined, {maximumFractionDigits: 2});
+        }
+
+        function scrollToCategory(name) {
+            const element = document.getElementById('category-' + name);
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+
+        // Initialize all charts
+        document.addEventListener('DOMContentLoaded', function() {
+            chartConfigs.forEach(category => {
+                category.Charts.forEach(chart => {
+                    if (chart.Series && chart.Series.length > 0) {
+                        initChart(chart);
+                    }
+                });
+            });
+        });
+
+        function initChart(config) {
+            const ctx = document.getElementById('chart-' + config.ID);
+            if (!ctx) return;
+
+            const isCompareMode = {{ if .Config.CompareMode }}true{{ else }}false{{ end }};
+
+            const datasets = config.Series.map((series, idx) => {
+                // Determine series label
+                let label = series.Name || 'Value';
+                if (series.Labels) {
+                    // Use container or pod name from labels if available
+                    if (series.Labels.container) {
+                        label = series.Labels.container;
+                    } else if (series.Labels.pod) {
+                        label = series.Labels.pod.split('-').slice(-2).join('-');
+                    } else if (series.Labels.cache_type) {
+                        label = series.Labels.cache_type;
+                    } else if (series.Labels.status) {
+                        label = series.Labels.status;
+                    } else if (series.Labels.reason) {
+                        label = series.Labels.reason;
+                    }
+                }
+
+                // Add run name for comparison mode
+                if (isCompareMode && series.RunName) {
+                    label = `${label} (${series.RunName})`;
+                }
+
+                // Determine color based on mode
+                let borderColor, backgroundColor;
+                if (isCompareMode && series.RunName) {
+                    const runIndex = {{ if .Config.CompareMode }}{{ toJSON .Config.RunNames }}{{ else }}[]{{ end }}.indexOf(series.RunName);
+                    borderColor = getRunColor(runIndex >= 0 ? runIndex : idx);
+                    backgroundColor = getRunColor(runIndex >= 0 ? runIndex : idx, 0.2);
+                } else {
+                    borderColor = getColor(idx);
+                    backgroundColor = getColor(idx, 0.2);
+                }
+
+                // Apply color scheme override
+                if (config.Options && config.Options.ColorScheme === 'red') {
+                    borderColor = 'rgba(231, 76, 60, 1)';
+                    backgroundColor = 'rgba(231, 76, 60, 0.2)';
+                }
+
+                return {
+                    label: label,
+                    data: series.Data.map(dp => ({
+                        x: new Date(dp.Timestamp),
+                        y: dp.Value
+                    })),
+                    borderColor: borderColor,
+                    backgroundColor: backgroundColor,
+                    fill: config.Type === 'area' || (config.Options && config.Options.Stacked),
+                    tension: 0.3,
+                    pointRadius: 2,
+                    pointHoverRadius: 5,
+                    borderWidth: 2,
+                };
+            });
+
+            const yAxisUnit = config.Options ? config.Options.YAxisUnit : null;
+
+            new Chart(ctx, {
+                type: config.Type === 'area' ? 'line' : config.Type,
+                data: { datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    },
+                    plugins: {
+                        legend: {
+                            display: config.Options && config.Options.ShowLegend,
+                            position: 'bottom',
+                            labels: {
+                                color: '#aaa',
+                                usePointStyle: true,
+                                padding: 15
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: '#fff',
+                            bodyColor: '#eee',
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    label += formatValue(context.parsed.y, yAxisUnit);
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                unit: 'minute',
+                                displayFormats: {
+                                    minute: 'HH:mm'
+                                }
+                            },
+                            grid: { color: 'rgba(255,255,255,0.1)' },
+                            ticks: { color: '#aaa' }
+                        },
+                        y: {
+                            title: {
+                                display: config.Options && config.Options.YAxisLabel,
+                                text: config.Options ? config.Options.YAxisLabel : '',
+                                color: '#aaa'
+                            },
+                            grid: { color: 'rgba(255,255,255,0.1)' },
+                            ticks: {
+                                color: '#aaa',
+                                callback: function(value) {
+                                    return formatValue(value, yAxisUnit);
+                                }
+                            },
+                            stacked: config.Options && config.Options.Stacked,
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
