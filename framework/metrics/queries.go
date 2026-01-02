@@ -218,6 +218,62 @@ func GetAllQueries(namespace string) []MetricQuery {
 			Category:    "resources",
 			Type:        "range",
 		},
+		{
+			ID:          "34",
+			Name:        "memory_usage_by_component",
+			Description: "Memory usage grouped by Tempo component (distributor, ingester, etc.)",
+			Query: fmt.Sprintf(`sum by (component) (
+  label_replace(
+    label_replace(
+      label_replace(
+        label_replace(
+          label_replace(
+            label_replace(
+              container_memory_working_set_bytes{namespace="%s", container=~"tempo.*", container!=""},
+              "component", "distributor", "pod", ".*-distributor-.*"
+            ),
+            "component", "ingester", "pod", ".*-ingester-.*"
+          ),
+          "component", "querier", "pod", ".*-querier-.*"
+        ),
+        "component", "compactor", "pod", ".*-compactor-.*"
+      ),
+      "component", "gateway", "pod", ".*-gateway-.*"
+    ),
+    "component", "query-frontend", "pod", ".*-query-frontend-.*"
+  )
+)`, namespace),
+			Category: "resources",
+			Type:     "range",
+		},
+		{
+			ID:          "35",
+			Name:        "cpu_usage_by_component",
+			Description: "CPU usage grouped by Tempo component (distributor, ingester, etc.)",
+			Query: fmt.Sprintf(`sum by (component) (
+  label_replace(
+    label_replace(
+      label_replace(
+        label_replace(
+          label_replace(
+            label_replace(
+              rate(container_cpu_usage_seconds_total{namespace="%s", container=~"tempo.*", container!=""}[5m]),
+              "component", "distributor", "pod", ".*-distributor-.*"
+            ),
+            "component", "ingester", "pod", ".*-ingester-.*"
+          ),
+          "component", "querier", "pod", ".*-querier-.*"
+        ),
+        "component", "compactor", "pod", ".*-compactor-.*"
+      ),
+      "component", "gateway", "pod", ".*-gateway-.*"
+    ),
+    "component", "query-frontend", "pod", ".*-query-frontend-.*"
+  )
+)`, namespace),
+			Category: "resources",
+			Type:     "range",
+		},
 
 		// Query Performance Metrics (from k6 xk6-tempo extension - requires k6 test with Prometheus export)
 		{
