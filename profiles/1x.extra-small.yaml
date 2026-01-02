@@ -5,7 +5,6 @@ tempo:
   variant: stack
 
 k6:
-  duration: "10m"
   vus:
     min: 5
     max: 20

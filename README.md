@@ -185,7 +185,6 @@ tempo:
     cpu: "1000m"
 
 k6:
-  duration: "5m"           # Test duration
   vus:
     min: 10                # Minimum virtual users
     max: 50                # Maximum virtual users
@@ -196,13 +195,14 @@ k6:
     queriesPerSecond: 25   # Target query rate
 ```
 
+**Note:** Test duration is controlled via the `DURATION` environment variable (default: `5m`).
+
 ### Profile Fields Explained
 
 | Field | Description |
 |-------|-------------|
 | `tempo.variant` | `monolithic` (single pod) or `stack` (distributed components) |
 | `tempo.resources` | Optional CPU/memory limits; omit to use operator defaults |
-| `k6.duration` | How long the test runs (e.g., `5m`, `1h`) |
 | `k6.vus.min/max` | Virtual user range for k6 executor |
 | `k6.ingestion.mbPerSecond` | Target throughput in megabytes per second |
 | `k6.ingestion.traceProfile` | Trace complexity affecting spans per trace |
@@ -541,19 +541,25 @@ func main() {
 
 ### k6 Test Configuration
 
-These can override profile settings when running k6 directly:
+These environment variables control test execution:
 
-| Variable | Description |
-|----------|-------------|
-| `SIZE` | Test size: small, medium, large, xlarge |
-| `MB_PER_SECOND` | Override ingestion rate |
-| `QUERIES_PER_SECOND` | Override query rate |
-| `DURATION` | Override test duration |
-| `VUS_MIN` | Override minimum VUs |
-| `VUS_MAX` | Override maximum VUs |
-| `TRACE_PROFILE` | Override trace profile |
-| `TEMPO_ENDPOINT` | OTLP gRPC endpoint |
-| `TEMPO_QUERY_ENDPOINT` | HTTP query endpoint |
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `DURATION` | `5m` | **Test duration** (e.g., `10m`, `1h`) |
+| `SIZE` | - | Test size: small, medium, large, xlarge |
+| `MB_PER_SECOND` | - | Override ingestion rate |
+| `QUERIES_PER_SECOND` | - | Override query rate |
+| `VUS_MIN` | - | Override minimum VUs |
+| `VUS_MAX` | - | Override maximum VUs |
+| `TRACE_PROFILE` | - | Override trace profile |
+| `TEMPO_ENDPOINT` | - | OTLP gRPC endpoint |
+| `TEMPO_QUERY_ENDPOINT` | - | HTTP query endpoint |
+
+Example:
+```bash
+# Run a 30-minute test
+DURATION=30m go run ./cmd/perf-runner --profiles=1x.small
+```
 
 ## Troubleshooting
 

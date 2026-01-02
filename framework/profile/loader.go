@@ -104,9 +104,7 @@ func Validate(p *Profile) error {
 	}
 
 	// Validate K6 config
-	if p.K6.Duration == "" {
-		return fmt.Errorf("k6.duration is required")
-	}
+	// Duration is optional - defaults to 5m if not set (can be overridden via DURATION env var)
 	if p.K6.VUs.Min <= 0 {
 		return fmt.Errorf("k6.vus.min must be positive")
 	}
