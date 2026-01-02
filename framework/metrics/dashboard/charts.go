@@ -180,20 +180,6 @@ func GetCategoryChartConfigs() map[string]CategoryChartConfig {
 					Options:     ChartOptions{YAxisLabel: "cores"},
 				},
 				{
-					MetricNames: []string{"memory_usage_by_container"},
-					Title:       "Memory by Container",
-					Description: "Memory usage breakdown by container type",
-					Type:        ChartTypeArea,
-					Options:     ChartOptions{YAxisLabel: "bytes", YAxisUnit: "bytes", ShowLegend: true, Stacked: true},
-				},
-				{
-					MetricNames: []string{"cpu_usage_by_container"},
-					Title:       "CPU by Container",
-					Description: "CPU usage breakdown by container type",
-					Type:        ChartTypeArea,
-					Options:     ChartOptions{YAxisLabel: "cores", ShowLegend: true, Stacked: true},
-				},
-				{
 					MetricNames: []string{"memory_usage_by_pod"},
 					Title:       "Memory by Pod",
 					Description: "Memory usage breakdown by individual pod instance",

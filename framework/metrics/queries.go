@@ -188,22 +188,6 @@ func GetAllQueries(namespace string) []MetricQuery {
 		},
 		{
 			ID:          "21",
-			Name:        "cpu_usage_by_container",
-			Description: "CPU cores used by each individual Tempo container",
-			Query:       fmt.Sprintf(`sum(rate(container_cpu_usage_seconds_total{namespace="%s", container=~"tempo.*", container!=""}[5m])) by (container)`, namespace),
-			Category:    "resources",
-			Type:        "range",
-		},
-		{
-			ID:          "22",
-			Name:        "memory_usage_by_container",
-			Description: "Memory working set bytes used by each individual Tempo container",
-			Query:       fmt.Sprintf(`sum(container_memory_working_set_bytes{namespace="%s", container=~"tempo.*"}) by (container)`, namespace),
-			Category:    "resources",
-			Type:        "range",
-		},
-		{
-			ID:          "23",
 			Name:        "memory_usage_by_pod",
 			Description: "Memory working set bytes for each Tempo container instance",
 			Query:       fmt.Sprintf(`container_memory_working_set_bytes{namespace="%s", container=~"tempo.*"}`, namespace),
@@ -211,7 +195,7 @@ func GetAllQueries(namespace string) []MetricQuery {
 			Type:        "range",
 		},
 		{
-			ID:          "24",
+			ID:          "22",
 			Name:        "cpu_usage_by_pod",
 			Description: "CPU cores used by each Tempo container instance",
 			Query:       fmt.Sprintf(`rate(container_cpu_usage_seconds_total{namespace="%s", container=~"tempo.*", container!=""}[5m])`, namespace),
@@ -219,7 +203,7 @@ func GetAllQueries(namespace string) []MetricQuery {
 			Type:        "range",
 		},
 		{
-			ID:          "34",
+			ID:          "23",
 			Name:        "memory_usage_by_component",
 			Description: "Memory usage grouped by Tempo component (distributor, ingester, etc.)",
 			Query: fmt.Sprintf(`sum by (component) (
@@ -247,7 +231,7 @@ func GetAllQueries(namespace string) []MetricQuery {
 			Type:     "range",
 		},
 		{
-			ID:          "35",
+			ID:          "24",
 			Name:        "cpu_usage_by_component",
 			Description: "CPU usage grouped by Tempo component (distributor, ingester, etc.)",
 			Query: fmt.Sprintf(`sum by (component) (
