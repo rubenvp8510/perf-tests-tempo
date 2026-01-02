@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tempo Performance Test Report - Performance Report</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <style>
+        :root {
+            --bg-primary: #1a1a2e;
+            --bg-secondary: #16213e;
+            --bg-card: #0f3460;
+            --text-primary: #eee;
+            --text-secondary: #aaa;
+            --accent: #e94560;
+            --accent-secondary: #0f4c75;
+            --success: #2ecc71;
+            --warning: #f1c40f;
+            --error: #e74c3c;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .container { max-width: 1800px; margin: 0 auto; padding: 20px; }
+
+        header {
+            background: var(--bg-secondary);
+            padding: 30px 0;
+            margin-bottom: 30px;
+            border-bottom: 3px solid var(--accent);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        h1 { font-size: 2rem; font-weight: 600; }
+        h2 { font-size: 1.5rem; margin-bottom: 20px; color: var(--accent); }
+        h3 { font-size: 1.1rem; margin-bottom: 10px; }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .summary-card {
+            background: var(--bg-card);
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            transition: transform 0.2s;
+        }
+
+        .summary-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .summary-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .summary-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .category-section {
+            margin-bottom: 40px;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 25px;
+        }
+
+        .category-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .category-description {
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+            font-size: 0.95rem;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 20px;
+        }
+
+        .chart-card {
+            background: var(--bg-card);
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .chart-title {
+            font-size: 1rem;
+            margin-bottom: 5px;
+        }
+
+        .chart-description {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            margin-bottom: 15px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 280px;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            position: sticky;
+            top: 0;
+            background: var(--bg-primary);
+            padding: 15px 0;
+            z-index: 100;
+        }
+
+        .nav-tab {
+            padding: 10px 20px;
+            background: var(--bg-secondary);
+            border: none;
+            border-radius: 6px;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+        }
+
+        .nav-tab:hover, .nav-tab.active {
+            background: var(--accent);
+        }
+
+        .metadata {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .badge-profile {
+            background: var(--accent);
+            color: white;
+        }
+
+        .badge-test {
+            background: var(--accent-secondary);
+            color: white;
+        }
+
+        
+
+         
+        @media print {
+            body {
+                background: white;
+                color: black;
+            }
+
+            :root {
+                --bg-primary: white;
+                --bg-secondary: #f5f5f5;
+                --bg-card: #fafafa;
+                --text-primary: #333;
+                --text-secondary: #666;
+                --accent: #e94560;
+            }
+
+            .nav-tabs {
+                display: none;
+            }
+
+            .category-section {
+                break-inside: avoid;
+                page-break-inside: avoid;
+            }
+
+            .chart-card {
+                break-inside: avoid;
+                page-break-inside: avoid;
+            }
+
+            .charts-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            header {
+                border-bottom-color: var(--accent);
+            }
+
+            .summary-card {
+                border: 1px solid #ddd;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header-content {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+
+        .no-data {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 200px;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        .print-button {
+            padding: 10px 20px;
+            background: var(--accent);
+            border: none;
+            border-radius: 6px;
+            color: white;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .print-button:hover {
+            opacity: 0.9;
+        }
+
+        @media print {
+            .print-button {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container header-content">
+            <div>
+                <h1>Tempo Performance Test Report</h1>
+                <p class="metadata">
+                    <span class="badge badge-profile">small</span>
+                    <span class="badge badge-test">combined</span>
+                    &nbsp;&bull;&nbsp;
+                    Generated: 2026-01-01 12:02:26
+                    
+                    &nbsp;&bull;&nbsp;
+                    Duration: 5m
+                    
+                </p>
+            </div>
+            <button class="print-button" onclick="window.print()">Export to PDF</button>
+        </div>
+    </header>
+
+    <main class="container">
+        
+        <section class="summary-grid">
+            <div class="summary-card">
+                <div class="summary-value">21</div>
+                <div class="summary-label">Metric Series</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-value">80</div>
+                <div class="summary-label">Data Points</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-value">11:16:52</div>
+                <div class="summary-label">Start Time</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-value">11:21:52</div>
+                <div class="summary-label">End Time</div>
+            </div>
+            
+        </section>
+
+        
+
+        
+        <nav class="nav-tabs">
+            
+            <button class="nav-tab" onclick="scrollToCategory('ingestion')">Ingestion Performance</button>
+            
+            <button class="nav-tab" onclick="scrollToCategory('compactor')">Compactor</button>
+            
+            <button class="nav-tab" onclick="scrollToCategory('storage')">Storage I/O</button>
+            
+            <button class="nav-tab" onclick="scrollToCategory('cache')">Cache Performance</button>
+            
+            <button class="nav-tab" onclick="scrollToCategory('resources')">Resource Utilization</button>
+            
+            <button class="nav-tab" onclick="scrollToCategory('query_performance')">Query Performance</button>
+            
+            <button class="nav-tab" onclick="scrollToCategory('query_latency')">Query Latency</button>
+            
+            <button class="nav-tab" onclick="scrollToCategory('querier')">Querier</button>
+            
+        </nav>
+
+        
+        
+        <section class="category-section" id="category-ingestion">
+            <div class="category-header">
+                <h2>Ingestion Performance</h2>
+            </div>
+            <p class="category-description">Metrics related to trace ingestion through the distributor and ingester components</p>
+
+            <div class="charts-grid">
+                
+                <div class="chart-card">
+                    <h3 class="chart-title">Spans Ingestion Rate</h3>
+                    <p class="chart-description">Rate of spans accepted and refused by Tempo&#39;s receiver</p>
+                    <div class="chart-container">
+                        
+                        <div class="no-data">No data available for this metric</div>
+                        
+                    </div>
+                </div>
+                
+                <div class="chart-card">
+                    <h3 class="chart-title">Bytes Received Rate</h3>
+                    <p class="chart-description">Rate of bytes received by the distributor</p>
+                    <div class="chart-container">
+                        
+                        <div class="no-data">No data available for this metric</div>
+                        
+                    </div>
+                </div>
+                
+                <div class="chart-card">
+                    <h3 class="chart-title">Push Latency P99</h3>
+                    <p class="chart-description">99th percentile latency of push operations to the distributor</p>
+                    <div class="chart-container">
+                        
+                        <div class="no-data">No data available for this metric</div>
+                        
+                    </div>
+                </div>
+                
+                <div class="chart-card">
+                    <h3 class="chart-title">Ingestion Errors</h3>
+                    <p class="chart-description">Rate of append failures and discarded spans</p>
+                    <div class="chart-container">
+                        
+                        <div class="no-data">No data available for this metric</div>
+                        
+                    </div>
+                </div>
+                
+                <div class="chart-card">
+                    <h3 class="chart-title">Live Traces per Ingester</h3>
+                    <p class="chart-description">Number of traces currently in memory on each ingester</p>
+                    <div class="chart-container">
+                        
+                        <div class="no-data">No data available for this metric</div>
+                        
+                    </div>
+                </div>
+                
+                <div class="chart-card">
+                    <h3 class="chart-title">Blocks Flushed Rate</h3>
+                    <p class="chart-description">Rate of blocks flushed from ingester to storage</p>
+                    <div class="chart-container">
+                        
+                        <div class="no-data">No data available for this metric</div>
+                        
+                    </div>
+                </div>
+                
+                <div class="chart-card">
+                    <h3 class="chart-title">Flush Queue Length</h3>
+                    <p class="chart-description">Number of blocks waiting to be flushed</p>
+                    <div class="chart-container">
+                        
+                        <div class="no-data">No data available for this metric</div>
+                        
+                    </div>
+                </div>
+                
+            </div>
+        </section>
+        
+        <section class="category-section" id="category-compactor">
+            <div class="category-header">
+                <h2>Compactor</h2>
+            </div>
+            <p class="category-description">Block compaction and storage optimization metrics</p>
+
+            <div class="charts-grid">
+                
+                <div class="chart-card">
+                    <h3 class="chart-title">Blocks Compacted Rate</h3>
+                    <p class="chart-description">Rate of blocks successfully compacted</p>
+                    <div class="chart-container">
+                        
+                        <div class="no-data">No data available for this metric</div>
+                        
+                    </div>
+                </div>
+                
+                <div class="chart-card">
+                    <h3 class="chart-title">Compactor Bytes Written</h3>
+                    <p class="chart-description">Rate of bytes written by compactor to storage</p>
+                    <div class="chart-container">
+                        
+                        <div class="no-data">No data available for this metric</div>
+                        
+                    </div>
+                </div>
+                
+                <div class="chart-card">
+                    <h3 class="chart-title">Outstanding Blocks</h3>
+                    <p class="chart-description">Number of blocks waiting to be compacted</p>
+                    <div class="chart-container">
+                        
+                        <div class="no-data">No data available for this metric</div>
+                        
+                    </div>
+                </div>
+                
+            </div>
+        </section>
+        
+        <section class="category-section" id="category-storage">
+            <div class="category-header">
+                <h2>Storage I/O</h2>
+            </div>
+            <p class="category-description">Storage read/write latencies and throughput</p>
+
+            <div class="charts-grid">
+                
+                <div class="chart-card">
+                    <h3 class="chart-title">Bytes Inspected</h3>
+                    <p class="chart-description">Rate of bytes read from storage by query frontend</p>
+                    <div class="chart-container">
+                        
+                        <div class="no-data">No data available for this metric</div>
+                        
+                    </div>
+                </div>
+                
+                <div class="chart-card">
+                    <h3 class="chart-title">Storage Latency P99</h3>
+                    <p class="chart-description">99th percentile latency of storage read and write operations</p>
+                    <div class="chart-container">
+                        
+                        <div class="no-data">No data available for this metric</div>
+                        
+                    </div>
+                </div>
+                
+            </div>
+        </section>
+        
+        <section class="category-section" id="category-cache">
+            <div class="category-header">
+                <h2>Cache Performance</h2>
+            </div>
+            <p class="category-description">Cache hit ratios and efficiency</p>
+
+            <div class="charts-grid">
+                
+                <div class="chart-card">
+                    <h3 class="chart-title">Cache Hit Ratio</h3>
+                    <p class="chart-description">Overall cache hit rate (0-1)</p>
+                    <div class="chart-container">
+                        
+                        <div class="no-data">No data available for this metric</div>
+                        
+                    </div>
+                </div>
+                
+                <div class="chart-card">
+                    <h3 class="chart-title">Cache Hits by Type</h3>
+                    <p class="chart-description">Cache hit rate grouped by cache type</p>
+                    <div class="chart-container">
+                        
+                        <div class="no-data">No data available for this metric</div>
+                        
+                    </div>
+                </div>
+                
+                <div class="chart-card">
+                    <h3 class="chart-title">Cache Misses by Type</h3>
+                    <p class="chart-description">Cache miss rate grouped by cache type</p>
+                    <div class="chart-container">
+                        
+                        <div class="no-data">No data available for this metric</div>
+                        
+                    </div>
+                </div>
+                
+            </div>
+        </section>
+        
+        <section class="category-section" id="category-resources">
+            <div class="category-header">
+                <h2>Resource Utilization</h2>
+            </div>
+            <p class="category-description">CPU and memory usage by Tempo components</p>
+
+            <div class="charts-grid">
+                
+                <div class="chart-card">
+                    <h3 class="chart-title">Total Memory Usage</h3>
+                    <p class="chart-description">Total memory working set bytes used by all Tempo containers</p>
+                    <div class="chart-container">
+                        
+                        <canvas id="chart-resources-16"></canvas>
+                        
+                    </div>
+                </div>
+                
+                <div class="chart-card">
+                    <h3 class="chart-title">Total CPU Usage</h3>
+                    <p class="chart-description">Total CPU cores used by all Tempo containers</p>
+                    <div class="chart-container">
+                        
+                        <div class="no-data">No data available for this metric</div>
+                        
+                    </div>
+                </div>
+                
+                <div class="chart-card">
+                    <h3 class="chart-title">Memory by Container</h3>
+                    <p class="chart-description">Memory usage breakdown by container type</p>
+                    <div class="chart-container">
+                        
+                        <canvas id="chart-resources-18"></canvas>
+                        
+                    </div>
+                </div>
+                
+                <div class="chart-card">
+                    <h3 class="chart-title">CPU by Container</h3>
+                    <p class="chart-description">CPU usage breakdown by container type</p>
+                    <div class="chart-container">
+                        
+                        <div class="no-data">No data available for this metric</div>
+                        
+                    </div>
+                </div>
+                
+            </div>
+        </section>
+        
+        <section class="category-section" id="category-query_performance">
+            <div class="category-header">
+                <h2>Query Performance</h2>
+            </div>
+            <p class="category-description">Query success rates and throughput</p>
+
+            <div class="charts-grid">
+                
+                <div class="chart-card">
+                    <h3 class="chart-title">Query Rate</h3>
+                    <p class="chart-description">Total query rate (queries per second)</p>
+                    <div class="chart-container">
+                        
+                        <div class="no-data">No data available for this metric</div>
+                        
+                    </div>
+                </div>
+                
+                <div class="chart-card">
+                    <h3 class="chart-title">Query Failure Rate</h3>
+                    <p class="chart-description">Rate of failed queries per second</p>
+                    <div class="chart-container">
+                        
+                        <div class="no-data">No data available for this metric</div>
+                        
+                    </div>
+                </div>
+                
+                <div class="chart-card">
+                    <h3 class="chart-title">Spans Returned Rate</h3>
+                    <p class="chart-description">Rate of total spans returned by queries</p>
+                    <div class="chart-container">
+                        
+                        <div class="no-data">No data available for this metric</div>
+                        
+                    </div>
+                </div>
+                
+            </div>
+        </section>
+        
+        <section class="category-section" id="category-query_latency">
+            <div class="category-header">
+                <h2>Query Latency</h2>
+            </div>
+            <p class="category-description">Query latency percentiles and distribution</p>
+
+            <div class="charts-grid">
+                
+                <div class="chart-card">
+                    <h3 class="chart-title">Query Latency Percentiles</h3>
+                    <p class="chart-description">90th and 99th percentile query latency</p>
+                    <div class="chart-container">
+                        
+                        <div class="no-data">No data available for this metric</div>
+                        
+                    </div>
+                </div>
+                
+                <div class="chart-card">
+                    <h3 class="chart-title">Query Failures Over Time</h3>
+                    <p class="chart-description">Query failure rate time series</p>
+                    <div class="chart-container">
+                        
+                        <div class="no-data">No data available for this metric</div>
+                        
+                    </div>
+                </div>
+                
+            </div>
+        </section>
+        
+        <section class="category-section" id="category-querier">
+            <div class="category-header">
+                <h2>Querier</h2>
+            </div>
+            <p class="category-description">Querier queue depth and job processing</p>
+
+            <div class="charts-grid">
+                
+                <div class="chart-card">
+                    <h3 class="chart-title">Queue Length</h3>
+                    <p class="chart-description">Number of queries waiting in querier queue per pod</p>
+                    <div class="chart-container">
+                        
+                        <div class="no-data">No data available for this metric</div>
+                        
+                    </div>
+                </div>
+                
+                <div class="chart-card">
+                    <h3 class="chart-title">Jobs in Progress</h3>
+                    <p class="chart-description">Number of jobs currently being processed by querier</p>
+                    <div class="chart-container">
+                        
+                        <div class="no-data">No data available for this metric</div>
+                        
+                    </div>
+                </div>
+                
+            </div>
+        </section>
+        
+
+        
+    </main>
+
+    <footer style="text-align: center; padding: 40px 20px; color: var(--text-secondary); font-size: 0.85rem;">
+        <p>Generated by Tempo Performance Test Framework</p>
+    </footer>
+
+    <script>
+        
+        const chartConfigs = [{"Name":"ingestion","Title":"Ingestion Performance","Description":"Metrics related to trace ingestion through the distributor and ingester components","Charts":[{"ID":"ingestion-1","Title":"Spans Ingestion Rate","Description":"Rate of spans accepted and refused by Tempo's receiver","Type":"line","Series":[],"Options":{"YAxisLabel":"spans/sec","YAxisUnit":"","Stacked":false,"ShowLegend":true,"ShowGrid":false,"ColorScheme":""}},{"ID":"ingestion-2","Title":"Bytes Received Rate","Description":"Rate of bytes received by the distributor","Type":"area","Series":[],"Options":{"YAxisLabel":"bytes/sec","YAxisUnit":"bytes","Stacked":false,"ShowLegend":true,"ShowGrid":false,"ColorScheme":""}},{"ID":"ingestion-3","Title":"Push Latency P99","Description":"99th percentile latency of push operations to the distributor","Type":"line","Series":[],"Options":{"YAxisLabel":"seconds","YAxisUnit":"seconds","Stacked":false,"ShowLegend":false,"ShowGrid":false,"ColorScheme":""}},{"ID":"ingestion-4","Title":"Ingestion Errors","Description":"Rate of append failures and discarded spans","Type":"line","Series":[],"Options":{"YAxisLabel":"errors/sec","YAxisUnit":"","Stacked":false,"ShowLegend":true,"ShowGrid":false,"ColorScheme":"red"}},{"ID":"ingestion-5","Title":"Live Traces per Ingester","Description":"Number of traces currently in memory on each ingester","Type":"line","Series":[],"Options":{"YAxisLabel":"traces","YAxisUnit":"","Stacked":false,"ShowLegend":true,"ShowGrid":false,"ColorScheme":""}},{"ID":"ingestion-6","Title":"Blocks Flushed Rate","Description":"Rate of blocks flushed from ingester to storage","Type":"line","Series":[],"Options":{"YAxisLabel":"blocks/sec","YAxisUnit":"","Stacked":false,"ShowLegend":true,"ShowGrid":false,"ColorScheme":""}},{"ID":"ingestion-7","Title":"Flush Queue Length","Description":"Number of blocks waiting to be flushed","Type":"line","Series":[],"Options":{"YAxisLabel":"blocks","YAxisUnit":"","Stacked":false,"ShowLegend":true,"ShowGrid":false,"ColorScheme":""}}]},{"Name":"compactor","Title":"Compactor","Description":"Block compaction and storage optimization metrics","Charts":[{"ID":"compactor-8","Title":"Blocks Compacted Rate","Description":"Rate of blocks successfully compacted","Type":"line","Series":[],"Options":{"YAxisLabel":"blocks/sec","YAxisUnit":"","Stacked":false,"ShowLegend":false,"ShowGrid":false,"ColorScheme":""}},{"ID":"compactor-9","Title":"Compactor Bytes Written","Description":"Rate of bytes written by compactor to storage","Type":"area","Series":[],"Options":{"YAxisLabel":"bytes/sec","YAxisUnit":"bytes","Stacked":false,"ShowLegend":false,"ShowGrid":false,"ColorScheme":""}},{"ID":"compactor-10","Title":"Outstanding Blocks","Description":"Number of blocks waiting to be compacted","Type":"line","Series":[],"Options":{"YAxisLabel":"blocks","YAxisUnit":"","Stacked":false,"ShowLegend":false,"ShowGrid":false,"ColorScheme":""}}]},{"Name":"storage","Title":"Storage I/O","Description":"Storage read/write latencies and throughput","Charts":[{"ID":"storage-11","Title":"Bytes Inspected","Description":"Rate of bytes read from storage by query frontend","Type":"area","Series":[],"Options":{"YAxisLabel":"bytes/sec","YAxisUnit":"bytes","Stacked":false,"ShowLegend":false,"ShowGrid":false,"ColorScheme":""}},{"ID":"storage-12","Title":"Storage Latency P99","Description":"99th percentile latency of storage read and write operations","Type":"line","Series":[],"Options":{"YAxisLabel":"seconds","YAxisUnit":"seconds","Stacked":false,"ShowLegend":true,"ShowGrid":false,"ColorScheme":""}}]},{"Name":"cache","Title":"Cache Performance","Description":"Cache hit ratios and efficiency","Charts":[{"ID":"cache-13","Title":"Cache Hit Ratio","Description":"Overall cache hit rate (0-1)","Type":"line","Series":[],"Options":{"YAxisLabel":"ratio","YAxisUnit":"percent","Stacked":false,"ShowLegend":false,"ShowGrid":false,"ColorScheme":""}},{"ID":"cache-14","Title":"Cache Hits by Type","Description":"Cache hit rate grouped by cache type","Type":"line","Series":[],"Options":{"YAxisLabel":"hits/sec","YAxisUnit":"","Stacked":false,"ShowLegend":true,"ShowGrid":false,"ColorScheme":""}},{"ID":"cache-15","Title":"Cache Misses by Type","Description":"Cache miss rate grouped by cache type","Type":"line","Series":[],"Options":{"YAxisLabel":"misses/sec","YAxisUnit":"","Stacked":false,"ShowLegend":true,"ShowGrid":false,"ColorScheme":"red"}}]},{"Name":"resources","Title":"Resource Utilization","Description":"CPU and memory usage by Tempo components","Charts":[{"ID":"resources-16","Title":"Total Memory Usage","Description":"Total memory working set bytes used by all Tempo containers","Type":"area","Series":[{"Name":"memory_usage_total","Labels":{},"Data":[{"Timestamp":"2026-01-01T11:16:52Z","Value":98570240},{"Timestamp":"2026-01-01T11:17:52Z","Value":298110976},{"Timestamp":"2026-01-01T11:18:52Z","Value":485965824},{"Timestamp":"2026-01-01T11:19:52Z","Value":593285120},{"Timestamp":"2026-01-01T11:20:52Z","Value":665505792},{"Timestamp":"2026-01-01T11:21:52Z","Value":666685440}],"RunName":""}],"Options":{"YAxisLabel":"bytes","YAxisUnit":"bytes","Stacked":false,"ShowLegend":false,"ShowGrid":false,"ColorScheme":""}},{"ID":"resources-17","Title":"Total CPU Usage","Description":"Total CPU cores used by all Tempo containers","Type":"area","Series":[],"Options":{"YAxisLabel":"cores","YAxisUnit":"","Stacked":false,"ShowLegend":false,"ShowGrid":false,"ColorScheme":""}},{"ID":"resources-18","Title":"Memory by Container","Description":"Memory usage breakdown by container type","Type":"area","Series":[{"Name":"memory_usage_by_container","Labels":{"container":"tempo-gateway-opa"},"Data":[{"Timestamp":"2026-01-01T11:17:52Z","Value":13238272},{"Timestamp":"2026-01-01T11:18:52Z","Value":25853952},{"Timestamp":"2026-01-01T11:19:52Z","Value":26931200},{"Timestamp":"2026-01-01T11:20:52Z","Value":27140096},{"Timestamp":"2026-01-01T11:21:52Z","Value":27521024}],"RunName":""},{"Name":"memory_usage_by_container","Labels":{"container":"tempo-query"},"Data":[{"Timestamp":"2026-01-01T11:17:52Z","Value":15949824},{"Timestamp":"2026-01-01T11:18:52Z","Value":7606272},{"Timestamp":"2026-01-01T11:19:52Z","Value":8384512},{"Timestamp":"2026-01-01T11:20:52Z","Value":8400896},{"Timestamp":"2026-01-01T11:21:52Z","Value":8888320}],"RunName":""},{"Name":"memory_usage_by_container","Labels":{"container":"tempo"},"Data":[{"Timestamp":"2026-01-01T11:16:52Z","Value":98570240},{"Timestamp":"2026-01-01T11:17:52Z","Value":228483072},{"Timestamp":"2026-01-01T11:18:52Z","Value":410759168},{"Timestamp":"2026-01-01T11:19:52Z","Value":516222976},{"Timestamp":"2026-01-01T11:20:52Z","Value":579571712},{"Timestamp":"2026-01-01T11:21:52Z","Value":581877760}],"RunName":""},{"Name":"memory_usage_by_container","Labels":{"container":"tempo-gateway"},"Data":[{"Timestamp":"2026-01-01T11:17:52Z","Value":40439808},{"Timestamp":"2026-01-01T11:18:52Z","Value":41746432},{"Timestamp":"2026-01-01T11:19:52Z","Value":41746432},{"Timestamp":"2026-01-01T11:20:52Z","Value":50393088},{"Timestamp":"2026-01-01T11:21:52Z","Value":48398336}],"RunName":""}],"Options":{"YAxisLabel":"bytes","YAxisUnit":"bytes","Stacked":true,"ShowLegend":true,"ShowGrid":false,"ColorScheme":""}},{"ID":"resources-19","Title":"CPU by Container","Description":"CPU usage breakdown by container type","Type":"area","Series":[],"Options":{"YAxisLabel":"cores","YAxisUnit":"","Stacked":true,"ShowLegend":true,"ShowGrid":false,"ColorScheme":""}}]},{"Name":"query_performance","Title":"Query Performance","Description":"Query success rates and throughput","Charts":[{"ID":"query_performance-20","Title":"Query Rate","Description":"Total query rate (queries per second)","Type":"line","Series":[],"Options":{"YAxisLabel":"queries/sec","YAxisUnit":"","Stacked":false,"ShowLegend":false,"ShowGrid":false,"ColorScheme":""}},{"ID":"query_performance-21","Title":"Query Failure Rate","Description":"Rate of failed queries per second","Type":"line","Series":[],"Options":{"YAxisLabel":"failures/sec","YAxisUnit":"","Stacked":false,"ShowLegend":false,"ShowGrid":false,"ColorScheme":"red"}},{"ID":"query_performance-22","Title":"Spans Returned Rate","Description":"Rate of total spans returned by queries","Type":"line","Series":[],"Options":{"YAxisLabel":"spans/sec","YAxisUnit":"","Stacked":false,"ShowLegend":false,"ShowGrid":false,"ColorScheme":""}}]},{"Name":"query_latency","Title":"Query Latency","Description":"Query latency percentiles and distribution","Charts":[{"ID":"query_latency-23","Title":"Query Latency Percentiles","Description":"90th and 99th percentile query latency","Type":"line","Series":[],"Options":{"YAxisLabel":"seconds","YAxisUnit":"seconds","Stacked":false,"ShowLegend":true,"ShowGrid":false,"ColorScheme":""}},{"ID":"query_latency-24","Title":"Query Failures Over Time","Description":"Query failure rate time series","Type":"line","Series":[],"Options":{"YAxisLabel":"failures/sec","YAxisUnit":"","Stacked":false,"ShowLegend":false,"ShowGrid":false,"ColorScheme":"red"}}]},{"Name":"querier","Title":"Querier","Description":"Querier queue depth and job processing","Charts":[{"ID":"querier-25","Title":"Queue Length","Description":"Number of queries waiting in querier queue per pod","Type":"line","Series":[],"Options":{"YAxisLabel":"queries","YAxisUnit":"","Stacked":false,"ShowLegend":true,"ShowGrid":false,"ColorScheme":""}},{"ID":"querier-26","Title":"Jobs in Progress","Description":"Number of jobs currently being processed by querier","Type":"line","Series":[],"Options":{"YAxisLabel":"jobs","YAxisUnit":"","Stacked":false,"ShowLegend":true,"ShowGrid":false,"ColorScheme":""}}]}];
+
+        
+        const defaultColors = [
+            'rgba(233, 69, 96, 1)',    
+            'rgba(52, 152, 219, 1)',   
+            'rgba(46, 204, 113, 1)',   
+            'rgba(241, 196, 15, 1)',   
+            'rgba(155, 89, 182, 1)',   
+            'rgba(230, 126, 34, 1)',   
+            'rgba(26, 188, 156, 1)',   
+            'rgba(149, 165, 166, 1)',  
+        ];
+
+        const runColors = [
+            'rgba(233, 69, 96, 1)',    
+            'rgba(52, 152, 219, 1)',   
+            'rgba(46, 204, 113, 1)',   
+            'rgba(241, 196, 15, 1)',   
+        ];
+
+        function getColor(index, alpha = 1) {
+            const color = defaultColors[index % defaultColors.length];
+            return alpha === 1 ? color : color.replace(', 1)', `, ${alpha})`);
+        }
+
+        function getRunColor(index, alpha = 1) {
+            const color = runColors[index % runColors.length];
+            return alpha === 1 ? color : color.replace(', 1)', `, ${alpha})`);
+        }
+
+        function formatValue(value, unit) {
+            if (unit === 'bytes') {
+                if (value >= 1e9) return (value / 1e9).toFixed(2) + ' GB';
+                if (value >= 1e6) return (value / 1e6).toFixed(2) + ' MB';
+                if (value >= 1e3) return (value / 1e3).toFixed(2) + ' KB';
+                return value.toFixed(0) + ' B';
+            }
+            if (unit === 'seconds') {
+                if (value < 0.001) return (value * 1e6).toFixed(0) + ' µs';
+                if (value < 1) return (value * 1000).toFixed(2) + ' ms';
+                return value.toFixed(3) + ' s';
+            }
+            if (unit === 'percent') {
+                return (value * 100).toFixed(1) + '%';
+            }
+            if (value >= 1e6) return (value / 1e6).toFixed(2) + 'M';
+            if (value >= 1e3) return (value / 1e3).toFixed(2) + 'K';
+            return value.toLocaleString(undefined, {maximumFractionDigits: 2});
+        }
+
+        function scrollToCategory(name) {
+            const element = document.getElementById('category-' + name);
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            chartConfigs.forEach(category => {
+                category.Charts.forEach(chart => {
+                    if (chart.Series && chart.Series.length > 0) {
+                        initChart(chart);
+                    }
+                });
+            });
+        });
+
+        function initChart(config) {
+            const ctx = document.getElementById('chart-' + config.ID);
+            if (!ctx) return;
+
+            const isCompareMode = false;
+
+            const datasets = config.Series.map((series, idx) => {
+                
+                let label = series.Name || 'Value';
+                if (series.Labels) {
+                    
+                    if (series.Labels.container) {
+                        label = series.Labels.container;
+                    } else if (series.Labels.pod) {
+                        label = series.Labels.pod.split('-').slice(-2).join('-');
+                    } else if (series.Labels.cache_type) {
+                        label = series.Labels.cache_type;
+                    } else if (series.Labels.status) {
+                        label = series.Labels.status;
+                    } else if (series.Labels.reason) {
+                        label = series.Labels.reason;
+                    }
+                }
+
+                
+                if (isCompareMode && series.RunName) {
+                    label = `${label} (${series.RunName})`;
+                }
+
+                
+                let borderColor, backgroundColor;
+                if (isCompareMode && series.RunName) {
+                    const runIndex = [].indexOf(series.RunName);
+                    borderColor = getRunColor(runIndex >= 0 ? runIndex : idx);
+                    backgroundColor = getRunColor(runIndex >= 0 ? runIndex : idx, 0.2);
+                } else {
+                    borderColor = getColor(idx);
+                    backgroundColor = getColor(idx, 0.2);
+                }
+
+                
+                if (config.Options && config.Options.ColorScheme === 'red') {
+                    borderColor = 'rgba(231, 76, 60, 1)';
+                    backgroundColor = 'rgba(231, 76, 60, 0.2)';
+                }
+
+                return {
+                    label: label,
+                    data: series.Data.map(dp => ({
+                        x: new Date(dp.Timestamp),
+                        y: dp.Value
+                    })),
+                    borderColor: borderColor,
+                    backgroundColor: backgroundColor,
+                    fill: config.Type === 'area' || (config.Options && config.Options.Stacked),
+                    tension: 0.3,
+                    pointRadius: 2,
+                    pointHoverRadius: 5,
+                    borderWidth: 2,
+                };
+            });
+
+            const yAxisUnit = config.Options ? config.Options.YAxisUnit : null;
+
+            new Chart(ctx, {
+                type: config.Type === 'area' ? 'line' : config.Type,
+                data: { datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    },
+                    plugins: {
+                        legend: {
+                            display: config.Options && config.Options.ShowLegend,
+                            position: 'bottom',
+                            labels: {
+                                color: '#aaa',
+                                usePointStyle: true,
+                                padding: 15
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: '#fff',
+                            bodyColor: '#eee',
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    label += formatValue(context.parsed.y, yAxisUnit);
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                unit: 'minute',
+                                displayFormats: {
+                                    minute: 'HH:mm'
+                                }
+                            },
+                            grid: { color: 'rgba(255,255,255,0.1)' },
+                            ticks: { color: '#aaa' }
+                        },
+                        y: {
+                            title: {
+                                display: config.Options && config.Options.YAxisLabel,
+                                text: config.Options ? config.Options.YAxisLabel : '',
+                                color: '#aaa'
+                            },
+                            grid: { color: 'rgba(255,255,255,0.1)' },
+                            ticks: {
+                                color: '#aaa',
+                                callback: function(value) {
+                                    return formatValue(value, yAxisUnit);
+                                }
+                            },
+                            stacked: config.Options && config.Options.Stacked,
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>

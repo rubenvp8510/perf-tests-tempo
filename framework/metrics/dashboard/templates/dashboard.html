@@ -532,11 +532,19 @@
                 // Determine series label
                 let label = series.Name || 'Value';
                 if (series.Labels) {
-                    // Use container or pod name from labels if available
-                    if (series.Labels.container) {
+                    // When both pod and container are present, combine them for clarity
+                    if (series.Labels.pod && series.Labels.container) {
+                        // Extract component from pod name (e.g., "tempo-tempostack-ingester-0" -> "ingester-0")
+                        const podParts = series.Labels.pod.split('-');
+                        const componentIdx = podParts.findIndex(p => ['distributor', 'ingester', 'querier', 'compactor', 'gateway', 'query'].includes(p));
+                        const shortPod = componentIdx >= 0 ? podParts.slice(componentIdx).join('-') : podParts.slice(-2).join('-');
+                        label = `${shortPod}/${series.Labels.container}`;
+                    } else if (series.Labels.container) {
                         label = series.Labels.container;
                     } else if (series.Labels.pod) {
                         label = series.Labels.pod.split('-').slice(-2).join('-');
+                    } else if (series.Labels.component) {
+                        label = series.Labels.component;
                     } else if (series.Labels.cache_type) {
                         label = series.Labels.cache_type;
                     } else if (series.Labels.status) {

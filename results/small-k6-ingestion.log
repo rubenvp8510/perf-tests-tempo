@@ -1,0 +1,1188 @@
+
+         /\      Grafana   /‾‾/  
+    /\  /  \     |\  __   /  /   
+   /  \/    \    | |/ /  /   ‾‾\ 
+  /          \   |   (  |  (‾)  |
+ / __________ \  |_|\_\  \_____/ 
+
+     execution: local
+        script: ingestion-test.js
+        output: Prometheus remote write (http://prometheus-user-workload.openshift-user-workload-monitoring.svc:9091/api/v1/write)
+
+     scenarios: (100.00%) 1 scenario, 20 max VUs, 5m30s max duration (incl. graceful stop):
+              * ingestion: 18.00 iterations/s for 5m0s (maxVUs: 5-20, gracefulStop: 30s)
+
+time="2026-01-02T15:43:15Z" level=info msg="\n================================================================================\n  TEMPO INGESTION PERFORMANCE TEST\n================================================================================\n  Size:              medium\n  Description:       Moderate load - typical production baseline\n  Target Rate:       0.1 MB/s\n  Traces/sec:        18 (3.42 per VU)\n  Trace Profile:     small (8-15 spans)\n  Duration:          5m\n  VUs:               5 - 20\n  Endpoint:          otel-collector-collector.tempo-perf-small.svc.cluster.local:4317 (OTel Collector)\n================================================================================\n" source=console
+
+running (0m01.0s), 00/05 VUs, 18 complete and 0 interrupted iterations
+ingestion   [   0% ] 00/05 VUs  0m01.0s/5m0s  18.00 iters/s
+
+running (0m02.0s), 00/05 VUs, 36 complete and 0 interrupted iterations
+ingestion   [   1% ] 00/05 VUs  0m02.0s/5m0s  18.00 iters/s
+
+running (0m03.0s), 00/05 VUs, 54 complete and 0 interrupted iterations
+ingestion   [   1% ] 00/05 VUs  0m03.0s/5m0s  18.00 iters/s
+
+running (0m04.0s), 00/05 VUs, 72 complete and 0 interrupted iterations
+ingestion   [   1% ] 00/05 VUs  0m04.0s/5m0s  18.00 iters/s
+
+running (0m05.0s), 00/05 VUs, 90 complete and 0 interrupted iterations
+ingestion   [   2% ] 00/05 VUs  0m05.0s/5m0s  18.00 iters/s
+
+running (0m06.0s), 00/05 VUs, 108 complete and 0 interrupted iterations
+ingestion   [   2% ] 00/05 VUs  0m06.0s/5m0s  18.00 iters/s
+time="2026-01-02T15:43:21Z" level=error msg="Failed to send the time series data to the endpoint" error="read tcp 10.217.1.147:57482->10.217.5.249:9091: read: connection reset by peer" output="Prometheus remote write"
+
+running (0m07.0s), 00/05 VUs, 126 complete and 0 interrupted iterations
+ingestion   [   2% ] 00/05 VUs  0m07.0s/5m0s  18.00 iters/s
+
+running (0m08.0s), 00/05 VUs, 144 complete and 0 interrupted iterations
+ingestion   [   3% ] 00/05 VUs  0m08.0s/5m0s  18.00 iters/s
+
+running (0m09.0s), 00/05 VUs, 162 complete and 0 interrupted iterations
+ingestion   [   3% ] 00/05 VUs  0m09.0s/5m0s  18.00 iters/s
+
+running (0m10.0s), 00/05 VUs, 180 complete and 0 interrupted iterations
+ingestion   [   3% ] 00/05 VUs  0m10.0s/5m0s  18.00 iters/s
+time="2026-01-02T15:43:25Z" level=error msg="Failed to send the time series data to the endpoint" error="read tcp 10.217.1.147:47058->10.217.5.249:9091: read: connection reset by peer" output="Prometheus remote write"
+
+running (0m11.0s), 00/05 VUs, 198 complete and 0 interrupted iterations
+ingestion   [   4% ] 00/05 VUs  0m11.0s/5m0s  18.00 iters/s
+
+running (0m12.0s), 00/05 VUs, 216 complete and 0 interrupted iterations
+ingestion   [   4% ] 00/05 VUs  0m12.0s/5m0s  18.00 iters/s
+
+running (0m13.0s), 00/05 VUs, 234 complete and 0 interrupted iterations
+ingestion   [   4% ] 00/05 VUs  0m13.0s/5m0s  18.00 iters/s
+
+running (0m14.0s), 00/05 VUs, 252 complete and 0 interrupted iterations
+ingestion   [   5% ] 00/05 VUs  0m14.0s/5m0s  18.00 iters/s
+
+running (0m15.0s), 00/05 VUs, 270 complete and 0 interrupted iterations
+ingestion   [   5% ] 00/05 VUs  0m15.0s/5m0s  18.00 iters/s
+time="2026-01-02T15:43:30Z" level=error msg="Failed to send the time series data to the endpoint" error="read tcp 10.217.1.147:47060->10.217.5.249:9091: read: connection reset by peer" output="Prometheus remote write"
+
+running (0m16.0s), 00/05 VUs, 288 complete and 0 interrupted iterations
+ingestion   [   5% ] 00/05 VUs  0m16.0s/5m0s  18.00 iters/s
+
+running (0m17.0s), 00/05 VUs, 306 complete and 0 interrupted iterations
+ingestion   [   6% ] 00/05 VUs  0m17.0s/5m0s  18.00 iters/s
+
+running (0m18.0s), 00/05 VUs, 324 complete and 0 interrupted iterations
+ingestion   [   6% ] 00/05 VUs  0m18.0s/5m0s  18.00 iters/s
+
+running (0m19.0s), 00/05 VUs, 342 complete and 0 interrupted iterations
+ingestion   [   6% ] 00/05 VUs  0m19.0s/5m0s  18.00 iters/s
+
+running (0m20.0s), 00/05 VUs, 360 complete and 0 interrupted iterations
+ingestion   [   7% ] 00/05 VUs  0m20.0s/5m0s  18.00 iters/s
+time="2026-01-02T15:43:35Z" level=error msg="Failed to send the time series data to the endpoint" error="read tcp 10.217.1.147:42874->10.217.5.249:9091: read: connection reset by peer" output="Prometheus remote write"
+
+running (0m21.0s), 00/05 VUs, 378 complete and 0 interrupted iterations
+ingestion   [   7% ] 00/05 VUs  0m21.0s/5m0s  18.00 iters/s
+
+running (0m22.0s), 00/05 VUs, 396 complete and 0 interrupted iterations
+ingestion   [   7% ] 00/05 VUs  0m22.0s/5m0s  18.00 iters/s
+
+running (0m23.0s), 00/05 VUs, 414 complete and 0 interrupted iterations
+ingestion   [   8% ] 00/05 VUs  0m23.0s/5m0s  18.00 iters/s
+
+running (0m24.0s), 00/05 VUs, 432 complete and 0 interrupted iterations
+ingestion   [   8% ] 00/05 VUs  0m24.0s/5m0s  18.00 iters/s
+
+running (0m25.0s), 00/05 VUs, 450 complete and 0 interrupted iterations
+ingestion   [   8% ] 00/05 VUs  0m25.0s/5m0s  18.00 iters/s
+time="2026-01-02T15:43:40Z" level=error msg="Failed to send the time series data to the endpoint" error="read tcp 10.217.1.147:42882->10.217.5.249:9091: read: connection reset by peer" output="Prometheus remote write"
+
+running (0m26.0s), 00/05 VUs, 468 complete and 0 interrupted iterations
+ingestion   [   9% ] 00/05 VUs  0m26.0s/5m0s  18.00 iters/s
+
+running (0m27.0s), 00/05 VUs, 486 complete and 0 interrupted iterations
+ingestion   [   9% ] 00/05 VUs  0m27.0s/5m0s  18.00 iters/s
+
+running (0m28.0s), 00/05 VUs, 504 complete and 0 interrupted iterations
+ingestion   [   9% ] 00/05 VUs  0m28.0s/5m0s  18.00 iters/s
+
+running (0m29.0s), 00/05 VUs, 522 complete and 0 interrupted iterations
+ingestion   [  10% ] 00/05 VUs  0m29.0s/5m0s  18.00 iters/s
+
+running (0m30.0s), 00/05 VUs, 540 complete and 0 interrupted iterations
+ingestion   [  10% ] 00/05 VUs  0m30.0s/5m0s  18.00 iters/s
+time="2026-01-02T15:43:45Z" level=error msg="Failed to send the time series data to the endpoint" error="read tcp 10.217.1.147:52776->10.217.5.249:9091: read: connection reset by peer" output="Prometheus remote write"
+
+running (0m31.0s), 00/05 VUs, 558 complete and 0 interrupted iterations
+ingestion   [  10% ] 00/05 VUs  0m31.0s/5m0s  18.00 iters/s
+
+running (0m32.0s), 00/05 VUs, 576 complete and 0 interrupted iterations
+ingestion   [  11% ] 00/05 VUs  0m32.0s/5m0s  18.00 iters/s
+
+running (0m33.0s), 00/05 VUs, 594 complete and 0 interrupted iterations
+ingestion   [  11% ] 00/05 VUs  0m33.0s/5m0s  18.00 iters/s
+
+running (0m34.0s), 00/05 VUs, 612 complete and 0 interrupted iterations
+ingestion   [  11% ] 00/05 VUs  0m34.0s/5m0s  18.00 iters/s
+
+running (0m35.0s), 00/05 VUs, 630 complete and 0 interrupted iterations
+ingestion   [  12% ] 00/05 VUs  0m35.0s/5m0s  18.00 iters/s
+time="2026-01-02T15:43:50Z" level=error msg="Failed to send the time series data to the endpoint" error="read tcp 10.217.1.147:52778->10.217.5.249:9091: read: connection reset by peer" output="Prometheus remote write"
+
+running (0m36.0s), 00/05 VUs, 648 complete and 0 interrupted iterations
+ingestion   [  12% ] 00/05 VUs  0m36.0s/5m0s  18.00 iters/s
+
+running (0m37.0s), 00/05 VUs, 666 complete and 0 interrupted iterations
+ingestion   [  12% ] 00/05 VUs  0m37.0s/5m0s  18.00 iters/s
+
+running (0m38.0s), 00/05 VUs, 684 complete and 0 interrupted iterations
+ingestion   [  13% ] 00/05 VUs  0m38.0s/5m0s  18.00 iters/s
+
+running (0m39.0s), 00/05 VUs, 702 complete and 0 interrupted iterations
+ingestion   [  13% ] 00/05 VUs  0m39.0s/5m0s  18.00 iters/s
+
+running (0m40.0s), 00/05 VUs, 720 complete and 0 interrupted iterations
+ingestion   [  13% ] 00/05 VUs  0m40.0s/5m0s  18.00 iters/s
+time="2026-01-02T15:43:55Z" level=error msg="Failed to send the time series data to the endpoint" error="read tcp 10.217.1.147:41058->10.217.5.249:9091: read: connection reset by peer" output="Prometheus remote write"
+
+running (0m41.0s), 00/05 VUs, 738 complete and 0 interrupted iterations
+ingestion   [  14% ] 00/05 VUs  0m41.0s/5m0s  18.00 iters/s
+
+running (0m42.0s), 00/05 VUs, 756 complete and 0 interrupted iterations
+ingestion   [  14% ] 00/05 VUs  0m42.0s/5m0s  18.00 iters/s
+
+running (0m43.0s), 00/05 VUs, 774 complete and 0 interrupted iterations
+ingestion   [  14% ] 00/05 VUs  0m43.0s/5m0s  18.00 iters/s
+
+running (0m44.0s), 00/05 VUs, 792 complete and 0 interrupted iterations
+ingestion   [  15% ] 00/05 VUs  0m44.0s/5m0s  18.00 iters/s
+
+running (0m45.0s), 00/05 VUs, 810 complete and 0 interrupted iterations
+ingestion   [  15% ] 00/05 VUs  0m45.0s/5m0s  18.00 iters/s
+time="2026-01-02T15:44:00Z" level=error msg="Failed to send the time series data to the endpoint" error="read tcp 10.217.1.147:41066->10.217.5.249:9091: read: connection reset by peer" output="Prometheus remote write"
+
+running (0m46.0s), 00/05 VUs, 828 complete and 0 interrupted iterations
+ingestion   [  15% ] 00/05 VUs  0m46.0s/5m0s  18.00 iters/s
+
+running (0m47.0s), 00/05 VUs, 846 complete and 0 interrupted iterations
+ingestion   [  16% ] 00/05 VUs  0m47.0s/5m0s  18.00 iters/s
+
+running (0m48.0s), 00/05 VUs, 864 complete and 0 interrupted iterations
+ingestion   [  16% ] 00/05 VUs  0m48.0s/5m0s  18.00 iters/s
+
+running (0m49.0s), 00/05 VUs, 882 complete and 0 interrupted iterations
+ingestion   [  16% ] 00/05 VUs  0m49.0s/5m0s  18.00 iters/s
+
+running (0m50.0s), 00/05 VUs, 900 complete and 0 interrupted iterations
+ingestion   [  17% ] 00/05 VUs  0m50.0s/5m0s  18.00 iters/s
+time="2026-01-02T15:44:05Z" level=error msg="Failed to send the time series data to the endpoint" error="read tcp 10.217.1.147:56154->10.217.5.249:9091: read: connection reset by peer" output="Prometheus remote write"
+
+running (0m51.0s), 00/05 VUs, 918 complete and 0 interrupted iterations
+ingestion   [  17% ] 00/05 VUs  0m51.0s/5m0s  18.00 iters/s
+
+running (0m52.0s), 00/05 VUs, 936 complete and 0 interrupted iterations
+ingestion   [  17% ] 00/05 VUs  0m52.0s/5m0s  18.00 iters/s
+
+running (0m53.0s), 00/05 VUs, 954 complete and 0 interrupted iterations
+ingestion   [  18% ] 00/05 VUs  0m53.0s/5m0s  18.00 iters/s
+
+running (0m54.0s), 00/05 VUs, 972 complete and 0 interrupted iterations
+ingestion   [  18% ] 00/05 VUs  0m54.0s/5m0s  18.00 iters/s
+
+running (0m55.0s), 00/05 VUs, 990 complete and 0 interrupted iterations
+ingestion   [  18% ] 00/05 VUs  0m55.0s/5m0s  18.00 iters/s
+time="2026-01-02T15:44:10Z" level=error msg="Failed to send the time series data to the endpoint" error="read tcp 10.217.1.147:56162->10.217.5.249:9091: read: connection reset by peer" output="Prometheus remote write"
+
+running (0m56.0s), 00/05 VUs, 1008 complete and 0 interrupted iterations
+ingestion   [  19% ] 00/05 VUs  0m56.0s/5m0s  18.00 iters/s
+
+running (0m57.0s), 00/05 VUs, 1026 complete and 0 interrupted iterations
+ingestion   [  19% ] 00/05 VUs  0m57.0s/5m0s  18.00 iters/s
+
+running (0m58.0s), 00/05 VUs, 1044 complete and 0 interrupted iterations
+ingestion   [  19% ] 00/05 VUs  0m58.0s/5m0s  18.00 iters/s
+
+running (0m59.0s), 00/05 VUs, 1062 complete and 0 interrupted iterations
+ingestion   [  20% ] 00/05 VUs  0m59.0s/5m0s  18.00 iters/s
+
+running (1m00.0s), 00/05 VUs, 1080 complete and 0 interrupted iterations
+ingestion   [  20% ] 00/05 VUs  1m00.0s/5m0s  18.00 iters/s
+time="2026-01-02T15:44:15Z" level=error msg="Failed to send the time series data to the endpoint" error="read tcp 10.217.1.147:34864->10.217.5.249:9091: read: connection reset by peer" output="Prometheus remote write"
+
+running (1m01.0s), 00/05 VUs, 1098 complete and 0 interrupted iterations
+ingestion   [  20% ] 00/05 VUs  1m01.0s/5m0s  18.00 iters/s
+
+running (1m02.0s), 00/05 VUs, 1116 complete and 0 interrupted iterations
+ingestion   [  21% ] 00/05 VUs  1m02.0s/5m0s  18.00 iters/s
+
+running (1m03.0s), 00/05 VUs, 1134 complete and 0 interrupted iterations
+ingestion   [  21% ] 00/05 VUs  1m03.0s/5m0s  18.00 iters/s
+
+running (1m04.0s), 00/05 VUs, 1152 complete and 0 interrupted iterations
+ingestion   [  21% ] 00/05 VUs  1m04.0s/5m0s  18.00 iters/s
+
+running (1m05.0s), 00/05 VUs, 1170 complete and 0 interrupted iterations
+ingestion   [  22% ] 00/05 VUs  1m05.0s/5m0s  18.00 iters/s
+time="2026-01-02T15:44:20Z" level=error msg="Failed to send the time series data to the endpoint" error="read tcp 10.217.1.147:34870->10.217.5.249:9091: read: connection reset by peer" output="Prometheus remote write"
+
+running (1m06.0s), 00/05 VUs, 1188 complete and 0 interrupted iterations
+ingestion   [  22% ] 00/05 VUs  1m06.0s/5m0s  18.00 iters/s
+
+running (1m07.0s), 00/05 VUs, 1206 complete and 0 interrupted iterations
+ingestion   [  22% ] 00/05 VUs  1m07.0s/5m0s  18.00 iters/s
+
+running (1m08.0s), 00/05 VUs, 1224 complete and 0 interrupted iterations
+ingestion   [  23% ] 00/05 VUs  1m08.0s/5m0s  18.00 iters/s
+
+running (1m09.0s), 00/05 VUs, 1242 complete and 0 interrupted iterations
+ingestion   [  23% ] 00/05 VUs  1m09.0s/5m0s  18.00 iters/s
+
+running (1m10.0s), 00/05 VUs, 1260 complete and 0 interrupted iterations
+ingestion   [  23% ] 00/05 VUs  1m10.0s/5m0s  18.00 iters/s
+time="2026-01-02T15:44:25Z" level=error msg="Failed to send the time series data to the endpoint" error="read tcp 10.217.1.147:46862->10.217.5.249:9091: read: connection reset by peer" output="Prometheus remote write"
+
+running (1m11.0s), 00/05 VUs, 1278 complete and 0 interrupted iterations
+ingestion   [  24% ] 00/05 VUs  1m11.0s/5m0s  18.00 iters/s
+
+running (1m12.0s), 00/05 VUs, 1296 complete and 0 interrupted iterations
+ingestion   [  24% ] 00/05 VUs  1m12.0s/5m0s  18.00 iters/s
+
+running (1m13.0s), 00/05 VUs, 1314 complete and 0 interrupted iterations
+ingestion   [  24% ] 00/05 VUs  1m13.0s/5m0s  18.00 iters/s
+
+running (1m14.0s), 00/05 VUs, 1332 complete and 0 interrupted iterations
+ingestion   [  25% ] 00/05 VUs  1m14.0s/5m0s  18.00 iters/s
+
+running (1m15.0s), 00/05 VUs, 1350 complete and 0 interrupted iterations
+ingestion   [  25% ] 00/05 VUs  1m15.0s/5m0s  18.00 iters/s
+time="2026-01-02T15:44:30Z" level=error msg="Failed to send the time series data to the endpoint" error="read tcp 10.217.1.147:46866->10.217.5.249:9091: read: connection reset by peer" output="Prometheus remote write"
+
+running (1m16.0s), 00/05 VUs, 1368 complete and 0 interrupted iterations
+ingestion   [  25% ] 00/05 VUs  1m16.0s/5m0s  18.00 iters/s
+
+running (1m17.0s), 00/05 VUs, 1386 complete and 0 interrupted iterations
+ingestion   [  26% ] 00/05 VUs  1m17.0s/5m0s  18.00 iters/s
+
+running (1m18.0s), 00/05 VUs, 1404 complete and 0 interrupted iterations
+ingestion   [  26% ] 00/05 VUs  1m18.0s/5m0s  18.00 iters/s
+
+running (1m19.0s), 00/05 VUs, 1422 complete and 0 interrupted iterations
+ingestion   [  26% ] 00/05 VUs  1m19.0s/5m0s  18.00 iters/s
+
+running (1m20.0s), 00/05 VUs, 1440 complete and 0 interrupted iterations
+ingestion   [  27% ] 00/05 VUs  1m20.0s/5m0s  18.00 iters/s
+time="2026-01-02T15:44:35Z" level=error msg="Failed to send the time series data to the endpoint" error="read tcp 10.217.1.147:33944->10.217.5.249:9091: read: connection reset by peer" output="Prometheus remote write"
+
+running (1m21.0s), 00/05 VUs, 1458 complete and 0 interrupted iterations
+ingestion   [  27% ] 00/05 VUs  1m21.0s/5m0s  18.00 iters/s
+
+running (1m22.0s), 00/05 VUs, 1476 complete and 0 interrupted iterations
+ingestion   [  27% ] 00/05 VUs  1m22.0s/5m0s  18.00 iters/s
+
+running (1m23.0s), 00/05 VUs, 1494 complete and 0 interrupted iterations
+ingestion   [  28% ] 00/05 VUs  1m23.0s/5m0s  18.00 iters/s
+
+running (1m24.0s), 00/05 VUs, 1512 complete and 0 interrupted iterations
+ingestion   [  28% ] 00/05 VUs  1m24.0s/5m0s  18.00 iters/s
+
+running (1m25.0s), 00/05 VUs, 1530 complete and 0 interrupted iterations
+ingestion   [  28% ] 00/05 VUs  1m25.0s/5m0s  18.00 iters/s
+time="2026-01-02T15:44:40Z" level=error msg="Failed to send the time series data to the endpoint" error="read tcp 10.217.1.147:33954->10.217.5.249:9091: read: connection reset by peer" output="Prometheus remote write"
+
+running (1m26.0s), 00/05 VUs, 1548 complete and 0 interrupted iterations
+ingestion   [  29% ] 00/05 VUs  1m26.0s/5m0s  18.00 iters/s
+
+running (1m27.0s), 00/05 VUs, 1566 complete and 0 interrupted iterations
+ingestion   [  29% ] 00/05 VUs  1m27.0s/5m0s  18.00 iters/s
+
+running (1m28.0s), 00/05 VUs, 1584 complete and 0 interrupted iterations
+ingestion   [  29% ] 00/05 VUs  1m28.0s/5m0s  18.00 iters/s
+
+running (1m29.0s), 00/05 VUs, 1602 complete and 0 interrupted iterations
+ingestion   [  30% ] 00/05 VUs  1m29.0s/5m0s  18.00 iters/s
+
+running (1m30.0s), 00/05 VUs, 1620 complete and 0 interrupted iterations
+ingestion   [  30% ] 00/05 VUs  1m30.0s/5m0s  18.00 iters/s
+time="2026-01-02T15:44:45Z" level=error msg="Failed to send the time series data to the endpoint" error="read tcp 10.217.1.147:38880->10.217.5.249:9091: read: connection reset by peer" output="Prometheus remote write"
+
+running (1m31.0s), 00/05 VUs, 1638 complete and 0 interrupted iterations
+ingestion   [  30% ] 00/05 VUs  1m31.0s/5m0s  18.00 iters/s
+
+running (1m32.0s), 00/05 VUs, 1656 complete and 0 interrupted iterations
+ingestion   [  31% ] 00/05 VUs  1m32.0s/5m0s  18.00 iters/s
+
+running (1m33.0s), 00/05 VUs, 1674 complete and 0 interrupted iterations
+ingestion   [  31% ] 00/05 VUs  1m33.0s/5m0s  18.00 iters/s
+
+running (1m34.0s), 00/05 VUs, 1692 complete and 0 interrupted iterations
+ingestion   [  31% ] 00/05 VUs  1m34.0s/5m0s  18.00 iters/s
+
+running (1m35.0s), 00/05 VUs, 1710 complete and 0 interrupted iterations
+ingestion   [  32% ] 00/05 VUs  1m35.0s/5m0s  18.00 iters/s
+time="2026-01-02T15:44:50Z" level=error msg="Failed to send the time series data to the endpoint" error="read tcp 10.217.1.147:38890->10.217.5.249:9091: read: connection reset by peer" output="Prometheus remote write"
+
+running (1m36.0s), 00/05 VUs, 1728 complete and 0 interrupted iterations
+ingestion   [  32% ] 00/05 VUs  1m36.0s/5m0s  18.00 iters/s
+
+running (1m37.0s), 00/05 VUs, 1746 complete and 0 interrupted iterations
+ingestion   [  32% ] 00/05 VUs  1m37.0s/5m0s  18.00 iters/s
+
+running (1m38.0s), 00/05 VUs, 1764 complete and 0 interrupted iterations
+ingestion   [  33% ] 00/05 VUs  1m38.0s/5m0s  18.00 iters/s
+
+running (1m39.0s), 00/05 VUs, 1782 complete and 0 interrupted iterations
+ingestion   [  33% ] 00/05 VUs  1m39.0s/5m0s  18.00 iters/s
+
+running (1m40.0s), 00/05 VUs, 1800 complete and 0 interrupted iterations
+ingestion   [  33% ] 00/05 VUs  1m40.0s/5m0s  18.00 iters/s
+time="2026-01-02T15:44:55Z" level=error msg="Failed to send the time series data to the endpoint" error="read tcp 10.217.1.147:38690->10.217.5.249:9091: read: connection reset by peer" output="Prometheus remote write"
+
+running (1m41.0s), 00/05 VUs, 1818 complete and 0 interrupted iterations
+ingestion   [  34% ] 00/05 VUs  1m41.0s/5m0s  18.00 iters/s
+
+running (1m42.0s), 00/05 VUs, 1836 complete and 0 interrupted iterations
+ingestion   [  34% ] 00/05 VUs  1m42.0s/5m0s  18.00 iters/s
+
+running (1m43.0s), 00/05 VUs, 1854 complete and 0 interrupted iterations
+ingestion   [  34% ] 00/05 VUs  1m43.0s/5m0s  18.00 iters/s
+
+running (1m44.0s), 00/05 VUs, 1872 complete and 0 interrupted iterations
+ingestion   [  35% ] 00/05 VUs  1m44.0s/5m0s  18.00 iters/s
+
+running (1m45.0s), 00/05 VUs, 1890 complete and 0 interrupted iterations
+ingestion   [  35% ] 00/05 VUs  1m45.0s/5m0s  18.00 iters/s
+time="2026-01-02T15:45:00Z" level=error msg="Failed to send the time series data to the endpoint" error="read tcp 10.217.1.147:38696->10.217.5.249:9091: read: connection reset by peer" output="Prometheus remote write"
+
+running (1m46.0s), 00/05 VUs, 1908 complete and 0 interrupted iterations
+ingestion   [  35% ] 00/05 VUs  1m46.0s/5m0s  18.00 iters/s
+
+running (1m47.0s), 00/05 VUs, 1926 complete and 0 interrupted iterations
+ingestion   [  36% ] 00/05 VUs  1m47.0s/5m0s  18.00 iters/s
+
+running (1m48.0s), 00/05 VUs, 1944 complete and 0 interrupted iterations
+ingestion   [  36% ] 00/05 VUs  1m48.0s/5m0s  18.00 iters/s
+
+running (1m49.0s), 00/05 VUs, 1962 complete and 0 interrupted iterations
+ingestion   [  36% ] 00/05 VUs  1m49.0s/5m0s  18.00 iters/s
+
+running (1m50.0s), 00/05 VUs, 1980 complete and 0 interrupted iterations
+ingestion   [  37% ] 00/05 VUs  1m50.0s/5m0s  18.00 iters/s
+time="2026-01-02T15:45:05Z" level=error msg="Failed to send the time series data to the endpoint" error="read tcp 10.217.1.147:36704->10.217.5.249:9091: read: connection reset by peer" output="Prometheus remote write"
+
+running (1m51.0s), 00/05 VUs, 1998 complete and 0 interrupted iterations
+ingestion   [  37% ] 00/05 VUs  1m51.0s/5m0s  18.00 iters/s
+
+running (1m52.0s), 00/05 VUs, 2016 complete and 0 interrupted iterations
+ingestion   [  37% ] 00/05 VUs  1m52.0s/5m0s  18.00 iters/s
+
+running (1m53.0s), 00/05 VUs, 2034 complete and 0 interrupted iterations
+ingestion   [  38% ] 00/05 VUs  1m53.0s/5m0s  18.00 iters/s
+
+running (1m54.0s), 00/05 VUs, 2052 complete and 0 interrupted iterations
+ingestion   [  38% ] 00/05 VUs  1m54.0s/5m0s  18.00 iters/s
+
+running (1m55.0s), 00/05 VUs, 2070 complete and 0 interrupted iterations
+ingestion   [  38% ] 00/05 VUs  1m55.0s/5m0s  18.00 iters/s
+time="2026-01-02T15:45:10Z" level=error msg="Failed to send the time series data to the endpoint" error="read tcp 10.217.1.147:36710->10.217.5.249:9091: read: connection reset by peer" output="Prometheus remote write"
+
+running (1m56.0s), 00/05 VUs, 2088 complete and 0 interrupted iterations
+ingestion   [  39% ] 00/05 VUs  1m56.0s/5m0s  18.00 iters/s
+
+running (1m57.0s), 00/05 VUs, 2106 complete and 0 interrupted iterations
+ingestion   [  39% ] 00/05 VUs  1m57.0s/5m0s  18.00 iters/s
+
+running (1m58.0s), 00/05 VUs, 2124 complete and 0 interrupted iterations
+ingestion   [  39% ] 00/05 VUs  1m58.0s/5m0s  18.00 iters/s
+
+running (1m59.0s), 00/05 VUs, 2142 complete and 0 interrupted iterations
+ingestion   [  40% ] 00/05 VUs  1m59.0s/5m0s  18.00 iters/s
+
+running (2m00.0s), 00/05 VUs, 2160 complete and 0 interrupted iterations
+ingestion   [  40% ] 00/05 VUs  2m00.0s/5m0s  18.00 iters/s
+time="2026-01-02T15:45:15Z" level=error msg="Failed to send the time series data to the endpoint" error="read tcp 10.217.1.147:38388->10.217.5.249:9091: read: connection reset by peer" output="Prometheus remote write"
+
+running (2m01.0s), 00/05 VUs, 2178 complete and 0 interrupted iterations
+ingestion   [  40% ] 00/05 VUs  2m01.0s/5m0s  18.00 iters/s
+
+running (2m02.0s), 00/05 VUs, 2196 complete and 0 interrupted iterations
+ingestion   [  41% ] 00/05 VUs  2m02.0s/5m0s  18.00 iters/s
+
+running (2m03.0s), 00/05 VUs, 2214 complete and 0 interrupted iterations
+ingestion   [  41% ] 00/05 VUs  2m03.0s/5m0s  18.00 iters/s
+
+running (2m04.0s), 00/05 VUs, 2232 complete and 0 interrupted iterations
+ingestion   [  41% ] 00/05 VUs  2m04.0s/5m0s  18.00 iters/s
+
+running (2m05.0s), 00/05 VUs, 2250 complete and 0 interrupted iterations
+ingestion   [  42% ] 00/05 VUs  2m05.0s/5m0s  18.00 iters/s
+time="2026-01-02T15:45:20Z" level=error msg="Failed to send the time series data to the endpoint" error="read tcp 10.217.1.147:38404->10.217.5.249:9091: read: connection reset by peer" output="Prometheus remote write"
+
+running (2m06.0s), 00/05 VUs, 2268 complete and 0 interrupted iterations
+ingestion   [  42% ] 00/05 VUs  2m06.0s/5m0s  18.00 iters/s
+
+running (2m07.0s), 00/05 VUs, 2286 complete and 0 interrupted iterations
+ingestion   [  42% ] 00/05 VUs  2m07.0s/5m0s  18.00 iters/s
+
+running (2m08.0s), 00/05 VUs, 2304 complete and 0 interrupted iterations
+ingestion   [  43% ] 00/05 VUs  2m08.0s/5m0s  18.00 iters/s
+
+running (2m09.0s), 00/05 VUs, 2322 complete and 0 interrupted iterations
+ingestion   [  43% ] 00/05 VUs  2m09.0s/5m0s  18.00 iters/s
+
+running (2m10.0s), 00/05 VUs, 2340 complete and 0 interrupted iterations
+ingestion   [  43% ] 00/05 VUs  2m10.0s/5m0s  18.00 iters/s
+time="2026-01-02T15:45:25Z" level=error msg="Failed to send the time series data to the endpoint" error="read tcp 10.217.1.147:57852->10.217.5.249:9091: read: connection reset by peer" output="Prometheus remote write"
+
+running (2m11.0s), 00/05 VUs, 2358 complete and 0 interrupted iterations
+ingestion   [  44% ] 00/05 VUs  2m11.0s/5m0s  18.00 iters/s
+
+running (2m12.0s), 00/05 VUs, 2376 complete and 0 interrupted iterations
+ingestion   [  44% ] 00/05 VUs  2m12.0s/5m0s  18.00 iters/s
+
+running (2m13.0s), 00/05 VUs, 2394 complete and 0 interrupted iterations
+ingestion   [  44% ] 00/05 VUs  2m13.0s/5m0s  18.00 iters/s
+
+running (2m14.0s), 00/05 VUs, 2412 complete and 0 interrupted iterations
+ingestion   [  45% ] 00/05 VUs  2m14.0s/5m0s  18.00 iters/s
+
+running (2m15.0s), 00/05 VUs, 2430 complete and 0 interrupted iterations
+ingestion   [  45% ] 00/05 VUs  2m15.0s/5m0s  18.00 iters/s
+time="2026-01-02T15:45:30Z" level=error msg="Failed to send the time series data to the endpoint" error="read tcp 10.217.1.147:57862->10.217.5.249:9091: read: connection reset by peer" output="Prometheus remote write"
+
+running (2m16.0s), 00/05 VUs, 2448 complete and 0 interrupted iterations
+ingestion   [  45% ] 00/05 VUs  2m16.0s/5m0s  18.00 iters/s
+
+running (2m17.0s), 00/05 VUs, 2466 complete and 0 interrupted iterations
+ingestion   [  46% ] 00/05 VUs  2m17.0s/5m0s  18.00 iters/s
+
+running (2m18.0s), 00/05 VUs, 2484 complete and 0 interrupted iterations
+ingestion   [  46% ] 00/05 VUs  2m18.0s/5m0s  18.00 iters/s
+
+running (2m19.0s), 00/05 VUs, 2502 complete and 0 interrupted iterations
+ingestion   [  46% ] 00/05 VUs  2m19.0s/5m0s  18.00 iters/s
+
+running (2m20.0s), 00/05 VUs, 2520 complete and 0 interrupted iterations
+ingestion   [  47% ] 00/05 VUs  2m20.0s/5m0s  18.00 iters/s
+time="2026-01-02T15:45:35Z" level=error msg="Failed to send the time series data to the endpoint" error="read tcp 10.217.1.147:33006->10.217.5.249:9091: read: connection reset by peer" output="Prometheus remote write"
+
+running (2m21.0s), 00/05 VUs, 2538 complete and 0 interrupted iterations
+ingestion   [  47% ] 00/05 VUs  2m21.0s/5m0s  18.00 iters/s
+
+running (2m22.0s), 00/05 VUs, 2556 complete and 0 interrupted iterations
+ingestion   [  47% ] 00/05 VUs  2m22.0s/5m0s  18.00 iters/s
+
+running (2m23.0s), 00/05 VUs, 2574 complete and 0 interrupted iterations
+ingestion   [  48% ] 00/05 VUs  2m23.0s/5m0s  18.00 iters/s
+
+running (2m24.0s), 00/05 VUs, 2592 complete and 0 interrupted iterations
+ingestion   [  48% ] 00/05 VUs  2m24.0s/5m0s  18.00 iters/s
+
+running (2m25.0s), 00/05 VUs, 2610 complete and 0 interrupted iterations
+ingestion   [  48% ] 00/05 VUs  2m25.0s/5m0s  18.00 iters/s
+time="2026-01-02T15:45:40Z" level=error msg="Failed to send the time series data to the endpoint" error="read tcp 10.217.1.147:33014->10.217.5.249:9091: read: connection reset by peer" output="Prometheus remote write"
+
+running (2m26.0s), 00/05 VUs, 2628 complete and 0 interrupted iterations
+ingestion   [  49% ] 00/05 VUs  2m26.0s/5m0s  18.00 iters/s
+
+running (2m27.0s), 00/05 VUs, 2646 complete and 0 interrupted iterations
+ingestion   [  49% ] 00/05 VUs  2m27.0s/5m0s  18.00 iters/s
+
+running (2m28.0s), 00/05 VUs, 2664 complete and 0 interrupted iterations
+ingestion   [  49% ] 00/05 VUs  2m28.0s/5m0s  18.00 iters/s
+
+running (2m29.0s), 00/05 VUs, 2682 complete and 0 interrupted iterations
+ingestion   [  50% ] 00/05 VUs  2m29.0s/5m0s  18.00 iters/s
+
+running (2m30.0s), 00/05 VUs, 2700 complete and 0 interrupted iterations
+ingestion   [  50% ] 00/05 VUs  2m30.0s/5m0s  18.00 iters/s
+time="2026-01-02T15:45:45Z" level=error msg="Failed to send the time series data to the endpoint" error="read tcp 10.217.1.147:56316->10.217.5.249:9091: read: connection reset by peer" output="Prometheus remote write"
+
+running (2m31.0s), 00/05 VUs, 2718 complete and 0 interrupted iterations
+ingestion   [  50% ] 00/05 VUs  2m31.0s/5m0s  18.00 iters/s
+
+running (2m32.0s), 00/05 VUs, 2736 complete and 0 interrupted iterations
+ingestion   [  51% ] 00/05 VUs  2m32.0s/5m0s  18.00 iters/s
+
+running (2m33.0s), 00/05 VUs, 2754 complete and 0 interrupted iterations
+ingestion   [  51% ] 00/05 VUs  2m33.0s/5m0s  18.00 iters/s
+
+running (2m34.0s), 00/05 VUs, 2772 complete and 0 interrupted iterations
+ingestion   [  51% ] 00/05 VUs  2m34.0s/5m0s  18.00 iters/s
+
+running (2m35.0s), 00/05 VUs, 2790 complete and 0 interrupted iterations
+ingestion   [  52% ] 00/05 VUs  2m35.0s/5m0s  18.00 iters/s
+time="2026-01-02T15:45:50Z" level=error msg="Failed to send the time series data to the endpoint" error="read tcp 10.217.1.147:56326->10.217.5.249:9091: read: connection reset by peer" output="Prometheus remote write"
+
+running (2m36.0s), 00/05 VUs, 2808 complete and 0 interrupted iterations
+ingestion   [  52% ] 00/05 VUs  2m36.0s/5m0s  18.00 iters/s
+
+running (2m37.0s), 00/05 VUs, 2826 complete and 0 interrupted iterations
+ingestion   [  52% ] 00/05 VUs  2m37.0s/5m0s  18.00 iters/s
+
+running (2m38.0s), 00/05 VUs, 2844 complete and 0 interrupted iterations
+ingestion   [  53% ] 00/05 VUs  2m38.0s/5m0s  18.00 iters/s
+
+running (2m39.0s), 00/05 VUs, 2862 complete and 0 interrupted iterations
+ingestion   [  53% ] 00/05 VUs  2m39.0s/5m0s  18.00 iters/s
+
+running (2m40.0s), 00/05 VUs, 2880 complete and 0 interrupted iterations
+ingestion   [  53% ] 00/05 VUs  2m40.0s/5m0s  18.00 iters/s
+time="2026-01-02T15:45:55Z" level=error msg="Failed to send the time series data to the endpoint" error="read tcp 10.217.1.147:42078->10.217.5.249:9091: read: connection reset by peer" output="Prometheus remote write"
+
+running (2m41.0s), 00/05 VUs, 2898 complete and 0 interrupted iterations
+ingestion   [  54% ] 00/05 VUs  2m41.0s/5m0s  18.00 iters/s
+
+running (2m42.0s), 00/05 VUs, 2916 complete and 0 interrupted iterations
+ingestion   [  54% ] 00/05 VUs  2m42.0s/5m0s  18.00 iters/s
+
+running (2m43.0s), 00/05 VUs, 2934 complete and 0 interrupted iterations
+ingestion   [  54% ] 00/05 VUs  2m43.0s/5m0s  18.00 iters/s
+
+running (2m44.0s), 00/05 VUs, 2952 complete and 0 interrupted iterations
+ingestion   [  55% ] 00/05 VUs  2m44.0s/5m0s  18.00 iters/s
+
+running (2m45.0s), 00/05 VUs, 2970 complete and 0 interrupted iterations
+ingestion   [  55% ] 00/05 VUs  2m45.0s/5m0s  18.00 iters/s
+time="2026-01-02T15:46:00Z" level=error msg="Failed to send the time series data to the endpoint" error="read tcp 10.217.1.147:42086->10.217.5.249:9091: read: connection reset by peer" output="Prometheus remote write"
+
+running (2m46.0s), 00/05 VUs, 2988 complete and 0 interrupted iterations
+ingestion   [  55% ] 00/05 VUs  2m46.0s/5m0s  18.00 iters/s
+
+running (2m47.0s), 00/05 VUs, 3006 complete and 0 interrupted iterations
+ingestion   [  56% ] 00/05 VUs  2m47.0s/5m0s  18.00 iters/s
+
+running (2m48.0s), 00/05 VUs, 3024 complete and 0 interrupted iterations
+ingestion   [  56% ] 00/05 VUs  2m48.0s/5m0s  18.00 iters/s
+
+running (2m49.0s), 00/05 VUs, 3042 complete and 0 interrupted iterations
+ingestion   [  56% ] 00/05 VUs  2m49.0s/5m0s  18.00 iters/s
+
+running (2m50.0s), 00/05 VUs, 3060 complete and 0 interrupted iterations
+ingestion   [  57% ] 00/05 VUs  2m50.0s/5m0s  18.00 iters/s
+time="2026-01-02T15:46:05Z" level=error msg="Failed to send the time series data to the endpoint" error="read tcp 10.217.1.147:58352->10.217.5.249:9091: read: connection reset by peer" output="Prometheus remote write"
+
+running (2m51.0s), 00/05 VUs, 3078 complete and 0 interrupted iterations
+ingestion   [  57% ] 00/05 VUs  2m51.0s/5m0s  18.00 iters/s
+
+running (2m52.0s), 00/05 VUs, 3096 complete and 0 interrupted iterations
+ingestion   [  57% ] 00/05 VUs  2m52.0s/5m0s  18.00 iters/s
+
+running (2m53.0s), 00/05 VUs, 3114 complete and 0 interrupted iterations
+ingestion   [  58% ] 00/05 VUs  2m53.0s/5m0s  18.00 iters/s
+
+running (2m54.0s), 00/05 VUs, 3132 complete and 0 interrupted iterations
+ingestion   [  58% ] 00/05 VUs  2m54.0s/5m0s  18.00 iters/s
+
+running (2m55.0s), 00/05 VUs, 3150 complete and 0 interrupted iterations
+ingestion   [  58% ] 00/05 VUs  2m55.0s/5m0s  18.00 iters/s
+time="2026-01-02T15:46:10Z" level=error msg="Failed to send the time series data to the endpoint" error="read tcp 10.217.1.147:58360->10.217.5.249:9091: read: connection reset by peer" output="Prometheus remote write"
+
+running (2m56.0s), 00/05 VUs, 3168 complete and 0 interrupted iterations
+ingestion   [  59% ] 00/05 VUs  2m56.0s/5m0s  18.00 iters/s
+
+running (2m57.0s), 00/05 VUs, 3186 complete and 0 interrupted iterations
+ingestion   [  59% ] 00/05 VUs  2m57.0s/5m0s  18.00 iters/s
+
+running (2m58.0s), 00/05 VUs, 3204 complete and 0 interrupted iterations
+ingestion   [  59% ] 00/05 VUs  2m58.0s/5m0s  18.00 iters/s
+
+running (2m59.0s), 00/05 VUs, 3222 complete and 0 interrupted iterations
+ingestion   [  60% ] 00/05 VUs  2m59.0s/5m0s  18.00 iters/s
+
+running (3m00.0s), 00/05 VUs, 3240 complete and 0 interrupted iterations
+ingestion   [  60% ] 00/05 VUs  3m00.0s/5m0s  18.00 iters/s
+time="2026-01-02T15:46:15Z" level=error msg="Failed to send the time series data to the endpoint" error="read tcp 10.217.1.147:41084->10.217.5.249:9091: read: connection reset by peer" output="Prometheus remote write"
+
+running (3m01.0s), 00/05 VUs, 3258 complete and 0 interrupted iterations
+ingestion   [  60% ] 00/05 VUs  3m01.0s/5m0s  18.00 iters/s
+
+running (3m02.0s), 00/05 VUs, 3276 complete and 0 interrupted iterations
+ingestion   [  61% ] 00/05 VUs  3m02.0s/5m0s  18.00 iters/s
+
+running (3m03.0s), 00/05 VUs, 3294 complete and 0 interrupted iterations
+ingestion   [  61% ] 00/05 VUs  3m03.0s/5m0s  18.00 iters/s
+
+running (3m04.0s), 00/05 VUs, 3312 complete and 0 interrupted iterations
+ingestion   [  61% ] 00/05 VUs  3m04.0s/5m0s  18.00 iters/s
+
+running (3m05.0s), 00/05 VUs, 3330 complete and 0 interrupted iterations
+ingestion   [  62% ] 00/05 VUs  3m05.0s/5m0s  18.00 iters/s
+time="2026-01-02T15:46:20Z" level=error msg="Failed to send the time series data to the endpoint" error="read tcp 10.217.1.147:41086->10.217.5.249:9091: read: connection reset by peer" output="Prometheus remote write"
+
+running (3m06.0s), 00/05 VUs, 3348 complete and 0 interrupted iterations
+ingestion   [  62% ] 00/05 VUs  3m06.0s/5m0s  18.00 iters/s
+
+running (3m07.0s), 00/05 VUs, 3366 complete and 0 interrupted iterations
+ingestion   [  62% ] 00/05 VUs  3m07.0s/5m0s  18.00 iters/s
+
+running (3m08.0s), 00/05 VUs, 3384 complete and 0 interrupted iterations
+ingestion   [  63% ] 00/05 VUs  3m08.0s/5m0s  18.00 iters/s
+
+running (3m09.0s), 00/05 VUs, 3402 complete and 0 interrupted iterations
+ingestion   [  63% ] 00/05 VUs  3m09.0s/5m0s  18.00 iters/s
+
+running (3m10.0s), 00/05 VUs, 3420 complete and 0 interrupted iterations
+ingestion   [  63% ] 00/05 VUs  3m10.0s/5m0s  18.00 iters/s
+time="2026-01-02T15:46:25Z" level=error msg="Failed to send the time series data to the endpoint" error="read tcp 10.217.1.147:33472->10.217.5.249:9091: read: connection reset by peer" output="Prometheus remote write"
+
+running (3m11.0s), 00/05 VUs, 3438 complete and 0 interrupted iterations
+ingestion   [  64% ] 00/05 VUs  3m11.0s/5m0s  18.00 iters/s
+
+running (3m12.0s), 00/05 VUs, 3456 complete and 0 interrupted iterations
+ingestion   [  64% ] 00/05 VUs  3m12.0s/5m0s  18.00 iters/s
+
+running (3m13.0s), 00/05 VUs, 3474 complete and 0 interrupted iterations
+ingestion   [  64% ] 00/05 VUs  3m13.0s/5m0s  18.00 iters/s
+
+running (3m14.0s), 00/05 VUs, 3492 complete and 0 interrupted iterations
+ingestion   [  65% ] 00/05 VUs  3m14.0s/5m0s  18.00 iters/s
+
+running (3m15.0s), 00/05 VUs, 3510 complete and 0 interrupted iterations
+ingestion   [  65% ] 00/05 VUs  3m15.0s/5m0s  18.00 iters/s
+time="2026-01-02T15:46:30Z" level=error msg="Failed to send the time series data to the endpoint" error="read tcp 10.217.1.147:33480->10.217.5.249:9091: read: connection reset by peer" output="Prometheus remote write"
+
+running (3m16.0s), 00/05 VUs, 3528 complete and 0 interrupted iterations
+ingestion   [  65% ] 00/05 VUs  3m16.0s/5m0s  18.00 iters/s
+
+running (3m17.0s), 00/05 VUs, 3546 complete and 0 interrupted iterations
+ingestion   [  66% ] 00/05 VUs  3m17.0s/5m0s  18.00 iters/s
+
+running (3m18.0s), 00/05 VUs, 3564 complete and 0 interrupted iterations
+ingestion   [  66% ] 00/05 VUs  3m18.0s/5m0s  18.00 iters/s
+
+running (3m19.0s), 00/05 VUs, 3582 complete and 0 interrupted iterations
+ingestion   [  66% ] 00/05 VUs  3m19.0s/5m0s  18.00 iters/s
+
+running (3m20.0s), 00/05 VUs, 3600 complete and 0 interrupted iterations
+ingestion   [  67% ] 00/05 VUs  3m20.0s/5m0s  18.00 iters/s
+time="2026-01-02T15:46:35Z" level=error msg="Failed to send the time series data to the endpoint" error="read tcp 10.217.1.147:33940->10.217.5.249:9091: read: connection reset by peer" output="Prometheus remote write"
+
+running (3m21.0s), 00/05 VUs, 3618 complete and 0 interrupted iterations
+ingestion   [  67% ] 00/05 VUs  3m21.0s/5m0s  18.00 iters/s
+
+running (3m22.0s), 00/05 VUs, 3636 complete and 0 interrupted iterations
+ingestion   [  67% ] 00/05 VUs  3m22.0s/5m0s  18.00 iters/s
+
+running (3m23.0s), 00/05 VUs, 3654 complete and 0 interrupted iterations
+ingestion   [  68% ] 00/05 VUs  3m23.0s/5m0s  18.00 iters/s
+
+running (3m24.0s), 00/05 VUs, 3672 complete and 0 interrupted iterations
+ingestion   [  68% ] 00/05 VUs  3m24.0s/5m0s  18.00 iters/s
+
+running (3m25.0s), 00/05 VUs, 3690 complete and 0 interrupted iterations
+ingestion   [  68% ] 00/05 VUs  3m25.0s/5m0s  18.00 iters/s
+time="2026-01-02T15:46:40Z" level=error msg="Failed to send the time series data to the endpoint" error="read tcp 10.217.1.147:33952->10.217.5.249:9091: read: connection reset by peer" output="Prometheus remote write"
+
+running (3m26.0s), 00/05 VUs, 3708 complete and 0 interrupted iterations
+ingestion   [  69% ] 00/05 VUs  3m26.0s/5m0s  18.00 iters/s
+
+running (3m27.0s), 00/05 VUs, 3726 complete and 0 interrupted iterations
+ingestion   [  69% ] 00/05 VUs  3m27.0s/5m0s  18.00 iters/s
+
+running (3m28.0s), 00/05 VUs, 3744 complete and 0 interrupted iterations
+ingestion   [  69% ] 00/05 VUs  3m28.0s/5m0s  18.00 iters/s
+
+running (3m29.0s), 00/05 VUs, 3762 complete and 0 interrupted iterations
+ingestion   [  70% ] 00/05 VUs  3m29.0s/5m0s  18.00 iters/s
+
+running (3m30.0s), 00/05 VUs, 3780 complete and 0 interrupted iterations
+ingestion   [  70% ] 00/05 VUs  3m30.0s/5m0s  18.00 iters/s
+time="2026-01-02T15:46:45Z" level=error msg="Failed to send the time series data to the endpoint" error="read tcp 10.217.1.147:52220->10.217.5.249:9091: read: connection reset by peer" output="Prometheus remote write"
+
+running (3m31.0s), 00/05 VUs, 3798 complete and 0 interrupted iterations
+ingestion   [  70% ] 00/05 VUs  3m31.0s/5m0s  18.00 iters/s
+
+running (3m32.0s), 00/05 VUs, 3816 complete and 0 interrupted iterations
+ingestion   [  71% ] 00/05 VUs  3m32.0s/5m0s  18.00 iters/s
+
+running (3m33.0s), 00/05 VUs, 3834 complete and 0 interrupted iterations
+ingestion   [  71% ] 00/05 VUs  3m33.0s/5m0s  18.00 iters/s
+
+running (3m34.0s), 00/05 VUs, 3852 complete and 0 interrupted iterations
+ingestion   [  71% ] 00/05 VUs  3m34.0s/5m0s  18.00 iters/s
+
+running (3m35.0s), 00/05 VUs, 3870 complete and 0 interrupted iterations
+ingestion   [  72% ] 00/05 VUs  3m35.0s/5m0s  18.00 iters/s
+time="2026-01-02T15:46:50Z" level=error msg="Failed to send the time series data to the endpoint" error="read tcp 10.217.1.147:52232->10.217.5.249:9091: read: connection reset by peer" output="Prometheus remote write"
+
+running (3m36.0s), 00/05 VUs, 3888 complete and 0 interrupted iterations
+ingestion   [  72% ] 00/05 VUs  3m36.0s/5m0s  18.00 iters/s
+
+running (3m37.0s), 00/05 VUs, 3906 complete and 0 interrupted iterations
+ingestion   [  72% ] 00/05 VUs  3m37.0s/5m0s  18.00 iters/s
+
+running (3m38.0s), 00/05 VUs, 3924 complete and 0 interrupted iterations
+ingestion   [  73% ] 00/05 VUs  3m38.0s/5m0s  18.00 iters/s
+
+running (3m39.0s), 00/05 VUs, 3942 complete and 0 interrupted iterations
+ingestion   [  73% ] 00/05 VUs  3m39.0s/5m0s  18.00 iters/s
+
+running (3m40.0s), 00/05 VUs, 3960 complete and 0 interrupted iterations
+ingestion   [  73% ] 00/05 VUs  3m40.0s/5m0s  18.00 iters/s
+time="2026-01-02T15:46:55Z" level=error msg="Failed to send the time series data to the endpoint" error="read tcp 10.217.1.147:49892->10.217.5.249:9091: read: connection reset by peer" output="Prometheus remote write"
+
+running (3m41.0s), 00/05 VUs, 3978 complete and 0 interrupted iterations
+ingestion   [  74% ] 00/05 VUs  3m41.0s/5m0s  18.00 iters/s
+
+running (3m42.0s), 00/05 VUs, 3996 complete and 0 interrupted iterations
+ingestion   [  74% ] 00/05 VUs  3m42.0s/5m0s  18.00 iters/s
+
+running (3m43.0s), 00/05 VUs, 4014 complete and 0 interrupted iterations
+ingestion   [  74% ] 00/05 VUs  3m43.0s/5m0s  18.00 iters/s
+
+running (3m44.0s), 00/05 VUs, 4032 complete and 0 interrupted iterations
+ingestion   [  75% ] 00/05 VUs  3m44.0s/5m0s  18.00 iters/s
+
+running (3m45.0s), 00/05 VUs, 4050 complete and 0 interrupted iterations
+ingestion   [  75% ] 00/05 VUs  3m45.0s/5m0s  18.00 iters/s
+time="2026-01-02T15:47:00Z" level=error msg="Failed to send the time series data to the endpoint" error="read tcp 10.217.1.147:49906->10.217.5.249:9091: read: connection reset by peer" output="Prometheus remote write"
+
+running (3m46.0s), 00/05 VUs, 4068 complete and 0 interrupted iterations
+ingestion   [  75% ] 00/05 VUs  3m46.0s/5m0s  18.00 iters/s
+
+running (3m47.0s), 00/05 VUs, 4086 complete and 0 interrupted iterations
+ingestion   [  76% ] 00/05 VUs  3m47.0s/5m0s  18.00 iters/s
+
+running (3m48.0s), 00/05 VUs, 4104 complete and 0 interrupted iterations
+ingestion   [  76% ] 00/05 VUs  3m48.0s/5m0s  18.00 iters/s
+
+running (3m49.0s), 00/05 VUs, 4122 complete and 0 interrupted iterations
+ingestion   [  76% ] 00/05 VUs  3m49.0s/5m0s  18.00 iters/s
+
+running (3m50.0s), 00/05 VUs, 4140 complete and 0 interrupted iterations
+ingestion   [  77% ] 00/05 VUs  3m50.0s/5m0s  18.00 iters/s
+time="2026-01-02T15:47:05Z" level=error msg="Failed to send the time series data to the endpoint" error="read tcp 10.217.1.147:49110->10.217.5.249:9091: read: connection reset by peer" output="Prometheus remote write"
+
+running (3m51.0s), 00/05 VUs, 4158 complete and 0 interrupted iterations
+ingestion   [  77% ] 00/05 VUs  3m51.0s/5m0s  18.00 iters/s
+
+running (3m52.0s), 00/05 VUs, 4176 complete and 0 interrupted iterations
+ingestion   [  77% ] 00/05 VUs  3m52.0s/5m0s  18.00 iters/s
+
+running (3m53.0s), 00/05 VUs, 4194 complete and 0 interrupted iterations
+ingestion   [  78% ] 00/05 VUs  3m53.0s/5m0s  18.00 iters/s
+
+running (3m54.0s), 00/05 VUs, 4212 complete and 0 interrupted iterations
+ingestion   [  78% ] 00/05 VUs  3m54.0s/5m0s  18.00 iters/s
+
+running (3m55.0s), 00/05 VUs, 4230 complete and 0 interrupted iterations
+ingestion   [  78% ] 00/05 VUs  3m55.0s/5m0s  18.00 iters/s
+time="2026-01-02T15:47:10Z" level=error msg="Failed to send the time series data to the endpoint" error="read tcp 10.217.1.147:49122->10.217.5.249:9091: read: connection reset by peer" output="Prometheus remote write"
+
+running (3m56.0s), 00/05 VUs, 4248 complete and 0 interrupted iterations
+ingestion   [  79% ] 00/05 VUs  3m56.0s/5m0s  18.00 iters/s
+
+running (3m57.0s), 00/05 VUs, 4266 complete and 0 interrupted iterations
+ingestion   [  79% ] 00/05 VUs  3m57.0s/5m0s  18.00 iters/s
+
+running (3m58.0s), 00/05 VUs, 4284 complete and 0 interrupted iterations
+ingestion   [  79% ] 00/05 VUs  3m58.0s/5m0s  18.00 iters/s
+
+running (3m59.0s), 00/05 VUs, 4302 complete and 0 interrupted iterations
+ingestion   [  80% ] 00/05 VUs  3m59.0s/5m0s  18.00 iters/s
+
+running (4m00.0s), 00/05 VUs, 4320 complete and 0 interrupted iterations
+ingestion   [  80% ] 00/05 VUs  4m00.0s/5m0s  18.00 iters/s
+time="2026-01-02T15:47:15Z" level=error msg="Failed to send the time series data to the endpoint" error="read tcp 10.217.1.147:33664->10.217.5.249:9091: read: connection reset by peer" output="Prometheus remote write"
+
+running (4m01.0s), 00/05 VUs, 4338 complete and 0 interrupted iterations
+ingestion   [  80% ] 00/05 VUs  4m01.0s/5m0s  18.00 iters/s
+
+running (4m02.0s), 00/05 VUs, 4356 complete and 0 interrupted iterations
+ingestion   [  81% ] 00/05 VUs  4m02.0s/5m0s  18.00 iters/s
+
+running (4m03.0s), 00/05 VUs, 4374 complete and 0 interrupted iterations
+ingestion   [  81% ] 00/05 VUs  4m03.0s/5m0s  18.00 iters/s
+
+running (4m04.0s), 00/05 VUs, 4392 complete and 0 interrupted iterations
+ingestion   [  81% ] 00/05 VUs  4m04.0s/5m0s  18.00 iters/s
+
+running (4m05.0s), 00/05 VUs, 4410 complete and 0 interrupted iterations
+ingestion   [  82% ] 00/05 VUs  4m05.0s/5m0s  18.00 iters/s
+time="2026-01-02T15:47:20Z" level=error msg="Failed to send the time series data to the endpoint" error="read tcp 10.217.1.147:33678->10.217.5.249:9091: read: connection reset by peer" output="Prometheus remote write"
+
+running (4m06.0s), 00/05 VUs, 4428 complete and 0 interrupted iterations
+ingestion   [  82% ] 00/05 VUs  4m06.0s/5m0s  18.00 iters/s
+
+running (4m07.0s), 00/05 VUs, 4446 complete and 0 interrupted iterations
+ingestion   [  82% ] 00/05 VUs  4m07.0s/5m0s  18.00 iters/s
+
+running (4m08.0s), 00/05 VUs, 4464 complete and 0 interrupted iterations
+ingestion   [  83% ] 00/05 VUs  4m08.0s/5m0s  18.00 iters/s
+
+running (4m09.0s), 00/05 VUs, 4482 complete and 0 interrupted iterations
+ingestion   [  83% ] 00/05 VUs  4m09.0s/5m0s  18.00 iters/s
+
+running (4m10.0s), 00/05 VUs, 4500 complete and 0 interrupted iterations
+ingestion   [  83% ] 00/05 VUs  4m10.0s/5m0s  18.00 iters/s
+time="2026-01-02T15:47:25Z" level=error msg="Failed to send the time series data to the endpoint" error="read tcp 10.217.1.147:34250->10.217.5.249:9091: read: connection reset by peer" output="Prometheus remote write"
+
+running (4m11.0s), 00/05 VUs, 4518 complete and 0 interrupted iterations
+ingestion   [  84% ] 00/05 VUs  4m11.0s/5m0s  18.00 iters/s
+
+running (4m12.0s), 00/05 VUs, 4536 complete and 0 interrupted iterations
+ingestion   [  84% ] 00/05 VUs  4m12.0s/5m0s  18.00 iters/s
+
+running (4m13.0s), 00/05 VUs, 4554 complete and 0 interrupted iterations
+ingestion   [  84% ] 00/05 VUs  4m13.0s/5m0s  18.00 iters/s
+
+running (4m14.0s), 00/05 VUs, 4572 complete and 0 interrupted iterations
+ingestion   [  85% ] 00/05 VUs  4m14.0s/5m0s  18.00 iters/s
+
+running (4m15.0s), 00/05 VUs, 4590 complete and 0 interrupted iterations
+ingestion   [  85% ] 00/05 VUs  4m15.0s/5m0s  18.00 iters/s
+time="2026-01-02T15:47:30Z" level=error msg="Failed to send the time series data to the endpoint" error="read tcp 10.217.1.147:34252->10.217.5.249:9091: read: connection reset by peer" output="Prometheus remote write"
+
+running (4m16.0s), 00/05 VUs, 4608 complete and 0 interrupted iterations
+ingestion   [  85% ] 00/05 VUs  4m16.0s/5m0s  18.00 iters/s
+
+running (4m17.0s), 00/05 VUs, 4626 complete and 0 interrupted iterations
+ingestion   [  86% ] 00/05 VUs  4m17.0s/5m0s  18.00 iters/s
+
+running (4m18.0s), 00/05 VUs, 4644 complete and 0 interrupted iterations
+ingestion   [  86% ] 00/05 VUs  4m18.0s/5m0s  18.00 iters/s
+
+running (4m19.0s), 00/05 VUs, 4662 complete and 0 interrupted iterations
+ingestion   [  86% ] 00/05 VUs  4m19.0s/5m0s  18.00 iters/s
+
+running (4m20.0s), 00/05 VUs, 4680 complete and 0 interrupted iterations
+ingestion   [  87% ] 00/05 VUs  4m20.0s/5m0s  18.00 iters/s
+time="2026-01-02T15:47:35Z" level=error msg="Failed to send the time series data to the endpoint" error="read tcp 10.217.1.147:57480->10.217.5.249:9091: read: connection reset by peer" output="Prometheus remote write"
+
+running (4m21.0s), 00/05 VUs, 4698 complete and 0 interrupted iterations
+ingestion   [  87% ] 00/05 VUs  4m21.0s/5m0s  18.00 iters/s
+
+running (4m22.0s), 00/05 VUs, 4716 complete and 0 interrupted iterations
+ingestion   [  87% ] 00/05 VUs  4m22.0s/5m0s  18.00 iters/s
+
+running (4m23.0s), 00/05 VUs, 4734 complete and 0 interrupted iterations
+ingestion   [  88% ] 00/05 VUs  4m23.0s/5m0s  18.00 iters/s
+
+running (4m24.0s), 00/05 VUs, 4752 complete and 0 interrupted iterations
+ingestion   [  88% ] 00/05 VUs  4m24.0s/5m0s  18.00 iters/s
+
+running (4m25.0s), 00/05 VUs, 4770 complete and 0 interrupted iterations
+ingestion   [  88% ] 00/05 VUs  4m25.0s/5m0s  18.00 iters/s
+time="2026-01-02T15:47:40Z" level=error msg="Failed to send the time series data to the endpoint" error="read tcp 10.217.1.147:57486->10.217.5.249:9091: read: connection reset by peer" output="Prometheus remote write"
+
+running (4m26.0s), 00/05 VUs, 4788 complete and 0 interrupted iterations
+ingestion   [  89% ] 00/05 VUs  4m26.0s/5m0s  18.00 iters/s
+
+running (4m27.0s), 00/05 VUs, 4806 complete and 0 interrupted iterations
+ingestion   [  89% ] 00/05 VUs  4m27.0s/5m0s  18.00 iters/s
+
+running (4m28.0s), 00/05 VUs, 4824 complete and 0 interrupted iterations
+ingestion   [  89% ] 00/05 VUs  4m28.0s/5m0s  18.00 iters/s
+
+running (4m29.0s), 00/05 VUs, 4842 complete and 0 interrupted iterations
+ingestion   [  90% ] 00/05 VUs  4m29.0s/5m0s  18.00 iters/s
+
+running (4m30.0s), 00/05 VUs, 4860 complete and 0 interrupted iterations
+ingestion   [  90% ] 00/05 VUs  4m30.0s/5m0s  18.00 iters/s
+time="2026-01-02T15:47:45Z" level=error msg="Failed to send the time series data to the endpoint" error="read tcp 10.217.1.147:58570->10.217.5.249:9091: read: connection reset by peer" output="Prometheus remote write"
+
+running (4m31.0s), 00/05 VUs, 4878 complete and 0 interrupted iterations
+ingestion   [  90% ] 00/05 VUs  4m31.0s/5m0s  18.00 iters/s
+
+running (4m32.0s), 00/05 VUs, 4896 complete and 0 interrupted iterations
+ingestion   [  91% ] 00/05 VUs  4m32.0s/5m0s  18.00 iters/s
+
+running (4m33.0s), 00/05 VUs, 4914 complete and 0 interrupted iterations
+ingestion   [  91% ] 00/05 VUs  4m33.0s/5m0s  18.00 iters/s
+
+running (4m34.0s), 00/05 VUs, 4932 complete and 0 interrupted iterations
+ingestion   [  91% ] 00/05 VUs  4m34.0s/5m0s  18.00 iters/s
+
+running (4m35.0s), 00/05 VUs, 4950 complete and 0 interrupted iterations
+ingestion   [  92% ] 00/05 VUs  4m35.0s/5m0s  18.00 iters/s
+time="2026-01-02T15:47:50Z" level=error msg="Failed to send the time series data to the endpoint" error="read tcp 10.217.1.147:58574->10.217.5.249:9091: read: connection reset by peer" output="Prometheus remote write"
+
+running (4m36.0s), 00/05 VUs, 4968 complete and 0 interrupted iterations
+ingestion   [  92% ] 00/05 VUs  4m36.0s/5m0s  18.00 iters/s
+
+running (4m37.0s), 00/05 VUs, 4986 complete and 0 interrupted iterations
+ingestion   [  92% ] 00/05 VUs  4m37.0s/5m0s  18.00 iters/s
+
+running (4m38.0s), 00/05 VUs, 5004 complete and 0 interrupted iterations
+ingestion   [  93% ] 00/05 VUs  4m38.0s/5m0s  18.00 iters/s
+
+running (4m39.0s), 00/05 VUs, 5022 complete and 0 interrupted iterations
+ingestion   [  93% ] 00/05 VUs  4m39.0s/5m0s  18.00 iters/s
+
+running (4m40.0s), 00/05 VUs, 5040 complete and 0 interrupted iterations
+ingestion   [  93% ] 00/05 VUs  4m40.0s/5m0s  18.00 iters/s
+time="2026-01-02T15:47:55Z" level=error msg="Failed to send the time series data to the endpoint" error="read tcp 10.217.1.147:47328->10.217.5.249:9091: read: connection reset by peer" output="Prometheus remote write"
+
+running (4m41.0s), 00/05 VUs, 5058 complete and 0 interrupted iterations
+ingestion   [  94% ] 00/05 VUs  4m41.0s/5m0s  18.00 iters/s
+
+running (4m42.0s), 00/05 VUs, 5076 complete and 0 interrupted iterations
+ingestion   [  94% ] 00/05 VUs  4m42.0s/5m0s  18.00 iters/s
+
+running (4m43.0s), 00/05 VUs, 5094 complete and 0 interrupted iterations
+ingestion   [  94% ] 00/05 VUs  4m43.0s/5m0s  18.00 iters/s
+
+running (4m44.0s), 00/05 VUs, 5112 complete and 0 interrupted iterations
+ingestion   [  95% ] 00/05 VUs  4m44.0s/5m0s  18.00 iters/s
+
+running (4m45.0s), 00/05 VUs, 5130 complete and 0 interrupted iterations
+ingestion   [  95% ] 00/05 VUs  4m45.0s/5m0s  18.00 iters/s
+time="2026-01-02T15:48:00Z" level=error msg="Failed to send the time series data to the endpoint" error="read tcp 10.217.1.147:47340->10.217.5.249:9091: read: connection reset by peer" output="Prometheus remote write"
+
+running (4m46.0s), 00/05 VUs, 5148 complete and 0 interrupted iterations
+ingestion   [  95% ] 00/05 VUs  4m46.0s/5m0s  18.00 iters/s
+
+running (4m47.0s), 00/05 VUs, 5166 complete and 0 interrupted iterations
+ingestion   [  96% ] 00/05 VUs  4m47.0s/5m0s  18.00 iters/s
+
+running (4m48.0s), 00/05 VUs, 5184 complete and 0 interrupted iterations
+ingestion   [  96% ] 00/05 VUs  4m48.0s/5m0s  18.00 iters/s
+
+running (4m49.0s), 00/05 VUs, 5202 complete and 0 interrupted iterations
+ingestion   [  96% ] 00/05 VUs  4m49.0s/5m0s  18.00 iters/s
+
+running (4m50.0s), 00/05 VUs, 5220 complete and 0 interrupted iterations
+ingestion   [  97% ] 00/05 VUs  4m50.0s/5m0s  18.00 iters/s
+time="2026-01-02T15:48:05Z" level=error msg="Failed to send the time series data to the endpoint" error="read tcp 10.217.1.147:46066->10.217.5.249:9091: read: connection reset by peer" output="Prometheus remote write"
+
+running (4m51.0s), 00/05 VUs, 5238 complete and 0 interrupted iterations
+ingestion   [  97% ] 00/05 VUs  4m51.0s/5m0s  18.00 iters/s
+
+running (4m52.0s), 00/05 VUs, 5256 complete and 0 interrupted iterations
+ingestion   [  97% ] 00/05 VUs  4m52.0s/5m0s  18.00 iters/s
+
+running (4m53.0s), 00/05 VUs, 5274 complete and 0 interrupted iterations
+ingestion   [  98% ] 00/05 VUs  4m53.0s/5m0s  18.00 iters/s
+
+running (4m54.0s), 00/05 VUs, 5292 complete and 0 interrupted iterations
+ingestion   [  98% ] 00/05 VUs  4m54.0s/5m0s  18.00 iters/s
+
+running (4m55.0s), 00/05 VUs, 5310 complete and 0 interrupted iterations
+ingestion   [  98% ] 00/05 VUs  4m55.0s/5m0s  18.00 iters/s
+time="2026-01-02T15:48:10Z" level=error msg="Failed to send the time series data to the endpoint" error="read tcp 10.217.1.147:46082->10.217.5.249:9091: read: connection reset by peer" output="Prometheus remote write"
+
+running (4m56.0s), 00/05 VUs, 5328 complete and 0 interrupted iterations
+ingestion   [  99% ] 00/05 VUs  4m56.0s/5m0s  18.00 iters/s
+
+running (4m57.0s), 00/05 VUs, 5346 complete and 0 interrupted iterations
+ingestion   [  99% ] 00/05 VUs  4m57.0s/5m0s  18.00 iters/s
+
+running (4m58.0s), 00/05 VUs, 5364 complete and 0 interrupted iterations
+ingestion   [  99% ] 00/05 VUs  4m58.0s/5m0s  18.00 iters/s
+
+running (4m59.0s), 00/05 VUs, 5382 complete and 0 interrupted iterations
+ingestion   [ 100% ] 00/05 VUs  4m59.0s/5m0s  18.00 iters/s
+
+running (5m00.0s), 00/05 VUs, 5400 complete and 0 interrupted iterations
+ingestion   [ 100% ] 00/05 VUs  5m00.0s/5m0s  18.00 iters/s
+time="2026-01-02T15:48:15Z" level=error msg="Failed to send the time series data to the endpoint" error="read tcp 10.217.1.147:56402->10.217.5.249:9091: read: connection reset by peer" output="Prometheus remote write"
+time="2026-01-02T15:48:15Z" level=info msg="\n================================================================================\n  TEST COMPLETE\n================================================================================\n  Check the k6 summary above for detailed metrics:\n  - tempo_ingestion_bytes_total: Total bytes ingested\n  - tempo_ingestion_traces_total: Total traces sent\n  - tempo_ingestion_spans_total: Total spans sent\n  - tempo_ingestion_failures_total: Failed ingestion attempts\n================================================================================\n" source=console
+time="2026-01-02T15:48:15Z" level=error msg="Failed to send the time series data to the endpoint" error="read tcp 10.217.1.147:56412->10.217.5.249:9091: read: connection reset by peer" output="Prometheus remote write"
+time="2026-01-02T15:48:15Z" level=error msg="Stopping output 0 failed" component=output-manager error="marking time series as stale failed: read tcp 10.217.1.147:56426->10.217.5.249:9091: read: connection reset by peer"
+
+
+  █ THRESHOLDS 
+
+    tempo_ingestion_bytes_total
+    ✓ 'rate>0' rate=122 kB/s
+
+    tempo_ingestion_failures_total
+    ✓ 'rate<1' rate=0/s
+
+    tempo_ingestion_traces_total
+    ✓ 'rate>0' rate=18.00225/s
+
+
+  █ TOTAL RESULTS 
+
+    CUSTOM
+    tempo_ingestion_bytes_total..........: 37 MB   122 kB/s
+    tempo_ingestion_duration_seconds.....: avg=795.97µs min=377.68µs med=607.95µs max=36.99ms p(90)=994.02µs p(95)=1.32ms
+    tempo_ingestion_failures_total.......: 0       0/s
+    tempo_ingestion_rate_bytes_per_sec...: 100.00% 5401 out of 5401
+    tempo_ingestion_traces_total.........: 5401    18.00225/s
+
+    EXECUTION
+    iteration_duration...................: avg=1.06ms   min=577.22µs med=870µs    max=37.19ms p(90)=1.28ms   p(95)=1.69ms
+    iterations...........................: 5401    18.00225/s
+    vus..................................: 0       min=0            max=0
+    vus_max..............................: 5       min=5            max=5
+
+    NETWORK
+    data_received........................: 0 B     0 B/s
+    data_sent............................: 0 B     0 B/s
+
+
+
+
+running (5m00.0s), 00/05 VUs, 5401 complete and 0 interrupted iterations
+ingestion ✓ [ 100% ] 00/05 VUs  5m0s  18.00 iters/s
+===K6_SUMMARY_JSON_START===
+{
+    "metrics": {
+        "vus_max": {
+            "max": 5,
+            "value": 5,
+            "min": 5
+        },
+        "data_sent": {
+            "count": 0,
+            "rate": 0
+        },
+        "tempo_ingestion_bytes_total": {
+            "count": 36712200,
+            "rate": 122366.63819870712,
+            "thresholds": {
+                "rate>0": false
+            }
+        },
+        "iterations": {
+            "count": 5401,
+            "rate": 18.002250284952066
+        },
+        "tempo_ingestion_failures_total": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "rate<1": false
+            }
+        },
+        "tempo_ingestion_traces_total": {
+            "count": 5401,
+            "rate": 18.002250284952066,
+            "thresholds": {
+                "rate>0": false
+            }
+        },
+        "data_received": {
+            "rate": 0,
+            "count": 0
+        },
+        "tempo_ingestion_duration_seconds": {
+            "p(95)": 1.325345,
+            "avg": 0.7959732249583397,
+            "min": 0.377687,
+            "med": 0.607951,
+            "max": 36.993171,
+            "p(90)": 0.994029
+        },
+        "tempo_ingestion_rate_bytes_per_sec": {
+            "passes": 5401,
+            "fails": 0,
+            "value": 1
+        },
+        "iteration_duration": {
+            "p(95)": 1.698272,
+            "avg": 1.0697844613960392,
+            "min": 0.577221,
+            "med": 0.870006,
+            "max": 37.199524,
+            "p(90)": 1.287144
+        },
+        "vus": {
+            "value": 0,
+            "min": 0,
+            "max": 0
+        }
+    },
+    "setup_data": {
+        "traceConfig": {
+            "spans": {
+                "max": 15,
+                "min": 8
+            },
+            "context": {
+                "propagation": {
+                    "tenant_id": "tenant-1",
+                    "user_id": "user-1699",
+                    "correlation_id": "corr-nt2tf3",
+                    "region": "us-east-1",
+                    "request_id": "req-2hxv8k",
+                    "session_id": "session-1767368595124"
+                }
+            },
+            "description": "Startup/MVP - Simple API with basic services",
+            "name": "small",
+            "operations": [
+                {
+                    "duration": {
+                        "max": 20,
+                        "min": 5
+                    },
+                    "name": "validate-request",
+                    "service": "api-gateway"
+                },
+                {
+                    "duration": {
+                        "max": 50,
+                        "min": 10
+                    },
+                    "name": "authenticate",
+                    "service": "user-service"
+                },
+                {
+                    "duration": {
+                        "max": 100,
+                        "min": 20
+                    },
+                    "name": "process-order",
+                    "service": "api-gateway"
+                },
+                {
+                    "duration": {
+                        "max": 30,
+                        "min": 5
+                    },
+                    "name": "check-inventory",
+                    "service": "database"
+                },
+                {
+                    "duration": {
+                        "min": 1,
+                        "max": 5
+                    },
+                    "name": "cache-lookup",
+                    "service": "cache"
+                },
+                {
+                    "duration": {
+                        "max": 50,
+                        "min": 10
+                    },
+                    "name": "save-order",
+                    "service": "database"
+                },
+                {
+                    "duration": {
+                        "max": 20,
+                        "min": 5
+                    },
+                    "name": "send-notification",
+                    "service": "api-gateway"
+                }
+            ],
+            "rootOperation": {
+                "name": "POST /api/orders",
+                "service": "api-gateway"
+            },
+            "services": [
+                "frontend",
+                "api-gateway",
+                "user-service",
+                "database",
+                "cache"
+            ],
+            "settings": {
+                "attributes": {
+                    "enableSemanticAttributes": true,
+                    "enableTags": true,
+                    "tagDensity": 0.85
+                }
+            }
+        }
+    },
+    "root_group": {
+        "name": "",
+        "path": "",
+        "id": "d41d8cd98f00b204e9800998ecf8427e",
+        "groups": {},
+        "checks": {}
+    }
+}===K6_SUMMARY_JSON_END===

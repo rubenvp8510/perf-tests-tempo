@@ -1,0 +1,397 @@
+query_id,metric_name,category,description,timestamp,value,labels
+10,compactor_blocks_compacted,compactor,Rate of compaction errors (inverse indicator of successful compaction),2026-01-02T09:44:08Z,0.000000,
+10,compactor_blocks_compacted,compactor,Rate of compaction errors (inverse indicator of successful compaction),2026-01-02T09:45:08Z,0.000000,
+10,compactor_blocks_compacted,compactor,Rate of compaction errors (inverse indicator of successful compaction),2026-01-02T09:46:08Z,0.000000,
+10,compactor_blocks_compacted,compactor,Rate of compaction errors (inverse indicator of successful compaction),2026-01-02T09:47:08Z,0.000000,
+10,compactor_blocks_compacted,compactor,Rate of compaction errors (inverse indicator of successful compaction),2026-01-02T09:48:08Z,0.000000,
+28,querier_jobs_in_progress,querier,Total queries processed by query frontend,2026-01-02T09:44:08Z,3.903833,pod=tempo-tempostack-query-frontend-85d8b9fbd7-zcqjw
+28,querier_jobs_in_progress,querier,Total queries processed by query frontend,2026-01-02T09:45:08Z,5.000000,pod=tempo-tempostack-query-frontend-85d8b9fbd7-zcqjw
+28,querier_jobs_in_progress,querier,Total queries processed by query frontend,2026-01-02T09:46:08Z,5.000000,pod=tempo-tempostack-query-frontend-85d8b9fbd7-zcqjw
+28,querier_jobs_in_progress,querier,Total queries processed by query frontend,2026-01-02T09:47:08Z,5.000000,pod=tempo-tempostack-query-frontend-85d8b9fbd7-zcqjw
+28,querier_jobs_in_progress,querier,Total queries processed by query frontend,2026-01-02T09:48:08Z,5.000000,pod=tempo-tempostack-query-frontend-85d8b9fbd7-zcqjw
+13,query_frontend_bytes_inspected,storage,Rate of bytes read from storage by query frontend,2026-01-02T09:44:08Z,139265.298221,
+13,query_frontend_bytes_inspected,storage,Rate of bytes read from storage by query frontend,2026-01-02T09:45:08Z,913274.833333,
+13,query_frontend_bytes_inspected,storage,Rate of bytes read from storage by query frontend,2026-01-02T09:46:08Z,1742991.233333,
+13,query_frontend_bytes_inspected,storage,Rate of bytes read from storage by query frontend,2026-01-02T09:47:08Z,2266245.400000,
+13,query_frontend_bytes_inspected,storage,Rate of bytes read from storage by query frontend,2026-01-02T09:48:08Z,2862905.400000,
+12,compactor_outstanding_blocks,compactor,Number of items in the work queue,2026-01-02T09:43:08Z,0.000000,
+12,compactor_outstanding_blocks,compactor,Number of items in the work queue,2026-01-02T09:44:08Z,0.000000,
+12,compactor_outstanding_blocks,compactor,Number of items in the work queue,2026-01-02T09:45:08Z,0.000000,
+12,compactor_outstanding_blocks,compactor,Number of items in the work queue,2026-01-02T09:46:08Z,0.000000,
+12,compactor_outstanding_blocks,compactor,Number of items in the work queue,2026-01-02T09:47:08Z,0.000000,
+12,compactor_outstanding_blocks,compactor,Number of items in the work queue,2026-01-02T09:48:08Z,0.000000,
+11,compactor_bytes_written,compactor,Rate of bytes deleted by retention,2026-01-02T09:44:08Z,0.000000,
+11,compactor_bytes_written,compactor,Rate of bytes deleted by retention,2026-01-02T09:45:08Z,0.000000,
+11,compactor_bytes_written,compactor,Rate of bytes deleted by retention,2026-01-02T09:46:08Z,0.000000,
+11,compactor_bytes_written,compactor,Rate of bytes deleted by retention,2026-01-02T09:47:08Z,0.000000,
+11,compactor_bytes_written,compactor,Rate of bytes deleted by retention,2026-01-02T09:48:08Z,0.000000,
+4,distributor_push_duration_p99,ingestion,P99 latency of push operations to the distributor,2026-01-02T09:44:08Z,0.004959,
+4,distributor_push_duration_p99,ingestion,P99 latency of push operations to the distributor,2026-01-02T09:45:08Z,0.007600,
+4,distributor_push_duration_p99,ingestion,P99 latency of push operations to the distributor,2026-01-02T09:46:08Z,0.004959,
+4,distributor_push_duration_p99,ingestion,P99 latency of push operations to the distributor,2026-01-02T09:47:08Z,0.004959,
+4,distributor_push_duration_p99,ingestion,P99 latency of push operations to the distributor,2026-01-02T09:48:08Z,0.004959,
+16,cache_hit_ratio,cache,Blocklist poll duration p99 (proxy for storage access patterns),2026-01-02T09:44:08Z,NaN,
+16,cache_hit_ratio,cache,Blocklist poll duration p99 (proxy for storage access patterns),2026-01-02T09:45:08Z,NaN,
+16,cache_hit_ratio,cache,Blocklist poll duration p99 (proxy for storage access patterns),2026-01-02T09:46:08Z,NaN,
+16,cache_hit_ratio,cache,Blocklist poll duration p99 (proxy for storage access patterns),2026-01-02T09:47:08Z,NaN,
+16,cache_hit_ratio,cache,Blocklist poll duration p99 (proxy for storage access patterns),2026-01-02T09:48:08Z,0.009950,
+22,cpu_usage_by_pod_container,resources,CPU usage for each container in each pod,2026-01-02T09:43:08Z,0.001458,"container=tempo,pod=tempo-tempostack-compactor-559b45c796-hqxgd"
+22,cpu_usage_by_pod_container,resources,CPU usage for each container in each pod,2026-01-02T09:44:08Z,0.001076,"container=tempo,pod=tempo-tempostack-compactor-559b45c796-hqxgd"
+22,cpu_usage_by_pod_container,resources,CPU usage for each container in each pod,2026-01-02T09:45:08Z,0.000698,"container=tempo,pod=tempo-tempostack-compactor-559b45c796-hqxgd"
+22,cpu_usage_by_pod_container,resources,CPU usage for each container in each pod,2026-01-02T09:45:08Z,0.000590,"container=tempo,pod=tempo-tempostack-compactor-fd99468b7-d94qn"
+22,cpu_usage_by_pod_container,resources,CPU usage for each container in each pod,2026-01-02T09:46:08Z,0.000961,"container=tempo,pod=tempo-tempostack-compactor-fd99468b7-d94qn"
+22,cpu_usage_by_pod_container,resources,CPU usage for each container in each pod,2026-01-02T09:47:08Z,0.001284,"container=tempo,pod=tempo-tempostack-compactor-fd99468b7-d94qn"
+22,cpu_usage_by_pod_container,resources,CPU usage for each container in each pod,2026-01-02T09:48:08Z,0.001804,"container=tempo,pod=tempo-tempostack-compactor-fd99468b7-d94qn"
+22,cpu_usage_by_pod_container,resources,CPU usage for each container in each pod,2026-01-02T09:45:08Z,0.008761,"container=tempo,pod=tempo-tempostack-distributor-6d67bbbcf5-z8x5v"
+22,cpu_usage_by_pod_container,resources,CPU usage for each container in each pod,2026-01-02T09:46:08Z,0.015103,"container=tempo,pod=tempo-tempostack-distributor-6d67bbbcf5-z8x5v"
+22,cpu_usage_by_pod_container,resources,CPU usage for each container in each pod,2026-01-02T09:47:08Z,0.021053,"container=tempo,pod=tempo-tempostack-distributor-6d67bbbcf5-z8x5v"
+22,cpu_usage_by_pod_container,resources,CPU usage for each container in each pod,2026-01-02T09:48:08Z,0.027615,"container=tempo,pod=tempo-tempostack-distributor-6d67bbbcf5-z8x5v"
+22,cpu_usage_by_pod_container,resources,CPU usage for each container in each pod,2026-01-02T09:43:08Z,0.001395,"container=tempo,pod=tempo-tempostack-distributor-7fdc888fc4-9d2sk"
+22,cpu_usage_by_pod_container,resources,CPU usage for each container in each pod,2026-01-02T09:44:08Z,0.001044,"container=tempo,pod=tempo-tempostack-distributor-7fdc888fc4-9d2sk"
+22,cpu_usage_by_pod_container,resources,CPU usage for each container in each pod,2026-01-02T09:45:08Z,0.000715,"container=tempo,pod=tempo-tempostack-distributor-7fdc888fc4-9d2sk"
+22,cpu_usage_by_pod_container,resources,CPU usage for each container in each pod,2026-01-02T09:43:08Z,0.001459,"container=tempo,pod=tempo-tempostack-ingester-0"
+22,cpu_usage_by_pod_container,resources,CPU usage for each container in each pod,2026-01-02T09:44:08Z,0.001125,"container=tempo,pod=tempo-tempostack-ingester-0"
+22,cpu_usage_by_pod_container,resources,CPU usage for each container in each pod,2026-01-02T09:45:08Z,0.012995,"container=tempo,pod=tempo-tempostack-ingester-0"
+22,cpu_usage_by_pod_container,resources,CPU usage for each container in each pod,2026-01-02T09:46:08Z,0.024405,"container=tempo,pod=tempo-tempostack-ingester-0"
+22,cpu_usage_by_pod_container,resources,CPU usage for each container in each pod,2026-01-02T09:47:08Z,0.039782,"container=tempo,pod=tempo-tempostack-ingester-0"
+22,cpu_usage_by_pod_container,resources,CPU usage for each container in each pod,2026-01-02T09:48:08Z,0.059373,"container=tempo,pod=tempo-tempostack-ingester-0"
+22,cpu_usage_by_pod_container,resources,CPU usage for each container in each pod,2026-01-02T09:43:08Z,0.001401,"container=tempo,pod=tempo-tempostack-querier-5768f6457-hkl9l"
+22,cpu_usage_by_pod_container,resources,CPU usage for each container in each pod,2026-01-02T09:44:08Z,0.001040,"container=tempo,pod=tempo-tempostack-querier-5768f6457-hkl9l"
+22,cpu_usage_by_pod_container,resources,CPU usage for each container in each pod,2026-01-02T09:45:08Z,0.000466,"container=tempo,pod=tempo-tempostack-querier-5768f6457-hkl9l"
+22,cpu_usage_by_pod_container,resources,CPU usage for each container in each pod,2026-01-02T09:45:08Z,0.005165,"container=tempo,pod=tempo-tempostack-querier-9c57d94fb-5vdlw"
+22,cpu_usage_by_pod_container,resources,CPU usage for each container in each pod,2026-01-02T09:46:08Z,0.007834,"container=tempo,pod=tempo-tempostack-querier-9c57d94fb-5vdlw"
+22,cpu_usage_by_pod_container,resources,CPU usage for each container in each pod,2026-01-02T09:47:08Z,0.010957,"container=tempo,pod=tempo-tempostack-querier-9c57d94fb-5vdlw"
+22,cpu_usage_by_pod_container,resources,CPU usage for each container in each pod,2026-01-02T09:48:08Z,0.014485,"container=tempo,pod=tempo-tempostack-querier-9c57d94fb-5vdlw"
+22,cpu_usage_by_pod_container,resources,CPU usage for each container in each pod,2026-01-02T09:45:08Z,0.008435,"container=tempo,pod=tempo-tempostack-query-frontend-85d8b9fbd7-zcqjw"
+22,cpu_usage_by_pod_container,resources,CPU usage for each container in each pod,2026-01-02T09:46:08Z,0.013456,"container=tempo,pod=tempo-tempostack-query-frontend-85d8b9fbd7-zcqjw"
+22,cpu_usage_by_pod_container,resources,CPU usage for each container in each pod,2026-01-02T09:47:08Z,0.019119,"container=tempo,pod=tempo-tempostack-query-frontend-85d8b9fbd7-zcqjw"
+22,cpu_usage_by_pod_container,resources,CPU usage for each container in each pod,2026-01-02T09:48:08Z,0.025335,"container=tempo,pod=tempo-tempostack-query-frontend-85d8b9fbd7-zcqjw"
+22,cpu_usage_by_pod_container,resources,CPU usage for each container in each pod,2026-01-02T09:43:08Z,0.000423,"container=tempo,pod=tempo-tempostack-query-frontend-868cfc46-7vhqr"
+22,cpu_usage_by_pod_container,resources,CPU usage for each container in each pod,2026-01-02T09:44:08Z,0.000300,"container=tempo,pod=tempo-tempostack-query-frontend-868cfc46-7vhqr"
+22,cpu_usage_by_pod_container,resources,CPU usage for each container in each pod,2026-01-02T09:45:08Z,0.000245,"container=tempo,pod=tempo-tempostack-query-frontend-868cfc46-7vhqr"
+22,cpu_usage_by_pod_container,resources,CPU usage for each container in each pod,2026-01-02T09:43:08Z,0.000979,"container=tempo-gateway,pod=tempo-tempostack-gateway-6bc78b476f-hfld4"
+22,cpu_usage_by_pod_container,resources,CPU usage for each container in each pod,2026-01-02T09:44:08Z,0.000775,"container=tempo-gateway,pod=tempo-tempostack-gateway-6bc78b476f-hfld4"
+22,cpu_usage_by_pod_container,resources,CPU usage for each container in each pod,2026-01-02T09:45:08Z,0.000589,"container=tempo-gateway,pod=tempo-tempostack-gateway-6bc78b476f-hfld4"
+22,cpu_usage_by_pod_container,resources,CPU usage for each container in each pod,2026-01-02T09:45:08Z,0.011847,"container=tempo-gateway,pod=tempo-tempostack-gateway-7db6897757-2qx58"
+22,cpu_usage_by_pod_container,resources,CPU usage for each container in each pod,2026-01-02T09:46:08Z,0.020521,"container=tempo-gateway,pod=tempo-tempostack-gateway-7db6897757-2qx58"
+22,cpu_usage_by_pod_container,resources,CPU usage for each container in each pod,2026-01-02T09:47:08Z,0.028741,"container=tempo-gateway,pod=tempo-tempostack-gateway-7db6897757-2qx58"
+22,cpu_usage_by_pod_container,resources,CPU usage for each container in each pod,2026-01-02T09:48:08Z,0.037828,"container=tempo-gateway,pod=tempo-tempostack-gateway-7db6897757-2qx58"
+22,cpu_usage_by_pod_container,resources,CPU usage for each container in each pod,2026-01-02T09:43:08Z,0.000375,"container=tempo-gateway-opa,pod=tempo-tempostack-gateway-6bc78b476f-hfld4"
+22,cpu_usage_by_pod_container,resources,CPU usage for each container in each pod,2026-01-02T09:44:08Z,0.000254,"container=tempo-gateway-opa,pod=tempo-tempostack-gateway-6bc78b476f-hfld4"
+22,cpu_usage_by_pod_container,resources,CPU usage for each container in each pod,2026-01-02T09:45:08Z,0.000181,"container=tempo-gateway-opa,pod=tempo-tempostack-gateway-6bc78b476f-hfld4"
+22,cpu_usage_by_pod_container,resources,CPU usage for each container in each pod,2026-01-02T09:45:08Z,0.008292,"container=tempo-gateway-opa,pod=tempo-tempostack-gateway-7db6897757-2qx58"
+22,cpu_usage_by_pod_container,resources,CPU usage for each container in each pod,2026-01-02T09:46:08Z,0.014729,"container=tempo-gateway-opa,pod=tempo-tempostack-gateway-7db6897757-2qx58"
+22,cpu_usage_by_pod_container,resources,CPU usage for each container in each pod,2026-01-02T09:47:08Z,0.020617,"container=tempo-gateway-opa,pod=tempo-tempostack-gateway-7db6897757-2qx58"
+22,cpu_usage_by_pod_container,resources,CPU usage for each container in each pod,2026-01-02T09:48:08Z,0.027306,"container=tempo-gateway-opa,pod=tempo-tempostack-gateway-7db6897757-2qx58"
+22,cpu_usage_by_pod_container,resources,CPU usage for each container in each pod,2026-01-02T09:45:08Z,0.000081,"container=tempo-query,pod=tempo-tempostack-query-frontend-85d8b9fbd7-zcqjw"
+22,cpu_usage_by_pod_container,resources,CPU usage for each container in each pod,2026-01-02T09:46:08Z,0.000120,"container=tempo-query,pod=tempo-tempostack-query-frontend-85d8b9fbd7-zcqjw"
+22,cpu_usage_by_pod_container,resources,CPU usage for each container in each pod,2026-01-02T09:47:08Z,0.000170,"container=tempo-query,pod=tempo-tempostack-query-frontend-85d8b9fbd7-zcqjw"
+22,cpu_usage_by_pod_container,resources,CPU usage for each container in each pod,2026-01-02T09:48:08Z,0.000222,"container=tempo-query,pod=tempo-tempostack-query-frontend-85d8b9fbd7-zcqjw"
+22,cpu_usage_by_pod_container,resources,CPU usage for each container in each pod,2026-01-02T09:43:08Z,0.000196,"container=tempo-query,pod=tempo-tempostack-query-frontend-868cfc46-7vhqr"
+22,cpu_usage_by_pod_container,resources,CPU usage for each container in each pod,2026-01-02T09:44:08Z,0.000152,"container=tempo-query,pod=tempo-tempostack-query-frontend-868cfc46-7vhqr"
+22,cpu_usage_by_pod_container,resources,CPU usage for each container in each pod,2026-01-02T09:45:08Z,0.000102,"container=tempo-query,pod=tempo-tempostack-query-frontend-868cfc46-7vhqr"
+6,discarded_spans,ingestion,"Rate of discarded spans per second, grouped by discard reason",2026-01-02T09:45:08Z,0.000000,reason=live_traces_exceeded
+6,discarded_spans,ingestion,"Rate of discarded spans per second, grouped by discard reason",2026-01-02T09:46:08Z,0.000000,reason=live_traces_exceeded
+6,discarded_spans,ingestion,"Rate of discarded spans per second, grouped by discard reason",2026-01-02T09:47:08Z,0.000000,reason=live_traces_exceeded
+6,discarded_spans,ingestion,"Rate of discarded spans per second, grouped by discard reason",2026-01-02T09:48:08Z,0.000000,reason=live_traces_exceeded
+6,discarded_spans,ingestion,"Rate of discarded spans per second, grouped by discard reason",2026-01-02T09:45:08Z,0.000000,reason=trace_too_large
+6,discarded_spans,ingestion,"Rate of discarded spans per second, grouped by discard reason",2026-01-02T09:46:08Z,0.000000,reason=trace_too_large
+6,discarded_spans,ingestion,"Rate of discarded spans per second, grouped by discard reason",2026-01-02T09:47:08Z,0.000000,reason=trace_too_large
+6,discarded_spans,ingestion,"Rate of discarded spans per second, grouped by discard reason",2026-01-02T09:48:08Z,0.000000,reason=trace_too_large
+6,discarded_spans,ingestion,"Rate of discarded spans per second, grouped by discard reason",2026-01-02T09:45:08Z,0.000000,reason=unknown_error
+6,discarded_spans,ingestion,"Rate of discarded spans per second, grouped by discard reason",2026-01-02T09:46:08Z,0.000000,reason=unknown_error
+6,discarded_spans,ingestion,"Rate of discarded spans per second, grouped by discard reason",2026-01-02T09:47:08Z,0.000000,reason=unknown_error
+6,discarded_spans,ingestion,"Rate of discarded spans per second, grouped by discard reason",2026-01-02T09:48:08Z,0.000000,reason=unknown_error
+8,ingester_blocks_flushed,ingestion,Rate of blocks flushed from ingester to storage,2026-01-02T09:44:08Z,0.000000,pod=tempo-tempostack-compactor-77d878fb89-drxd4
+8,ingester_blocks_flushed,ingestion,Rate of blocks flushed from ingester to storage,2026-01-02T09:44:08Z,0.000000,pod=tempo-tempostack-compactor-fd99468b7-d94qn
+8,ingester_blocks_flushed,ingestion,Rate of blocks flushed from ingester to storage,2026-01-02T09:45:08Z,0.000000,pod=tempo-tempostack-compactor-fd99468b7-d94qn
+8,ingester_blocks_flushed,ingestion,Rate of blocks flushed from ingester to storage,2026-01-02T09:46:08Z,0.000000,pod=tempo-tempostack-compactor-fd99468b7-d94qn
+8,ingester_blocks_flushed,ingestion,Rate of blocks flushed from ingester to storage,2026-01-02T09:47:08Z,0.000000,pod=tempo-tempostack-compactor-fd99468b7-d94qn
+8,ingester_blocks_flushed,ingestion,Rate of blocks flushed from ingester to storage,2026-01-02T09:48:08Z,0.000000,pod=tempo-tempostack-compactor-fd99468b7-d94qn
+8,ingester_blocks_flushed,ingestion,Rate of blocks flushed from ingester to storage,2026-01-02T09:44:08Z,0.000000,pod=tempo-tempostack-distributor-6d67bbbcf5-z8x5v
+8,ingester_blocks_flushed,ingestion,Rate of blocks flushed from ingester to storage,2026-01-02T09:45:08Z,0.000000,pod=tempo-tempostack-distributor-6d67bbbcf5-z8x5v
+8,ingester_blocks_flushed,ingestion,Rate of blocks flushed from ingester to storage,2026-01-02T09:46:08Z,0.000000,pod=tempo-tempostack-distributor-6d67bbbcf5-z8x5v
+8,ingester_blocks_flushed,ingestion,Rate of blocks flushed from ingester to storage,2026-01-02T09:47:08Z,0.000000,pod=tempo-tempostack-distributor-6d67bbbcf5-z8x5v
+8,ingester_blocks_flushed,ingestion,Rate of blocks flushed from ingester to storage,2026-01-02T09:48:08Z,0.000000,pod=tempo-tempostack-distributor-6d67bbbcf5-z8x5v
+8,ingester_blocks_flushed,ingestion,Rate of blocks flushed from ingester to storage,2026-01-02T09:44:08Z,0.000000,pod=tempo-tempostack-ingester-0
+8,ingester_blocks_flushed,ingestion,Rate of blocks flushed from ingester to storage,2026-01-02T09:45:08Z,0.000000,pod=tempo-tempostack-ingester-0
+8,ingester_blocks_flushed,ingestion,Rate of blocks flushed from ingester to storage,2026-01-02T09:46:08Z,0.000000,pod=tempo-tempostack-ingester-0
+8,ingester_blocks_flushed,ingestion,Rate of blocks flushed from ingester to storage,2026-01-02T09:47:08Z,0.000000,pod=tempo-tempostack-ingester-0
+8,ingester_blocks_flushed,ingestion,Rate of blocks flushed from ingester to storage,2026-01-02T09:48:08Z,0.000000,pod=tempo-tempostack-ingester-0
+8,ingester_blocks_flushed,ingestion,Rate of blocks flushed from ingester to storage,2026-01-02T09:44:08Z,0.000000,pod=tempo-tempostack-querier-9c57d94fb-5vdlw
+8,ingester_blocks_flushed,ingestion,Rate of blocks flushed from ingester to storage,2026-01-02T09:45:08Z,0.000000,pod=tempo-tempostack-querier-9c57d94fb-5vdlw
+8,ingester_blocks_flushed,ingestion,Rate of blocks flushed from ingester to storage,2026-01-02T09:46:08Z,0.000000,pod=tempo-tempostack-querier-9c57d94fb-5vdlw
+8,ingester_blocks_flushed,ingestion,Rate of blocks flushed from ingester to storage,2026-01-02T09:47:08Z,0.000000,pod=tempo-tempostack-querier-9c57d94fb-5vdlw
+8,ingester_blocks_flushed,ingestion,Rate of blocks flushed from ingester to storage,2026-01-02T09:48:08Z,0.000000,pod=tempo-tempostack-querier-9c57d94fb-5vdlw
+8,ingester_blocks_flushed,ingestion,Rate of blocks flushed from ingester to storage,2026-01-02T09:44:08Z,0.000000,pod=tempo-tempostack-query-frontend-85d8b9fbd7-zcqjw
+8,ingester_blocks_flushed,ingestion,Rate of blocks flushed from ingester to storage,2026-01-02T09:45:08Z,0.000000,pod=tempo-tempostack-query-frontend-85d8b9fbd7-zcqjw
+8,ingester_blocks_flushed,ingestion,Rate of blocks flushed from ingester to storage,2026-01-02T09:46:08Z,0.000000,pod=tempo-tempostack-query-frontend-85d8b9fbd7-zcqjw
+8,ingester_blocks_flushed,ingestion,Rate of blocks flushed from ingester to storage,2026-01-02T09:47:08Z,0.000000,pod=tempo-tempostack-query-frontend-85d8b9fbd7-zcqjw
+8,ingester_blocks_flushed,ingestion,Rate of blocks flushed from ingester to storage,2026-01-02T09:48:08Z,0.000000,pod=tempo-tempostack-query-frontend-85d8b9fbd7-zcqjw
+7,ingester_live_traces,ingestion,Number of live (in-memory) traces in each ingester,2026-01-02T09:44:08Z,420.000000,pod=tempo-tempostack-ingester-0
+7,ingester_live_traces,ingestion,Number of live (in-memory) traces in each ingester,2026-01-02T09:45:08Z,269.000000,pod=tempo-tempostack-ingester-0
+7,ingester_live_traces,ingestion,Number of live (in-memory) traces in each ingester,2026-01-02T09:46:08Z,270.000000,pod=tempo-tempostack-ingester-0
+7,ingester_live_traces,ingestion,Number of live (in-memory) traces in each ingester,2026-01-02T09:47:08Z,270.000000,pod=tempo-tempostack-ingester-0
+7,ingester_live_traces,ingestion,Number of live (in-memory) traces in each ingester,2026-01-02T09:48:08Z,269.000000,pod=tempo-tempostack-ingester-0
+14,storage_request_duration_read_p99,storage,P99 latency of storage read operations,2026-01-02T09:44:08Z,NaN,
+14,storage_request_duration_read_p99,storage,P99 latency of storage read operations,2026-01-02T09:45:08Z,NaN,
+14,storage_request_duration_read_p99,storage,P99 latency of storage read operations,2026-01-02T09:46:08Z,NaN,
+14,storage_request_duration_read_p99,storage,P99 latency of storage read operations,2026-01-02T09:47:08Z,NaN,
+14,storage_request_duration_read_p99,storage,P99 latency of storage read operations,2026-01-02T09:48:08Z,0.019850,
+5,ingester_append_failures,ingestion,Rate of failed ingester flushes,2026-01-02T09:44:08Z,0.000000,
+5,ingester_append_failures,ingestion,Rate of failed ingester flushes,2026-01-02T09:45:08Z,0.000000,
+5,ingester_append_failures,ingestion,Rate of failed ingester flushes,2026-01-02T09:46:08Z,0.000000,
+5,ingester_append_failures,ingestion,Rate of failed ingester flushes,2026-01-02T09:47:08Z,0.000000,
+5,ingester_append_failures,ingestion,Rate of failed ingester flushes,2026-01-02T09:48:08Z,0.000000,
+2,refused_spans_rate,ingestion,Rate of spans refused/rejected by Tempo's receiver per second,2026-01-02T09:45:08Z,0.000000,
+2,refused_spans_rate,ingestion,Rate of spans refused/rejected by Tempo's receiver per second,2026-01-02T09:46:08Z,0.000000,
+2,refused_spans_rate,ingestion,Rate of spans refused/rejected by Tempo's receiver per second,2026-01-02T09:47:08Z,0.000000,
+2,refused_spans_rate,ingestion,Rate of spans refused/rejected by Tempo's receiver per second,2026-01-02T09:48:08Z,0.000000,
+1,accepted_spans_rate,ingestion,Rate of spans successfully accepted by Tempo's receiver per second,2026-01-02T09:45:08Z,180.000000,
+1,accepted_spans_rate,ingestion,Rate of spans successfully accepted by Tempo's receiver per second,2026-01-02T09:46:08Z,180.000000,
+1,accepted_spans_rate,ingestion,Rate of spans successfully accepted by Tempo's receiver per second,2026-01-02T09:47:08Z,180.000000,
+1,accepted_spans_rate,ingestion,Rate of spans successfully accepted by Tempo's receiver per second,2026-01-02T09:48:08Z,180.000000,
+9,ingester_flush_queue_length,ingestion,Number of blocks waiting to be flushed,2026-01-02T09:43:08Z,0.000000,pod=tempo-tempostack-compactor-77d878fb89-drxd4
+9,ingester_flush_queue_length,ingestion,Number of blocks waiting to be flushed,2026-01-02T09:44:08Z,0.000000,pod=tempo-tempostack-compactor-77d878fb89-drxd4
+9,ingester_flush_queue_length,ingestion,Number of blocks waiting to be flushed,2026-01-02T09:44:08Z,0.000000,pod=tempo-tempostack-compactor-fd99468b7-d94qn
+9,ingester_flush_queue_length,ingestion,Number of blocks waiting to be flushed,2026-01-02T09:45:08Z,0.000000,pod=tempo-tempostack-compactor-fd99468b7-d94qn
+9,ingester_flush_queue_length,ingestion,Number of blocks waiting to be flushed,2026-01-02T09:46:08Z,0.000000,pod=tempo-tempostack-compactor-fd99468b7-d94qn
+9,ingester_flush_queue_length,ingestion,Number of blocks waiting to be flushed,2026-01-02T09:47:08Z,0.000000,pod=tempo-tempostack-compactor-fd99468b7-d94qn
+9,ingester_flush_queue_length,ingestion,Number of blocks waiting to be flushed,2026-01-02T09:48:08Z,0.000000,pod=tempo-tempostack-compactor-fd99468b7-d94qn
+9,ingester_flush_queue_length,ingestion,Number of blocks waiting to be flushed,2026-01-02T09:44:08Z,0.000000,pod=tempo-tempostack-distributor-6d67bbbcf5-z8x5v
+9,ingester_flush_queue_length,ingestion,Number of blocks waiting to be flushed,2026-01-02T09:45:08Z,0.000000,pod=tempo-tempostack-distributor-6d67bbbcf5-z8x5v
+9,ingester_flush_queue_length,ingestion,Number of blocks waiting to be flushed,2026-01-02T09:46:08Z,0.000000,pod=tempo-tempostack-distributor-6d67bbbcf5-z8x5v
+9,ingester_flush_queue_length,ingestion,Number of blocks waiting to be flushed,2026-01-02T09:47:08Z,0.000000,pod=tempo-tempostack-distributor-6d67bbbcf5-z8x5v
+9,ingester_flush_queue_length,ingestion,Number of blocks waiting to be flushed,2026-01-02T09:48:08Z,0.000000,pod=tempo-tempostack-distributor-6d67bbbcf5-z8x5v
+9,ingester_flush_queue_length,ingestion,Number of blocks waiting to be flushed,2026-01-02T09:44:08Z,0.000000,pod=tempo-tempostack-ingester-0
+9,ingester_flush_queue_length,ingestion,Number of blocks waiting to be flushed,2026-01-02T09:45:08Z,0.000000,pod=tempo-tempostack-ingester-0
+9,ingester_flush_queue_length,ingestion,Number of blocks waiting to be flushed,2026-01-02T09:46:08Z,0.000000,pod=tempo-tempostack-ingester-0
+9,ingester_flush_queue_length,ingestion,Number of blocks waiting to be flushed,2026-01-02T09:47:08Z,0.000000,pod=tempo-tempostack-ingester-0
+9,ingester_flush_queue_length,ingestion,Number of blocks waiting to be flushed,2026-01-02T09:48:08Z,0.000000,pod=tempo-tempostack-ingester-0
+9,ingester_flush_queue_length,ingestion,Number of blocks waiting to be flushed,2026-01-02T09:44:08Z,0.000000,pod=tempo-tempostack-querier-9c57d94fb-5vdlw
+9,ingester_flush_queue_length,ingestion,Number of blocks waiting to be flushed,2026-01-02T09:45:08Z,0.000000,pod=tempo-tempostack-querier-9c57d94fb-5vdlw
+9,ingester_flush_queue_length,ingestion,Number of blocks waiting to be flushed,2026-01-02T09:46:08Z,0.000000,pod=tempo-tempostack-querier-9c57d94fb-5vdlw
+9,ingester_flush_queue_length,ingestion,Number of blocks waiting to be flushed,2026-01-02T09:47:08Z,0.000000,pod=tempo-tempostack-querier-9c57d94fb-5vdlw
+9,ingester_flush_queue_length,ingestion,Number of blocks waiting to be flushed,2026-01-02T09:48:08Z,0.000000,pod=tempo-tempostack-querier-9c57d94fb-5vdlw
+9,ingester_flush_queue_length,ingestion,Number of blocks waiting to be flushed,2026-01-02T09:43:08Z,0.000000,pod=tempo-tempostack-query-frontend-85d8b9fbd7-zcqjw
+9,ingester_flush_queue_length,ingestion,Number of blocks waiting to be flushed,2026-01-02T09:44:08Z,0.000000,pod=tempo-tempostack-query-frontend-85d8b9fbd7-zcqjw
+9,ingester_flush_queue_length,ingestion,Number of blocks waiting to be flushed,2026-01-02T09:45:08Z,0.000000,pod=tempo-tempostack-query-frontend-85d8b9fbd7-zcqjw
+9,ingester_flush_queue_length,ingestion,Number of blocks waiting to be flushed,2026-01-02T09:46:08Z,0.000000,pod=tempo-tempostack-query-frontend-85d8b9fbd7-zcqjw
+9,ingester_flush_queue_length,ingestion,Number of blocks waiting to be flushed,2026-01-02T09:47:08Z,0.000000,pod=tempo-tempostack-query-frontend-85d8b9fbd7-zcqjw
+9,ingester_flush_queue_length,ingestion,Number of blocks waiting to be flushed,2026-01-02T09:48:08Z,0.000000,pod=tempo-tempostack-query-frontend-85d8b9fbd7-zcqjw
+25,query_frontend_queue_duration_p99,query_performance,Query frontend queue wait time p99,2026-01-02T09:44:08Z,0.004950,
+25,query_frontend_queue_duration_p99,query_performance,Query frontend queue wait time p99,2026-01-02T09:45:08Z,0.004950,
+25,query_frontend_queue_duration_p99,query_performance,Query frontend queue wait time p99,2026-01-02T09:46:08Z,0.004950,
+25,query_frontend_queue_duration_p99,query_performance,Query frontend queue wait time p99,2026-01-02T09:47:08Z,0.004950,
+25,query_frontend_queue_duration_p99,query_performance,Query frontend queue wait time p99,2026-01-02T09:48:08Z,0.004950,
+26,query_frontend_retries_rate,query_performance,Query frontend retries rate (indicates query issues),2026-01-02T09:44:08Z,11.711500,
+26,query_frontend_retries_rate,query_performance,Query frontend retries rate (indicates query issues),2026-01-02T09:45:08Z,15.000000,
+26,query_frontend_retries_rate,query_performance,Query frontend retries rate (indicates query issues),2026-01-02T09:46:08Z,15.000000,
+26,query_frontend_retries_rate,query_performance,Query frontend retries rate (indicates query issues),2026-01-02T09:47:08Z,15.000000,
+26,query_frontend_retries_rate,query_performance,Query frontend retries rate (indicates query issues),2026-01-02T09:48:08Z,15.000000,
+24,cpu_usage_by_component,resources,"CPU usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:43:08Z,0.001458,component=compactor
+24,cpu_usage_by_component,resources,"CPU usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:44:08Z,0.001076,component=compactor
+24,cpu_usage_by_component,resources,"CPU usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:45:08Z,0.001288,component=compactor
+24,cpu_usage_by_component,resources,"CPU usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:46:08Z,0.000961,component=compactor
+24,cpu_usage_by_component,resources,"CPU usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:47:08Z,0.001284,component=compactor
+24,cpu_usage_by_component,resources,"CPU usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:48:08Z,0.001804,component=compactor
+24,cpu_usage_by_component,resources,"CPU usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:43:08Z,0.001395,component=distributor
+24,cpu_usage_by_component,resources,"CPU usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:44:08Z,0.001044,component=distributor
+24,cpu_usage_by_component,resources,"CPU usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:45:08Z,0.009476,component=distributor
+24,cpu_usage_by_component,resources,"CPU usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:46:08Z,0.015103,component=distributor
+24,cpu_usage_by_component,resources,"CPU usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:47:08Z,0.021053,component=distributor
+24,cpu_usage_by_component,resources,"CPU usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:48:08Z,0.027615,component=distributor
+24,cpu_usage_by_component,resources,"CPU usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:43:08Z,0.001354,component=gateway
+24,cpu_usage_by_component,resources,"CPU usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:44:08Z,0.001029,component=gateway
+24,cpu_usage_by_component,resources,"CPU usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:45:08Z,0.020909,component=gateway
+24,cpu_usage_by_component,resources,"CPU usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:46:08Z,0.035250,component=gateway
+24,cpu_usage_by_component,resources,"CPU usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:47:08Z,0.049358,component=gateway
+24,cpu_usage_by_component,resources,"CPU usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:48:08Z,0.065134,component=gateway
+24,cpu_usage_by_component,resources,"CPU usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:43:08Z,0.001459,component=ingester
+24,cpu_usage_by_component,resources,"CPU usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:44:08Z,0.001125,component=ingester
+24,cpu_usage_by_component,resources,"CPU usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:45:08Z,0.012995,component=ingester
+24,cpu_usage_by_component,resources,"CPU usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:46:08Z,0.024405,component=ingester
+24,cpu_usage_by_component,resources,"CPU usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:47:08Z,0.039782,component=ingester
+24,cpu_usage_by_component,resources,"CPU usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:48:08Z,0.059373,component=ingester
+24,cpu_usage_by_component,resources,"CPU usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:43:08Z,0.001401,component=querier
+24,cpu_usage_by_component,resources,"CPU usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:44:08Z,0.001040,component=querier
+24,cpu_usage_by_component,resources,"CPU usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:45:08Z,0.005631,component=querier
+24,cpu_usage_by_component,resources,"CPU usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:46:08Z,0.007834,component=querier
+24,cpu_usage_by_component,resources,"CPU usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:47:08Z,0.010957,component=querier
+24,cpu_usage_by_component,resources,"CPU usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:48:08Z,0.014485,component=querier
+24,cpu_usage_by_component,resources,"CPU usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:43:08Z,0.000619,component=query-frontend
+24,cpu_usage_by_component,resources,"CPU usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:44:08Z,0.000453,component=query-frontend
+24,cpu_usage_by_component,resources,"CPU usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:45:08Z,0.008863,component=query-frontend
+24,cpu_usage_by_component,resources,"CPU usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:46:08Z,0.013576,component=query-frontend
+24,cpu_usage_by_component,resources,"CPU usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:47:08Z,0.019288,component=query-frontend
+24,cpu_usage_by_component,resources,"CPU usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:48:08Z,0.025557,component=query-frontend
+23,memory_usage_by_component,resources,"Memory usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:43:08Z,0.000000,component=compactor
+23,memory_usage_by_component,resources,"Memory usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:44:08Z,63348736.000000,component=compactor
+23,memory_usage_by_component,resources,"Memory usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:45:08Z,33353728.000000,component=compactor
+23,memory_usage_by_component,resources,"Memory usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:46:08Z,35655680.000000,component=compactor
+23,memory_usage_by_component,resources,"Memory usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:47:08Z,37978112.000000,component=compactor
+23,memory_usage_by_component,resources,"Memory usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:48:08Z,38060032.000000,component=compactor
+23,memory_usage_by_component,resources,"Memory usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:43:08Z,0.000000,component=distributor
+23,memory_usage_by_component,resources,"Memory usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:44:08Z,43470848.000000,component=distributor
+23,memory_usage_by_component,resources,"Memory usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:45:08Z,46628864.000000,component=distributor
+23,memory_usage_by_component,resources,"Memory usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:46:08Z,46546944.000000,component=distributor
+23,memory_usage_by_component,resources,"Memory usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:47:08Z,46448640.000000,component=distributor
+23,memory_usage_by_component,resources,"Memory usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:48:08Z,46665728.000000,component=distributor
+23,memory_usage_by_component,resources,"Memory usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:43:08Z,0.000000,component=gateway
+23,memory_usage_by_component,resources,"Memory usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:44:08Z,62570496.000000,component=gateway
+23,memory_usage_by_component,resources,"Memory usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:45:08Z,67784704.000000,component=gateway
+23,memory_usage_by_component,resources,"Memory usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:46:08Z,71450624.000000,component=gateway
+23,memory_usage_by_component,resources,"Memory usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:47:08Z,72159232.000000,component=gateway
+23,memory_usage_by_component,resources,"Memory usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:48:08Z,70242304.000000,component=gateway
+23,memory_usage_by_component,resources,"Memory usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:43:08Z,0.000000,component=ingester
+23,memory_usage_by_component,resources,"Memory usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:44:08Z,102785024.000000,component=ingester
+23,memory_usage_by_component,resources,"Memory usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:45:08Z,145592320.000000,component=ingester
+23,memory_usage_by_component,resources,"Memory usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:46:08Z,143994880.000000,component=ingester
+23,memory_usage_by_component,resources,"Memory usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:47:08Z,108855296.000000,component=ingester
+23,memory_usage_by_component,resources,"Memory usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:48:08Z,164417536.000000,component=ingester
+23,memory_usage_by_component,resources,"Memory usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:43:08Z,0.000000,component=querier
+23,memory_usage_by_component,resources,"Memory usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:44:08Z,49180672.000000,component=querier
+23,memory_usage_by_component,resources,"Memory usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:45:08Z,49963008.000000,component=querier
+23,memory_usage_by_component,resources,"Memory usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:46:08Z,50253824.000000,component=querier
+23,memory_usage_by_component,resources,"Memory usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:47:08Z,51920896.000000,component=querier
+23,memory_usage_by_component,resources,"Memory usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:48:08Z,51933184.000000,component=querier
+23,memory_usage_by_component,resources,"Memory usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:43:08Z,0.000000,component=query-frontend
+23,memory_usage_by_component,resources,"Memory usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:44:08Z,121204736.000000,component=query-frontend
+23,memory_usage_by_component,resources,"Memory usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:45:08Z,272809984.000000,component=query-frontend
+23,memory_usage_by_component,resources,"Memory usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:46:08Z,276320256.000000,component=query-frontend
+23,memory_usage_by_component,resources,"Memory usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:47:08Z,333352960.000000,component=query-frontend
+23,memory_usage_by_component,resources,"Memory usage grouped by Tempo component (distributor, ingester, etc.)",2026-01-02T09:48:08Z,373080064.000000,component=query-frontend
+19,memory_usage_total,resources,Total memory working set bytes used by all Tempo containers,2026-01-02T09:43:08Z,0.000000,
+19,memory_usage_total,resources,Total memory working set bytes used by all Tempo containers,2026-01-02T09:44:08Z,442560512.000000,
+19,memory_usage_total,resources,Total memory working set bytes used by all Tempo containers,2026-01-02T09:45:08Z,616132608.000000,
+19,memory_usage_total,resources,Total memory working set bytes used by all Tempo containers,2026-01-02T09:46:08Z,624222208.000000,
+19,memory_usage_total,resources,Total memory working set bytes used by all Tempo containers,2026-01-02T09:47:08Z,650715136.000000,
+19,memory_usage_total,resources,Total memory working set bytes used by all Tempo containers,2026-01-02T09:48:08Z,744398848.000000,
+15,storage_request_duration_write_p99,storage,P99 latency of retention operations,2026-01-02T09:44:08Z,NaN,
+15,storage_request_duration_write_p99,storage,P99 latency of retention operations,2026-01-02T09:45:08Z,NaN,
+15,storage_request_duration_write_p99,storage,P99 latency of retention operations,2026-01-02T09:46:08Z,NaN,
+15,storage_request_duration_write_p99,storage,P99 latency of retention operations,2026-01-02T09:47:08Z,NaN,
+15,storage_request_duration_write_p99,storage,P99 latency of retention operations,2026-01-02T09:48:08Z,NaN,
+17,cache_hits_by_type,cache,Backend hedged roundtrips rate (storage access optimization),2026-01-02T09:44:08Z,0.000000,pod=tempo-tempostack-compactor-77d878fb89-drxd4
+17,cache_hits_by_type,cache,Backend hedged roundtrips rate (storage access optimization),2026-01-02T09:44:08Z,0.000000,pod=tempo-tempostack-compactor-fd99468b7-d94qn
+17,cache_hits_by_type,cache,Backend hedged roundtrips rate (storage access optimization),2026-01-02T09:45:08Z,0.000000,pod=tempo-tempostack-compactor-fd99468b7-d94qn
+17,cache_hits_by_type,cache,Backend hedged roundtrips rate (storage access optimization),2026-01-02T09:46:08Z,0.000000,pod=tempo-tempostack-compactor-fd99468b7-d94qn
+17,cache_hits_by_type,cache,Backend hedged roundtrips rate (storage access optimization),2026-01-02T09:47:08Z,0.000000,pod=tempo-tempostack-compactor-fd99468b7-d94qn
+17,cache_hits_by_type,cache,Backend hedged roundtrips rate (storage access optimization),2026-01-02T09:48:08Z,0.000000,pod=tempo-tempostack-compactor-fd99468b7-d94qn
+17,cache_hits_by_type,cache,Backend hedged roundtrips rate (storage access optimization),2026-01-02T09:44:08Z,0.000000,pod=tempo-tempostack-distributor-6d67bbbcf5-z8x5v
+17,cache_hits_by_type,cache,Backend hedged roundtrips rate (storage access optimization),2026-01-02T09:45:08Z,0.000000,pod=tempo-tempostack-distributor-6d67bbbcf5-z8x5v
+17,cache_hits_by_type,cache,Backend hedged roundtrips rate (storage access optimization),2026-01-02T09:46:08Z,0.000000,pod=tempo-tempostack-distributor-6d67bbbcf5-z8x5v
+17,cache_hits_by_type,cache,Backend hedged roundtrips rate (storage access optimization),2026-01-02T09:47:08Z,0.000000,pod=tempo-tempostack-distributor-6d67bbbcf5-z8x5v
+17,cache_hits_by_type,cache,Backend hedged roundtrips rate (storage access optimization),2026-01-02T09:48:08Z,0.000000,pod=tempo-tempostack-distributor-6d67bbbcf5-z8x5v
+17,cache_hits_by_type,cache,Backend hedged roundtrips rate (storage access optimization),2026-01-02T09:44:08Z,0.000000,pod=tempo-tempostack-ingester-0
+17,cache_hits_by_type,cache,Backend hedged roundtrips rate (storage access optimization),2026-01-02T09:45:08Z,0.000000,pod=tempo-tempostack-ingester-0
+17,cache_hits_by_type,cache,Backend hedged roundtrips rate (storage access optimization),2026-01-02T09:46:08Z,0.000000,pod=tempo-tempostack-ingester-0
+17,cache_hits_by_type,cache,Backend hedged roundtrips rate (storage access optimization),2026-01-02T09:47:08Z,0.000000,pod=tempo-tempostack-ingester-0
+17,cache_hits_by_type,cache,Backend hedged roundtrips rate (storage access optimization),2026-01-02T09:48:08Z,0.000000,pod=tempo-tempostack-ingester-0
+17,cache_hits_by_type,cache,Backend hedged roundtrips rate (storage access optimization),2026-01-02T09:44:08Z,0.000000,pod=tempo-tempostack-querier-9c57d94fb-5vdlw
+17,cache_hits_by_type,cache,Backend hedged roundtrips rate (storage access optimization),2026-01-02T09:45:08Z,0.000000,pod=tempo-tempostack-querier-9c57d94fb-5vdlw
+17,cache_hits_by_type,cache,Backend hedged roundtrips rate (storage access optimization),2026-01-02T09:46:08Z,0.000000,pod=tempo-tempostack-querier-9c57d94fb-5vdlw
+17,cache_hits_by_type,cache,Backend hedged roundtrips rate (storage access optimization),2026-01-02T09:47:08Z,0.000000,pod=tempo-tempostack-querier-9c57d94fb-5vdlw
+17,cache_hits_by_type,cache,Backend hedged roundtrips rate (storage access optimization),2026-01-02T09:48:08Z,0.000000,pod=tempo-tempostack-querier-9c57d94fb-5vdlw
+17,cache_hits_by_type,cache,Backend hedged roundtrips rate (storage access optimization),2026-01-02T09:44:08Z,0.000000,pod=tempo-tempostack-query-frontend-85d8b9fbd7-zcqjw
+17,cache_hits_by_type,cache,Backend hedged roundtrips rate (storage access optimization),2026-01-02T09:45:08Z,0.000000,pod=tempo-tempostack-query-frontend-85d8b9fbd7-zcqjw
+17,cache_hits_by_type,cache,Backend hedged roundtrips rate (storage access optimization),2026-01-02T09:46:08Z,0.000000,pod=tempo-tempostack-query-frontend-85d8b9fbd7-zcqjw
+17,cache_hits_by_type,cache,Backend hedged roundtrips rate (storage access optimization),2026-01-02T09:47:08Z,0.000000,pod=tempo-tempostack-query-frontend-85d8b9fbd7-zcqjw
+17,cache_hits_by_type,cache,Backend hedged roundtrips rate (storage access optimization),2026-01-02T09:48:08Z,0.000000,pod=tempo-tempostack-query-frontend-85d8b9fbd7-zcqjw
+18,cache_misses_by_type,cache,Blocklist poll rate by pod,2026-01-02T09:44:08Z,0.000000,pod=tempo-tempostack-compactor-77d878fb89-drxd4
+18,cache_misses_by_type,cache,Blocklist poll rate by pod,2026-01-02T09:44:08Z,0.000000,pod=tempo-tempostack-compactor-fd99468b7-d94qn
+18,cache_misses_by_type,cache,Blocklist poll rate by pod,2026-01-02T09:45:08Z,0.000000,pod=tempo-tempostack-compactor-fd99468b7-d94qn
+18,cache_misses_by_type,cache,Blocklist poll rate by pod,2026-01-02T09:46:08Z,0.000000,pod=tempo-tempostack-compactor-fd99468b7-d94qn
+18,cache_misses_by_type,cache,Blocklist poll rate by pod,2026-01-02T09:47:08Z,0.000000,pod=tempo-tempostack-compactor-fd99468b7-d94qn
+18,cache_misses_by_type,cache,Blocklist poll rate by pod,2026-01-02T09:48:08Z,0.000000,pod=tempo-tempostack-compactor-fd99468b7-d94qn
+18,cache_misses_by_type,cache,Blocklist poll rate by pod,2026-01-02T09:44:08Z,0.000000,pod=tempo-tempostack-distributor-6d67bbbcf5-z8x5v
+18,cache_misses_by_type,cache,Blocklist poll rate by pod,2026-01-02T09:45:08Z,0.000000,pod=tempo-tempostack-distributor-6d67bbbcf5-z8x5v
+18,cache_misses_by_type,cache,Blocklist poll rate by pod,2026-01-02T09:46:08Z,0.000000,pod=tempo-tempostack-distributor-6d67bbbcf5-z8x5v
+18,cache_misses_by_type,cache,Blocklist poll rate by pod,2026-01-02T09:47:08Z,0.000000,pod=tempo-tempostack-distributor-6d67bbbcf5-z8x5v
+18,cache_misses_by_type,cache,Blocklist poll rate by pod,2026-01-02T09:48:08Z,0.000000,pod=tempo-tempostack-distributor-6d67bbbcf5-z8x5v
+18,cache_misses_by_type,cache,Blocklist poll rate by pod,2026-01-02T09:44:08Z,0.000000,pod=tempo-tempostack-ingester-0
+18,cache_misses_by_type,cache,Blocklist poll rate by pod,2026-01-02T09:45:08Z,0.000000,pod=tempo-tempostack-ingester-0
+18,cache_misses_by_type,cache,Blocklist poll rate by pod,2026-01-02T09:46:08Z,0.000000,pod=tempo-tempostack-ingester-0
+18,cache_misses_by_type,cache,Blocklist poll rate by pod,2026-01-02T09:47:08Z,0.000000,pod=tempo-tempostack-ingester-0
+18,cache_misses_by_type,cache,Blocklist poll rate by pod,2026-01-02T09:48:08Z,0.000000,pod=tempo-tempostack-ingester-0
+18,cache_misses_by_type,cache,Blocklist poll rate by pod,2026-01-02T09:44:08Z,0.000000,pod=tempo-tempostack-querier-9c57d94fb-5vdlw
+18,cache_misses_by_type,cache,Blocklist poll rate by pod,2026-01-02T09:45:08Z,0.000000,pod=tempo-tempostack-querier-9c57d94fb-5vdlw
+18,cache_misses_by_type,cache,Blocklist poll rate by pod,2026-01-02T09:46:08Z,0.000000,pod=tempo-tempostack-querier-9c57d94fb-5vdlw
+18,cache_misses_by_type,cache,Blocklist poll rate by pod,2026-01-02T09:47:08Z,0.000000,pod=tempo-tempostack-querier-9c57d94fb-5vdlw
+18,cache_misses_by_type,cache,Blocklist poll rate by pod,2026-01-02T09:48:08Z,0.000000,pod=tempo-tempostack-querier-9c57d94fb-5vdlw
+18,cache_misses_by_type,cache,Blocklist poll rate by pod,2026-01-02T09:44:08Z,0.000000,pod=tempo-tempostack-query-frontend-85d8b9fbd7-zcqjw
+18,cache_misses_by_type,cache,Blocklist poll rate by pod,2026-01-02T09:45:08Z,0.000000,pod=tempo-tempostack-query-frontend-85d8b9fbd7-zcqjw
+18,cache_misses_by_type,cache,Blocklist poll rate by pod,2026-01-02T09:46:08Z,0.000000,pod=tempo-tempostack-query-frontend-85d8b9fbd7-zcqjw
+18,cache_misses_by_type,cache,Blocklist poll rate by pod,2026-01-02T09:47:08Z,0.000000,pod=tempo-tempostack-query-frontend-85d8b9fbd7-zcqjw
+18,cache_misses_by_type,cache,Blocklist poll rate by pod,2026-01-02T09:48:08Z,0.033333,pod=tempo-tempostack-query-frontend-85d8b9fbd7-zcqjw
+27,querier_queue_length,querier,Number of queries waiting in query frontend queue,2026-01-02T09:44:08Z,0.000000,pod=tempo-tempostack-query-frontend-85d8b9fbd7-zcqjw
+27,querier_queue_length,querier,Number of queries waiting in query frontend queue,2026-01-02T09:45:08Z,0.000000,pod=tempo-tempostack-query-frontend-85d8b9fbd7-zcqjw
+27,querier_queue_length,querier,Number of queries waiting in query frontend queue,2026-01-02T09:46:08Z,0.000000,pod=tempo-tempostack-query-frontend-85d8b9fbd7-zcqjw
+27,querier_queue_length,querier,Number of queries waiting in query frontend queue,2026-01-02T09:47:08Z,0.000000,pod=tempo-tempostack-query-frontend-85d8b9fbd7-zcqjw
+27,querier_queue_length,querier,Number of queries waiting in query frontend queue,2026-01-02T09:48:08Z,0.000000,pod=tempo-tempostack-query-frontend-85d8b9fbd7-zcqjw
+21,memory_usage_by_pod_container,resources,Memory usage for each container in each pod,2026-01-02T09:43:08Z,0.000000,"container=tempo,pod=tempo-tempostack-compactor-77d878fb89-drxd4"
+21,memory_usage_by_pod_container,resources,Memory usage for each container in each pod,2026-01-02T09:44:08Z,30715904.000000,"container=tempo,pod=tempo-tempostack-compactor-77d878fb89-drxd4"
+21,memory_usage_by_pod_container,resources,Memory usage for each container in each pod,2026-01-02T09:43:08Z,0.000000,"container=tempo,pod=tempo-tempostack-compactor-fd99468b7-d94qn"
+21,memory_usage_by_pod_container,resources,Memory usage for each container in each pod,2026-01-02T09:44:08Z,32632832.000000,"container=tempo,pod=tempo-tempostack-compactor-fd99468b7-d94qn"
+21,memory_usage_by_pod_container,resources,Memory usage for each container in each pod,2026-01-02T09:45:08Z,33353728.000000,"container=tempo,pod=tempo-tempostack-compactor-fd99468b7-d94qn"
+21,memory_usage_by_pod_container,resources,Memory usage for each container in each pod,2026-01-02T09:46:08Z,35655680.000000,"container=tempo,pod=tempo-tempostack-compactor-fd99468b7-d94qn"
+21,memory_usage_by_pod_container,resources,Memory usage for each container in each pod,2026-01-02T09:47:08Z,37978112.000000,"container=tempo,pod=tempo-tempostack-compactor-fd99468b7-d94qn"
+21,memory_usage_by_pod_container,resources,Memory usage for each container in each pod,2026-01-02T09:48:08Z,38060032.000000,"container=tempo,pod=tempo-tempostack-compactor-fd99468b7-d94qn"
+21,memory_usage_by_pod_container,resources,Memory usage for each container in each pod,2026-01-02T09:43:08Z,0.000000,"container=tempo,pod=tempo-tempostack-distributor-6d67bbbcf5-z8x5v"
+21,memory_usage_by_pod_container,resources,Memory usage for each container in each pod,2026-01-02T09:44:08Z,43470848.000000,"container=tempo,pod=tempo-tempostack-distributor-6d67bbbcf5-z8x5v"
+21,memory_usage_by_pod_container,resources,Memory usage for each container in each pod,2026-01-02T09:45:08Z,46628864.000000,"container=tempo,pod=tempo-tempostack-distributor-6d67bbbcf5-z8x5v"
+21,memory_usage_by_pod_container,resources,Memory usage for each container in each pod,2026-01-02T09:46:08Z,46546944.000000,"container=tempo,pod=tempo-tempostack-distributor-6d67bbbcf5-z8x5v"
+21,memory_usage_by_pod_container,resources,Memory usage for each container in each pod,2026-01-02T09:47:08Z,46448640.000000,"container=tempo,pod=tempo-tempostack-distributor-6d67bbbcf5-z8x5v"
+21,memory_usage_by_pod_container,resources,Memory usage for each container in each pod,2026-01-02T09:48:08Z,46665728.000000,"container=tempo,pod=tempo-tempostack-distributor-6d67bbbcf5-z8x5v"
+21,memory_usage_by_pod_container,resources,Memory usage for each container in each pod,2026-01-02T09:43:08Z,0.000000,"container=tempo,pod=tempo-tempostack-distributor-7d8f75d477-fl4d2"
+21,memory_usage_by_pod_container,resources,Memory usage for each container in each pod,2026-01-02T09:43:08Z,0.000000,"container=tempo,pod=tempo-tempostack-ingester-0"
+21,memory_usage_by_pod_container,resources,Memory usage for each container in each pod,2026-01-02T09:44:08Z,102785024.000000,"container=tempo,pod=tempo-tempostack-ingester-0"
+21,memory_usage_by_pod_container,resources,Memory usage for each container in each pod,2026-01-02T09:45:08Z,145592320.000000,"container=tempo,pod=tempo-tempostack-ingester-0"
+21,memory_usage_by_pod_container,resources,Memory usage for each container in each pod,2026-01-02T09:46:08Z,143994880.000000,"container=tempo,pod=tempo-tempostack-ingester-0"
+21,memory_usage_by_pod_container,resources,Memory usage for each container in each pod,2026-01-02T09:47:08Z,108855296.000000,"container=tempo,pod=tempo-tempostack-ingester-0"
+21,memory_usage_by_pod_container,resources,Memory usage for each container in each pod,2026-01-02T09:48:08Z,164417536.000000,"container=tempo,pod=tempo-tempostack-ingester-0"
+21,memory_usage_by_pod_container,resources,Memory usage for each container in each pod,2026-01-02T09:43:08Z,0.000000,"container=tempo,pod=tempo-tempostack-querier-5bf964fb54-f2l6s"
+21,memory_usage_by_pod_container,resources,Memory usage for each container in each pod,2026-01-02T09:43:08Z,0.000000,"container=tempo,pod=tempo-tempostack-querier-9c57d94fb-5vdlw"
+21,memory_usage_by_pod_container,resources,Memory usage for each container in each pod,2026-01-02T09:44:08Z,49180672.000000,"container=tempo,pod=tempo-tempostack-querier-9c57d94fb-5vdlw"
+21,memory_usage_by_pod_container,resources,Memory usage for each container in each pod,2026-01-02T09:45:08Z,49963008.000000,"container=tempo,pod=tempo-tempostack-querier-9c57d94fb-5vdlw"
+21,memory_usage_by_pod_container,resources,Memory usage for each container in each pod,2026-01-02T09:46:08Z,50253824.000000,"container=tempo,pod=tempo-tempostack-querier-9c57d94fb-5vdlw"
+21,memory_usage_by_pod_container,resources,Memory usage for each container in each pod,2026-01-02T09:47:08Z,51920896.000000,"container=tempo,pod=tempo-tempostack-querier-9c57d94fb-5vdlw"
+21,memory_usage_by_pod_container,resources,Memory usage for each container in each pod,2026-01-02T09:48:08Z,51933184.000000,"container=tempo,pod=tempo-tempostack-querier-9c57d94fb-5vdlw"
+21,memory_usage_by_pod_container,resources,Memory usage for each container in each pod,2026-01-02T09:43:08Z,0.000000,"container=tempo,pod=tempo-tempostack-query-frontend-85d8b9fbd7-zcqjw"
+21,memory_usage_by_pod_container,resources,Memory usage for each container in each pod,2026-01-02T09:44:08Z,111411200.000000,"container=tempo,pod=tempo-tempostack-query-frontend-85d8b9fbd7-zcqjw"
+21,memory_usage_by_pod_container,resources,Memory usage for each container in each pod,2026-01-02T09:45:08Z,262434816.000000,"container=tempo,pod=tempo-tempostack-query-frontend-85d8b9fbd7-zcqjw"
+21,memory_usage_by_pod_container,resources,Memory usage for each container in each pod,2026-01-02T09:46:08Z,265916416.000000,"container=tempo,pod=tempo-tempostack-query-frontend-85d8b9fbd7-zcqjw"
+21,memory_usage_by_pod_container,resources,Memory usage for each container in each pod,2026-01-02T09:47:08Z,322473984.000000,"container=tempo,pod=tempo-tempostack-query-frontend-85d8b9fbd7-zcqjw"
+21,memory_usage_by_pod_container,resources,Memory usage for each container in each pod,2026-01-02T09:48:08Z,362180608.000000,"container=tempo,pod=tempo-tempostack-query-frontend-85d8b9fbd7-zcqjw"
+21,memory_usage_by_pod_container,resources,Memory usage for each container in each pod,2026-01-02T09:43:08Z,0.000000,"container=tempo,pod=tempo-tempostack-query-frontend-98545cf45-drb9q"
+21,memory_usage_by_pod_container,resources,Memory usage for each container in each pod,2026-01-02T09:43:08Z,0.000000,"container=tempo-gateway,pod=tempo-tempostack-gateway-687678f64c-ld7b4"
+21,memory_usage_by_pod_container,resources,Memory usage for each container in each pod,2026-01-02T09:43:08Z,0.000000,"container=tempo-gateway,pod=tempo-tempostack-gateway-7db6897757-2qx58"
+21,memory_usage_by_pod_container,resources,Memory usage for each container in each pod,2026-01-02T09:44:08Z,40923136.000000,"container=tempo-gateway,pod=tempo-tempostack-gateway-7db6897757-2qx58"
+21,memory_usage_by_pod_container,resources,Memory usage for each container in each pod,2026-01-02T09:45:08Z,45912064.000000,"container=tempo-gateway,pod=tempo-tempostack-gateway-7db6897757-2qx58"
+21,memory_usage_by_pod_container,resources,Memory usage for each container in each pod,2026-01-02T09:46:08Z,48873472.000000,"container=tempo-gateway,pod=tempo-tempostack-gateway-7db6897757-2qx58"
+21,memory_usage_by_pod_container,resources,Memory usage for each container in each pod,2026-01-02T09:47:08Z,49528832.000000,"container=tempo-gateway,pod=tempo-tempostack-gateway-7db6897757-2qx58"
+21,memory_usage_by_pod_container,resources,Memory usage for each container in each pod,2026-01-02T09:48:08Z,47304704.000000,"container=tempo-gateway,pod=tempo-tempostack-gateway-7db6897757-2qx58"
+21,memory_usage_by_pod_container,resources,Memory usage for each container in each pod,2026-01-02T09:43:08Z,0.000000,"container=tempo-gateway-opa,pod=tempo-tempostack-gateway-687678f64c-ld7b4"
+21,memory_usage_by_pod_container,resources,Memory usage for each container in each pod,2026-01-02T09:43:08Z,0.000000,"container=tempo-gateway-opa,pod=tempo-tempostack-gateway-7db6897757-2qx58"
+21,memory_usage_by_pod_container,resources,Memory usage for each container in each pod,2026-01-02T09:44:08Z,21647360.000000,"container=tempo-gateway-opa,pod=tempo-tempostack-gateway-7db6897757-2qx58"
+21,memory_usage_by_pod_container,resources,Memory usage for each container in each pod,2026-01-02T09:45:08Z,21872640.000000,"container=tempo-gateway-opa,pod=tempo-tempostack-gateway-7db6897757-2qx58"
+21,memory_usage_by_pod_container,resources,Memory usage for each container in each pod,2026-01-02T09:46:08Z,22577152.000000,"container=tempo-gateway-opa,pod=tempo-tempostack-gateway-7db6897757-2qx58"
+21,memory_usage_by_pod_container,resources,Memory usage for each container in each pod,2026-01-02T09:47:08Z,22630400.000000,"container=tempo-gateway-opa,pod=tempo-tempostack-gateway-7db6897757-2qx58"
+21,memory_usage_by_pod_container,resources,Memory usage for each container in each pod,2026-01-02T09:48:08Z,22937600.000000,"container=tempo-gateway-opa,pod=tempo-tempostack-gateway-7db6897757-2qx58"
+21,memory_usage_by_pod_container,resources,Memory usage for each container in each pod,2026-01-02T09:43:08Z,0.000000,"container=tempo-query,pod=tempo-tempostack-query-frontend-85d8b9fbd7-zcqjw"
+21,memory_usage_by_pod_container,resources,Memory usage for each container in each pod,2026-01-02T09:44:08Z,9793536.000000,"container=tempo-query,pod=tempo-tempostack-query-frontend-85d8b9fbd7-zcqjw"
+21,memory_usage_by_pod_container,resources,Memory usage for each container in each pod,2026-01-02T09:45:08Z,10375168.000000,"container=tempo-query,pod=tempo-tempostack-query-frontend-85d8b9fbd7-zcqjw"
+21,memory_usage_by_pod_container,resources,Memory usage for each container in each pod,2026-01-02T09:46:08Z,10403840.000000,"container=tempo-query,pod=tempo-tempostack-query-frontend-85d8b9fbd7-zcqjw"
+21,memory_usage_by_pod_container,resources,Memory usage for each container in each pod,2026-01-02T09:47:08Z,10878976.000000,"container=tempo-query,pod=tempo-tempostack-query-frontend-85d8b9fbd7-zcqjw"
+21,memory_usage_by_pod_container,resources,Memory usage for each container in each pod,2026-01-02T09:48:08Z,10899456.000000,"container=tempo-query,pod=tempo-tempostack-query-frontend-85d8b9fbd7-zcqjw"
+21,memory_usage_by_pod_container,resources,Memory usage for each container in each pod,2026-01-02T09:43:08Z,0.000000,"container=tempo-query,pod=tempo-tempostack-query-frontend-98545cf45-drb9q"
+3,bytes_received_rate,ingestion,"Rate of bytes received by the distributor per second, grouped by status",2026-01-02T09:45:08Z,122211.866667,
+3,bytes_received_rate,ingestion,"Rate of bytes received by the distributor per second, grouped by status",2026-01-02T09:46:08Z,122493.500000,
+3,bytes_received_rate,ingestion,"Rate of bytes received by the distributor per second, grouped by status",2026-01-02T09:47:08Z,122388.700000,
+3,bytes_received_rate,ingestion,"Rate of bytes received by the distributor per second, grouped by status",2026-01-02T09:48:08Z,122362.366667,
+20,cpu_usage_total,resources,Total CPU cores used by all Tempo containers,2026-01-02T09:43:08Z,0.007687,
+20,cpu_usage_total,resources,Total CPU cores used by all Tempo containers,2026-01-02T09:44:08Z,0.005767,
+20,cpu_usage_total,resources,Total CPU cores used by all Tempo containers,2026-01-02T09:45:08Z,0.059162,
+20,cpu_usage_total,resources,Total CPU cores used by all Tempo containers,2026-01-02T09:46:08Z,0.097128,
+20,cpu_usage_total,resources,Total CPU cores used by all Tempo containers,2026-01-02T09:47:08Z,0.141723,
+20,cpu_usage_total,resources,Total CPU cores used by all Tempo containers,2026-01-02T09:48:08Z,0.193968,
