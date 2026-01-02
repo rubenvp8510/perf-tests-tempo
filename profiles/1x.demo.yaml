@@ -1,0 +1,16 @@
+name: 1x.demo
+description: "Demo environment - minimal resources, no HA, not for production"
+
+tempo:
+  variant: monolithic
+
+k6:
+  duration: "5m"
+  vus:
+    min: 2
+    max: 5
+  ingestion:
+    mbPerSecond: 0.05
+    traceProfile: small
+  query:
+    queriesPerSecond: 2

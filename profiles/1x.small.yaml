@@ -1,0 +1,17 @@
+name: 1x.small
+description: "Small - ~500GB/day ingestion, HA enabled, production ready for moderate workloads"
+
+tempo:
+  variant: stack
+
+k6:
+  duration: "15m"
+  vus:
+    min: 20
+    max: 80
+  ingestion:
+    # ~500 GB/day = ~5.8 MB/s
+    mbPerSecond: 5.8
+    traceProfile: medium
+  query:
+    queriesPerSecond: 25

@@ -1,0 +1,17 @@
+name: 1x.medium
+description: "Medium - ~2TB/day ingestion, HA enabled, production ready for high workloads"
+
+tempo:
+  variant: stack
+
+k6:
+  duration: "15m"
+  vus:
+    min: 50
+    max: 200
+  ingestion:
+    # ~2 TB/day = ~23.1 MB/s
+    mbPerSecond: 23
+    traceProfile: large
+  query:
+    queriesPerSecond: 100
