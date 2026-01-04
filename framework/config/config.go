@@ -27,7 +27,7 @@ const (
 	DefaultNamespacePollInterval = 2 * time.Second
 
 	// DefaultJobTimeout is the default timeout for k6 job completion
-	DefaultJobTimeout = 30 * time.Minute
+	DefaultJobTimeout = 1 * time.Hour
 
 	// DefaultJobPollInterval is the default interval for polling job status
 	DefaultJobPollInterval = 5 * time.Second

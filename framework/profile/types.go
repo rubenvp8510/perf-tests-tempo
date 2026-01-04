@@ -20,6 +20,11 @@ type TempoConfig struct {
 	// Variant is the deployment type: "monolithic" or "stack"
 	Variant string `yaml:"variant"`
 
+	// ReplicationFactor determines how many ingesters must acknowledge data
+	// before accepting a span. Only applies to TempoStack (not monolithic).
+	// If not set, uses operator default (typically 1).
+	ReplicationFactor *int `yaml:"replicationFactor,omitempty"`
+
 	// Resources defines CPU and memory for Tempo pods (optional)
 	// If not specified, Tempo will use operator defaults
 	Resources *ResourceSpec `yaml:"resources,omitempty"`

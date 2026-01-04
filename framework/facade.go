@@ -31,8 +31,9 @@ func (f *Framework) SetupTempo(variant string, resources *ResourceConfig) error 
 	var tempoConfig *tempo.ResourceConfig
 	if resources != nil {
 		tempoConfig = &tempo.ResourceConfig{
-			Profile:   resources.Profile,
-			Resources: resources.Resources,
+			Profile:           resources.Profile,
+			Resources:         resources.Resources,
+			ReplicationFactor: resources.ReplicationFactor,
 		}
 		if resources.Overrides != nil {
 			tempoConfig.Overrides = &tempo.TempoOverrides{

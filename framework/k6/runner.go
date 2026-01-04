@@ -85,8 +85,9 @@ func RunTest(c Clients, testType TestType, config *Config) (*Result, error) {
 	}
 
 	// Wait for Job to complete
-	fmt.Printf("⏳ Waiting for k6 Job to complete (timeout: %s)...\n", JobTimeout)
-	success, err := waitForJob(c, jobName)
+	timeout := config.GetTimeout()
+	fmt.Printf("⏳ Waiting for k6 Job to complete (timeout: %s)...\n", timeout)
+	success, err := waitForJob(c, jobName, timeout)
 	if err != nil {
 		return nil, fmt.Errorf("error waiting for k6 Job: %w", err)
 	}
@@ -309,7 +310,8 @@ func RunParallelTests(c Clients, config *Config) (*ParallelResult, error) {
 	}
 
 	// Wait for both jobs to complete in parallel
-	fmt.Printf("⏳ Waiting for both k6 Jobs to complete (timeout: %s)...\n", JobTimeout)
+	timeout := config.GetTimeout()
+	fmt.Printf("⏳ Waiting for both k6 Jobs to complete (timeout: %s)...\n", timeout)
 
 	type jobResult struct {
 		name    string
@@ -322,14 +324,14 @@ func RunParallelTests(c Clients, config *Config) (*ParallelResult, error) {
 
 	// Wait for ingestion job
 	go func() {
-		success, err := waitForJob(c, ingestionJobName)
+		success, err := waitForJob(c, ingestionJobName, timeout)
 		logs, _ := getJobLogs(c, ingestionJobName)
 		results <- jobResult{name: "ingestion", success: success, logs: logs, err: err}
 	}()
 
 	// Wait for query job
 	go func() {
-		success, err := waitForJob(c, queryJobName)
+		success, err := waitForJob(c, queryJobName, timeout)
 		logs, _ := getJobLogs(c, queryJobName)
 		results <- jobResult{name: "query", success: success, logs: logs, err: err}
 	}()
@@ -664,8 +666,8 @@ func createJob(c Clients, jobName string, testType TestType, config *Config) err
 }
 
 // waitForJob waits for the k6 Job to complete
-func waitForJob(c Clients, jobName string) (bool, error) {
-	ctx, cancel := context.WithTimeout(c.Context(), JobTimeout)
+func waitForJob(c Clients, jobName string, timeout time.Duration) (bool, error) {
+	ctx, cancel := context.WithTimeout(c.Context(), timeout)
 	defer cancel()
 
 	namespace := c.Namespace()

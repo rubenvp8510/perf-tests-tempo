@@ -50,8 +50,13 @@ const (
 	// ScriptsConfigMap is the name of the ConfigMap containing k6 scripts
 	ScriptsConfigMap = "k6-scripts"
 
-	// JobTimeout is the maximum time to wait for a k6 job to complete
-	JobTimeout = 30 * time.Minute
+	// DefaultJobTimeout is the fallback timeout for k6 job completion
+	// Prefer using calculated timeout based on test duration
+	DefaultJobTimeout = 1 * time.Hour
+
+	// JobTimeoutBuffer is extra time added to test duration for job timeout
+	// This accounts for job startup, teardown, and metric collection
+	JobTimeoutBuffer = 10 * time.Minute
 
 	// DefaultTenant is the default tenant ID for multitenancy mode
 	DefaultTenant = "tenant-1"
@@ -90,6 +95,26 @@ type Config struct {
 	// Prometheus metrics export configuration
 	// If set, k6 will export metrics to Prometheus via remote write
 	PrometheusRWURL string
+
+	// Timeout is the maximum time to wait for the job to complete
+	// If not set, it's calculated as Duration + JobTimeoutBuffer
+	Timeout time.Duration
+}
+
+// GetTimeout returns the job timeout, calculating from Duration if not explicitly set
+func (c *Config) GetTimeout() time.Duration {
+	if c.Timeout > 0 {
+		return c.Timeout
+	}
+
+	// Parse duration and add buffer
+	if c.Duration != "" {
+		if d, err := time.ParseDuration(c.Duration); err == nil {
+			return d + JobTimeoutBuffer
+		}
+	}
+
+	return DefaultJobTimeout
 }
 
 // Result holds the result of a k6 test execution

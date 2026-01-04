@@ -28,6 +28,10 @@ type ResourceConfig = struct {
 	// Custom resources (used when Profile is empty)
 	Resources *corev1.ResourceRequirements
 
+	// ReplicationFactor determines how many ingesters must acknowledge data
+	// before accepting a span. Only applies to TempoStack (not monolithic).
+	ReplicationFactor *int
+
 	// Overrides contains Tempo limits configuration
 	Overrides *TempoOverrides
 }

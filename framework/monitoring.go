@@ -3,16 +3,21 @@ package framework
 import (
 	"context"
 	"fmt"
+	"time"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/yaml"
 )
 
 const (
-	monitoringNamespace        = "openshift-monitoring"
-	clusterMonitoringConfigMap = "cluster-monitoring-config"
+	monitoringNamespace            = "openshift-monitoring"
+	userWorkloadMonitoringNS       = "openshift-user-workload-monitoring"
+	clusterMonitoringConfigMap     = "cluster-monitoring-config"
+	userWorkloadMonitoringTimeout  = 2 * time.Minute
+	userWorkloadMonitoringInterval = 5 * time.Second
 )
 
 // MonitoringConfig represents the OpenShift cluster monitoring configuration
@@ -31,13 +36,22 @@ func (f *Framework) EnableUserWorkloadMonitoring() error {
 	if err != nil {
 		if errors.IsNotFound(err) {
 			// Create new ConfigMap
-			return f.createMonitoringConfigMap(ctx)
+			if err := f.createMonitoringConfigMap(ctx); err != nil {
+				return err
+			}
+			// Wait for user workload monitoring pods to be ready
+			return f.waitForUserWorkloadMonitoring()
 		}
 		return fmt.Errorf("failed to get cluster-monitoring-config: %w", err)
 	}
 
 	// Update existing ConfigMap if needed
-	return f.updateMonitoringConfigMap(ctx, existingCM)
+	if err := f.updateMonitoringConfigMap(ctx, existingCM); err != nil {
+		return err
+	}
+
+	// Wait for user workload monitoring pods to be ready
+	return f.waitForUserWorkloadMonitoring()
 }
 
 // createMonitoringConfigMap creates the cluster-monitoring-config ConfigMap
@@ -139,4 +153,41 @@ func (f *Framework) IsUserWorkloadMonitoringEnabled() (bool, error) {
 	}
 
 	return config.EnableUserWorkload, nil
+}
+
+// waitForUserWorkloadMonitoring waits for the user workload monitoring Prometheus to be ready
+func (f *Framework) waitForUserWorkloadMonitoring() error {
+	f.logger.Info("Waiting for user workload monitoring to be ready...")
+
+	ctx, cancel := context.WithTimeout(f.ctx, userWorkloadMonitoringTimeout)
+	defer cancel()
+
+	return wait.PollUntilContextCancel(ctx, userWorkloadMonitoringInterval, true, func(ctx context.Context) (bool, error) {
+		// Check if the prometheus-user-workload pods are running
+		pods, err := f.client.CoreV1().Pods(userWorkloadMonitoringNS).List(ctx, metav1.ListOptions{
+			LabelSelector: "app.kubernetes.io/name=prometheus",
+		})
+		if err != nil {
+			if errors.IsNotFound(err) {
+				return false, nil // Namespace doesn't exist yet
+			}
+			return false, nil // Keep polling on other errors
+		}
+
+		if len(pods.Items) == 0 {
+			return false, nil // No pods yet
+		}
+
+		// Check if at least one Prometheus pod is ready
+		for _, pod := range pods.Items {
+			for _, cond := range pod.Status.Conditions {
+				if cond.Type == corev1.PodReady && cond.Status == corev1.ConditionTrue {
+					f.logger.Info("User workload monitoring is ready")
+					return true, nil
+				}
+			}
+		}
+
+		return false, nil
+	})
 }
