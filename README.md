@@ -145,6 +145,9 @@ go run ./cmd/perf-runner [flags]
 | `--test-type` | `combined` | Test type: `ingestion`, `query`, or `combined` |
 | `--dry-run` | `false` | Print what would be executed without running |
 | `--skip-cleanup` | `false` | Skip cleanup after tests (useful for debugging) |
+| `--check-metrics` | `false` | Check and report metric availability after collection |
+| `--generate-dashboard` | `true` | Generate HTML dashboard after metrics collection |
+| `--node-selector` | (none) | Node selector for Tempo pods (e.g., `node-role.kubernetes.io/infra=`) |
 
 ### Examples
 
@@ -166,6 +169,15 @@ go run ./cmd/perf-runner --profiles=small --skip-cleanup
 
 # Custom output directory
 go run ./cmd/perf-runner --profiles=medium --output=/tmp/results
+
+# Run on infrastructure nodes (node selector)
+go run ./cmd/perf-runner --profiles=medium --node-selector="node-role.kubernetes.io/infra="
+
+# Multiple node selectors
+go run ./cmd/perf-runner --profiles=large --node-selector="node-role.kubernetes.io/infra=,kubernetes.io/os=linux"
+
+# Check metric availability after test
+go run ./cmd/perf-runner --profiles=small --check-metrics
 ```
 
 ## Profile Configuration
@@ -329,17 +341,26 @@ All output files are saved to the `--output` directory (default: `results/`):
 |------|-------------|
 | `{profile}-k6-ingestion.log` | k6 ingestion test output with metrics summary |
 | `{profile}-k6-query.log` | k6 query test output with metrics summary |
+| `{profile}-k6-ingestion-metrics.json` | Parsed k6 ingestion metrics (JSON) |
+| `{profile}-k6-query-metrics.json` | Parsed k6 query metrics (JSON) |
 | `{profile}-metrics.csv` | Prometheus metrics collected during test |
+| `{profile}-dashboard.html` | Interactive HTML dashboard with charts |
 
 Example output structure:
 ```
 results/
 ├── small-k6-ingestion.log
 ├── small-k6-query.log
+├── small-k6-ingestion-metrics.json
+├── small-k6-query-metrics.json
 ├── small-metrics.csv
+├── small-dashboard.html
 ├── medium-k6-ingestion.log
 ├── medium-k6-query.log
-└── medium-metrics.csv
+├── medium-k6-ingestion-metrics.json
+├── medium-k6-query-metrics.json
+├── medium-metrics.csv
+└── medium-dashboard.html
 ```
 
 ### k6 Log Contents
@@ -560,6 +581,67 @@ Example:
 # Run a 30-minute test
 DURATION=30m go run ./cmd/perf-runner --profiles=1x-small
 ```
+
+## Advanced Configuration
+
+### Node Selector
+
+Use the `--node-selector` flag to schedule Tempo pods on specific nodes. This is useful for:
+- Running on dedicated infrastructure nodes
+- Isolating performance tests from other workloads
+- Testing on nodes with specific hardware characteristics
+
+```bash
+# Schedule on OpenShift infrastructure nodes
+go run ./cmd/perf-runner --profiles=medium --node-selector="node-role.kubernetes.io/infra="
+
+# Schedule on nodes with specific labels
+go run ./cmd/perf-runner --profiles=large --node-selector="workload=performance,tier=dedicated"
+```
+
+The node selector is applied to:
+- **TempoMonolithic**: The single Tempo pod
+- **TempoStack**: All components (distributor, ingester, querier, compactor, query-frontend, gateway)
+
+### External S3 Storage
+
+By default, the framework deploys MinIO as in-cluster S3 storage. For testing with external AWS S3, use the framework API:
+
+```go
+import (
+    "github.com/redhat/perf-tests-tempo/test/framework"
+)
+
+// Configure external S3 storage
+resourceConfig := &framework.ResourceConfig{
+    Storage: &framework.StorageConfig{
+        Type:            "s3",              // Use external S3
+        Bucket:          "my-tempo-bucket",
+        Region:          "us-east-2",
+        AccessKeyID:     "AKIAXXXXXXXX",
+        SecretAccessKey: "your-secret-key",
+        // Endpoint: "",                    // Leave empty for AWS S3
+    },
+    NodeSelector: map[string]string{
+        "node-role.kubernetes.io/infra": "",
+    },
+}
+
+// Deploy Tempo with external S3
+fw.SetupTempo("stack", resourceConfig)
+```
+
+Storage configuration options:
+
+| Field | Description |
+|-------|-------------|
+| `Type` | `"minio"` (default, in-cluster) or `"s3"` (external AWS S3) |
+| `Bucket` | S3 bucket name |
+| `Region` | AWS region (required for AWS S3) |
+| `Endpoint` | S3 endpoint URL (required for MinIO, optional for AWS S3) |
+| `AccessKeyID` | AWS access key ID |
+| `SecretAccessKey` | AWS secret access key |
+| `SecretName` | Custom secret name (default: `"minio"` or `"tempo-s3"`) |
 
 ## Troubleshooting
 

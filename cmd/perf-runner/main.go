@@ -28,6 +28,7 @@ func main() {
 		skipCleanup       = flag.Bool("skip-cleanup", false, "Skip cleanup after tests (useful for debugging)")
 		checkMetrics      = flag.Bool("check-metrics", false, "Check and report metric availability after collection")
 		generateDashboard = flag.Bool("generate-dashboard", true, "Generate HTML dashboard after metrics collection")
+		nodeSelector      = flag.String("node-selector", "", "Node selector for Tempo pods (e.g., 'node-role.kubernetes.io/infra=')")
 	)
 	flag.Parse()
 
@@ -99,6 +100,12 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Parse node selector
+	nodeSelectorMap := parseNodeSelector(*nodeSelector)
+	if len(nodeSelectorMap) > 0 {
+		fmt.Printf("Using node selector: %v\n", nodeSelectorMap)
+	}
+
 	// Run profiles sequentially
 	results := make(map[string]*RunResult)
 	for _, p := range profiles {
@@ -110,7 +117,7 @@ func main() {
 		default:
 		}
 
-		result := runProfile(ctx, p, tt, *outputDir, *skipCleanup, *checkMetrics, *generateDashboard)
+		result := runProfile(ctx, p, tt, *outputDir, *skipCleanup, *checkMetrics, *generateDashboard, nodeSelectorMap)
 		results[p.Name] = result
 
 		if result.Error != nil {
@@ -137,7 +144,7 @@ type RunResult struct {
 	Error    error
 }
 
-func runProfile(ctx context.Context, p *profile.Profile, testType k6.TestType, outputDir string, skipCleanup, checkMetrics, generateDashboard bool) *RunResult {
+func runProfile(ctx context.Context, p *profile.Profile, testType k6.TestType, outputDir string, skipCleanup, checkMetrics, generateDashboard bool, nodeSelector map[string]string) *RunResult {
 	startTime := time.Now()
 	result := &RunResult{Profile: p.Name}
 
@@ -211,7 +218,7 @@ func runProfile(ctx context.Context, p *profile.Profile, testType k6.TestType, o
 
 	// Setup Tempo with profile resources
 	fmt.Printf("Setting up Tempo (%s)...\n", p.Tempo.Variant)
-	resourceConfig := profileToResourceConfig(p)
+	resourceConfig := profileToResourceConfig(p, nodeSelector)
 	if err := fw.SetupTempo(p.Tempo.Variant, resourceConfig); err != nil {
 		result.Error = fmt.Errorf("failed to setup Tempo: %w", err)
 		result.Duration = time.Since(startTime)
@@ -381,7 +388,7 @@ func runProfile(ctx context.Context, p *profile.Profile, testType k6.TestType, o
 	return result
 }
 
-func profileToResourceConfig(p *profile.Profile) *framework.ResourceConfig {
+func profileToResourceConfig(p *profile.Profile, nodeSelector map[string]string) *framework.ResourceConfig {
 	config := &framework.ResourceConfig{}
 	hasConfig := false
 
@@ -412,6 +419,12 @@ func profileToResourceConfig(p *profile.Profile) *framework.ResourceConfig {
 		config.Overrides = &framework.TempoOverrides{
 			MaxTracesPerUser: maxTracesPerUser,
 		}
+		hasConfig = true
+	}
+
+	// Add node selector if specified
+	if len(nodeSelector) > 0 {
+		config.NodeSelector = nodeSelector
 		hasConfig = true
 	}
 
@@ -515,4 +528,38 @@ func printSummary(results map[string]*RunResult) {
 	}
 
 	fmt.Printf("\nTotal: %d passed, %d failed\n", passed, failed)
+}
+
+// parseNodeSelector parses a node selector string in the format "key=value,key2=value2"
+// or "key=" for empty value selectors (common for node roles)
+func parseNodeSelector(s string) map[string]string {
+	if s == "" {
+		return nil
+	}
+
+	result := make(map[string]string)
+	pairs := strings.Split(s, ",")
+	for _, pair := range pairs {
+		pair = strings.TrimSpace(pair)
+		if pair == "" {
+			continue
+		}
+
+		// Handle "key=" (empty value) and "key=value" formats
+		if idx := strings.Index(pair, "="); idx >= 0 {
+			key := strings.TrimSpace(pair[:idx])
+			value := ""
+			if idx < len(pair)-1 {
+				value = strings.TrimSpace(pair[idx+1:])
+			}
+			if key != "" {
+				result[key] = value
+			}
+		}
+	}
+
+	if len(result) == 0 {
+		return nil
+	}
+	return result
 }

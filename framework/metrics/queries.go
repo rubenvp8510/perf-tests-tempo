@@ -91,10 +91,26 @@ func GetAllQueries(namespace string) []MetricQuery {
 			Category:    "ingestion",
 			Type:        "range",
 		},
+		{
+			ID:          "10",
+			Name:        "ingester_traces_created",
+			Description: "Total traces created in ingester",
+			Query:       fmt.Sprintf(`sum(tempo_ingester_traces_created_total{namespace="%s"})`, namespace),
+			Category:    "ingestion",
+			Type:        "range",
+		},
+		{
+			ID:          "11",
+			Name:        "distributor_spans_received",
+			Description: "Total spans received by distributor",
+			Query:       fmt.Sprintf(`sum(tempo_distributor_spans_received_total{namespace="%s"})`, namespace),
+			Category:    "ingestion",
+			Type:        "range",
+		},
 
 		// Compactor Metrics
 		{
-			ID:          "10",
+			ID:          "12",
 			Name:        "compactor_blocks_compacted",
 			Description: "Rate of blocks compacted",
 			Query:       fmt.Sprintf(`sum(rate(tempodb_compaction_blocks_total{namespace="%s"}[1m]))`, namespace),
@@ -102,7 +118,7 @@ func GetAllQueries(namespace string) []MetricQuery {
 			Type:        "range",
 		},
 		{
-			ID:          "11",
+			ID:          "13",
 			Name:        "compactor_bytes_written",
 			Description: "Rate of bytes written during compaction",
 			Query:       fmt.Sprintf(`sum(rate(tempodb_compaction_bytes_written_total{namespace="%s"}[1m]))`, namespace),
@@ -110,17 +126,33 @@ func GetAllQueries(namespace string) []MetricQuery {
 			Type:        "range",
 		},
 		{
-			ID:          "12",
+			ID:          "14",
 			Name:        "compactor_outstanding_blocks",
 			Description: "Blocks remaining to be compacted",
 			Query:       fmt.Sprintf(`sum(tempodb_compaction_outstanding_blocks{namespace="%s"})`, namespace),
 			Category:    "compactor",
 			Type:        "range",
 		},
+		{
+			ID:          "15",
+			Name:        "retention_deleted_total",
+			Description: "Total blocks deleted by retention",
+			Query:       fmt.Sprintf(`sum(tempodb_retention_deleted_total{namespace="%s"})`, namespace),
+			Category:    "compactor",
+			Type:        "range",
+		},
+		{
+			ID:          "16",
+			Name:        "retention_marked_for_deletion",
+			Description: "Total blocks marked for deletion by retention",
+			Query:       fmt.Sprintf(`sum(tempodb_retention_marked_for_deletion_total{namespace="%s"})`, namespace),
+			Category:    "compactor",
+			Type:        "range",
+		},
 
 		// Storage and I/O Metrics
 		{
-			ID:          "13",
+			ID:          "17",
 			Name:        "query_frontend_bytes_inspected",
 			Description: "Rate of bytes read from storage by query frontend",
 			Query:       fmt.Sprintf(`sum(rate(tempo_query_frontend_bytes_inspected_total{namespace="%s"}[1m]))`, namespace),
@@ -128,7 +160,7 @@ func GetAllQueries(namespace string) []MetricQuery {
 			Type:        "range",
 		},
 		{
-			ID:          "14",
+			ID:          "18",
 			Name:        "backend_read_latency_p99",
 			Description: "P99 latency of backend read operations (all operations)",
 			Query:       fmt.Sprintf(`histogram_quantile(0.99, sum(rate(tempodb_backend_request_duration_seconds_bucket{namespace="%s"}[1m])) by (le))`, namespace),
@@ -136,7 +168,7 @@ func GetAllQueries(namespace string) []MetricQuery {
 			Type:        "range",
 		},
 		{
-			ID:          "15",
+			ID:          "19",
 			Name:        "blocklist_poll_duration_p99",
 			Description: "P99 blocklist poll duration (storage access patterns)",
 			Query:       fmt.Sprintf(`histogram_quantile(0.99, sum(rate(tempodb_blocklist_poll_duration_seconds_bucket{namespace="%s"}[1m])) by (le))`, namespace),
@@ -146,7 +178,7 @@ func GetAllQueries(namespace string) []MetricQuery {
 
 		// Storage Block Metrics
 		{
-			ID:          "16",
+			ID:          "20",
 			Name:        "blocklist_length",
 			Description: "Number of blocks in the blocklist per tenant",
 			Query:       fmt.Sprintf(`sum(tempodb_blocklist_length{namespace="%s"}) by (tenant)`, namespace),
@@ -156,7 +188,7 @@ func GetAllQueries(namespace string) []MetricQuery {
 
 		// Resource Utilization Metrics
 		{
-			ID:          "17",
+			ID:          "21",
 			Name:        "memory_usage_total",
 			Description: "Total memory working set bytes used by all Tempo containers",
 			Query:       fmt.Sprintf(`sum(container_memory_working_set_bytes{namespace="%s", container=~"tempo.*"})`, namespace),
@@ -164,7 +196,7 @@ func GetAllQueries(namespace string) []MetricQuery {
 			Type:        "range",
 		},
 		{
-			ID:          "18",
+			ID:          "22",
 			Name:        "cpu_usage_total",
 			Description: "Total CPU cores used by all Tempo containers",
 			Query:       fmt.Sprintf(`sum(rate(container_cpu_usage_seconds_total{namespace="%s", container=~"tempo.*", container!=""}[5m]))`, namespace),
@@ -172,7 +204,7 @@ func GetAllQueries(namespace string) []MetricQuery {
 			Type:        "range",
 		},
 		{
-			ID:          "19",
+			ID:          "23",
 			Name:        "memory_usage_by_pod_container",
 			Description: "Memory usage for each container in each pod",
 			Query:       fmt.Sprintf(`sum(container_memory_working_set_bytes{namespace="%s", container=~"tempo.*"}) by (pod, container)`, namespace),
@@ -180,7 +212,7 @@ func GetAllQueries(namespace string) []MetricQuery {
 			Type:        "range",
 		},
 		{
-			ID:          "20",
+			ID:          "24",
 			Name:        "cpu_usage_by_pod_container",
 			Description: "CPU usage for each container in each pod",
 			Query:       fmt.Sprintf(`sum(rate(container_cpu_usage_seconds_total{namespace="%s", container=~"tempo.*", container!=""}[5m])) by (pod, container)`, namespace),
@@ -188,7 +220,7 @@ func GetAllQueries(namespace string) []MetricQuery {
 			Type:        "range",
 		},
 		{
-			ID:          "21",
+			ID:          "25",
 			Name:        "memory_usage_by_component",
 			Description: "Memory usage grouped by Tempo component (distributor, ingester, etc.)",
 			Query: fmt.Sprintf(`sum by (component) (
@@ -216,7 +248,7 @@ func GetAllQueries(namespace string) []MetricQuery {
 			Type:     "range",
 		},
 		{
-			ID:          "22",
+			ID:          "26",
 			Name:        "cpu_usage_by_component",
 			Description: "CPU usage grouped by Tempo component (distributor, ingester, etc.)",
 			Query: fmt.Sprintf(`sum by (component) (
@@ -246,7 +278,7 @@ func GetAllQueries(namespace string) []MetricQuery {
 
 		// Max Resource Metrics (simpler than P99, always works)
 		{
-			ID:          "23",
+			ID:          "27",
 			Name:        "memory_max_by_component",
 			Description: "Max memory usage by Tempo component over 5-minute windows",
 			Query: fmt.Sprintf(`max by (component) (
@@ -278,7 +310,7 @@ func GetAllQueries(namespace string) []MetricQuery {
 			Type:     "range",
 		},
 		{
-			ID:          "24",
+			ID:          "28",
 			Name:        "cpu_max_by_component",
 			Description: "Max CPU usage by Tempo component over 5-minute windows",
 			Query: fmt.Sprintf(`max by (component) (
@@ -310,7 +342,7 @@ func GetAllQueries(namespace string) []MetricQuery {
 			Type:     "range",
 		},
 		{
-			ID:          "25",
+			ID:          "29",
 			Name:        "memory_max_total",
 			Description: "Max total memory usage over 5-minute windows",
 			Query:       fmt.Sprintf(`max_over_time(sum(container_memory_working_set_bytes{namespace="%s", container=~"tempo.*"})[5m:])`, namespace),
@@ -318,7 +350,7 @@ func GetAllQueries(namespace string) []MetricQuery {
 			Type:        "range",
 		},
 		{
-			ID:          "26",
+			ID:          "30",
 			Name:        "cpu_max_total",
 			Description: "Max total CPU usage over 5-minute windows",
 			Query:       fmt.Sprintf(`max_over_time(sum(rate(container_cpu_usage_seconds_total{namespace="%s", container=~"tempo.*", container!=""}[1m]))[5m:])`, namespace),
@@ -330,7 +362,7 @@ func GetAllQueries(namespace string) []MetricQuery {
 		// Note: k6 metrics (query_failures_rate, total_queries_rate, spans_returned_sum, query_latency_p90/p99)
 		// are exported to separate JSON files since OpenShift doesn't support Prometheus remote write receiver
 		{
-			ID:          "27",
+			ID:          "31",
 			Name:        "query_frontend_queue_duration_p99",
 			Description: "Query frontend queue wait time p99",
 			Query:       fmt.Sprintf(`histogram_quantile(0.99, sum(rate(tempo_query_frontend_queue_duration_seconds_bucket{namespace="%s"}[1m])) by (le))`, namespace),
@@ -338,7 +370,7 @@ func GetAllQueries(namespace string) []MetricQuery {
 			Type:        "range",
 		},
 		{
-			ID:          "28",
+			ID:          "32",
 			Name:        "query_frontend_retries_rate",
 			Description: "Query frontend retries rate (indicates query issues)",
 			Query:       fmt.Sprintf(`sum(rate(tempo_query_frontend_retries_count{namespace="%s"}[1m]))`, namespace),
@@ -348,7 +380,7 @@ func GetAllQueries(namespace string) []MetricQuery {
 
 		// Querier Specific Metrics
 		{
-			ID:          "29",
+			ID:          "33",
 			Name:        "querier_queue_length",
 			Description: "Number of queries waiting in query frontend queue",
 			Query:       fmt.Sprintf(`sum(tempo_query_frontend_queue_length{namespace="%s"}) by (pod)`, namespace),
@@ -356,7 +388,7 @@ func GetAllQueries(namespace string) []MetricQuery {
 			Type:        "range",
 		},
 		{
-			ID:          "30",
+			ID:          "34",
 			Name:        "querier_jobs_in_progress",
 			Description: "Total queries processed by query frontend",
 			Query:       fmt.Sprintf(`sum(rate(tempo_query_frontend_queries_total{namespace="%s"}[1m])) by (pod)`, namespace),
@@ -366,7 +398,7 @@ func GetAllQueries(namespace string) []MetricQuery {
 
 		// Query Throughput Metrics
 		{
-			ID:          "31",
+			ID:          "35",
 			Name:        "queries_per_second",
 			Description: "Total queries processed per second across all query frontends",
 			Query:       fmt.Sprintf(`sum(rate(tempo_query_frontend_queries_total{namespace="%s"}[1m]))`, namespace),
@@ -374,7 +406,7 @@ func GetAllQueries(namespace string) []MetricQuery {
 			Type:        "range",
 		},
 		{
-			ID:          "32",
+			ID:          "36",
 			Name:        "query_duration_p99",
 			Description: "P99 query duration (end-to-end latency)",
 			Query:       fmt.Sprintf(`histogram_quantile(0.99, sum(rate(tempo_request_duration_seconds_bucket{namespace="%s", route=~".*search.*|.*Search.*"}[5m])) by (le))`, namespace),
@@ -382,7 +414,7 @@ func GetAllQueries(namespace string) []MetricQuery {
 			Type:        "range",
 		},
 		{
-			ID:          "33",
+			ID:          "37",
 			Name:        "query_duration_p50",
 			Description: "P50 (median) query duration",
 			Query:       fmt.Sprintf(`histogram_quantile(0.50, sum(rate(tempo_request_duration_seconds_bucket{namespace="%s", route=~".*search.*|.*Search.*"}[5m])) by (le))`, namespace),

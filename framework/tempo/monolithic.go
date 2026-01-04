@@ -103,6 +103,12 @@ func getProfileResources(profile string) *corev1.ResourceRequirements {
 
 // buildTempoMonolithicCR builds a TempoMonolithic CR using typed API
 func buildTempoMonolithicCR(namespace string, resources *ResourceConfig) *tempoapi.TempoMonolithic {
+	// Determine storage secret name
+	secretName := GetStorageSecretName(nil)
+	if resources != nil && resources.Storage != nil {
+		secretName = GetStorageSecretName(resources.Storage)
+	}
+
 	// Build extra config as JSON
 	extraConfig := map[string]interface{}{
 		"ingester": map[string]interface{}{
@@ -138,7 +144,7 @@ func buildTempoMonolithicCR(namespace string, resources *ResourceConfig) *tempoa
 					Backend: tempoapi.MonolithicTracesStorageBackendS3,
 					S3: &tempoapi.MonolithicTracesStorageS3Spec{
 						MonolithicTracesObjectStorageSpec: tempoapi.MonolithicTracesObjectStorageSpec{
-							Secret: "minio",
+							Secret: secretName,
 						},
 					},
 				},
@@ -186,6 +192,11 @@ func buildTempoMonolithicCR(namespace string, resources *ResourceConfig) *tempoa
 		}
 		if resourceReqs != nil {
 			tempoCR.Spec.Resources = resourceReqs
+		}
+
+		// Apply node selector if provided
+		if len(resources.NodeSelector) > 0 {
+			tempoCR.Spec.NodeSelector = resources.NodeSelector
 		}
 	}
 

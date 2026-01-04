@@ -34,10 +34,23 @@ func (f *Framework) SetupTempo(variant string, resources *ResourceConfig) error 
 			Profile:           resources.Profile,
 			Resources:         resources.Resources,
 			ReplicationFactor: resources.ReplicationFactor,
+			NodeSelector:      resources.NodeSelector,
 		}
 		if resources.Overrides != nil {
 			tempoConfig.Overrides = &tempo.TempoOverrides{
 				MaxTracesPerUser: resources.Overrides.MaxTracesPerUser,
+			}
+		}
+		if resources.Storage != nil {
+			tempoConfig.Storage = &tempo.StorageConfig{
+				Type:            resources.Storage.Type,
+				SecretName:      resources.Storage.SecretName,
+				Endpoint:        resources.Storage.Endpoint,
+				Bucket:          resources.Storage.Bucket,
+				Region:          resources.Storage.Region,
+				AccessKeyID:     resources.Storage.AccessKeyID,
+				SecretAccessKey: resources.Storage.SecretAccessKey,
+				Insecure:        resources.Storage.Insecure,
 			}
 		}
 	}

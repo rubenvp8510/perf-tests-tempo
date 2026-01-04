@@ -84,6 +84,20 @@ func GetCategoryChartConfigs() map[string]CategoryChartConfig {
 					Type:        ChartTypeLine,
 					Options:     ChartOptions{YAxisLabel: "blocks", ShowLegend: true},
 				},
+				{
+					MetricNames: []string{"ingester_traces_created"},
+					Title:       "Total Traces Created",
+					Description: "Cumulative count of traces created in ingester",
+					Type:        ChartTypeLine,
+					Options:     ChartOptions{YAxisLabel: "traces"},
+				},
+				{
+					MetricNames: []string{"distributor_spans_received"},
+					Title:       "Total Spans Received",
+					Description: "Cumulative count of spans received by distributor",
+					Type:        ChartTypeLine,
+					Options:     ChartOptions{YAxisLabel: "spans"},
+				},
 			},
 		},
 		"compactor": {
@@ -110,6 +124,13 @@ func GetCategoryChartConfigs() map[string]CategoryChartConfig {
 					Description: "Number of blocks waiting to be compacted",
 					Type:        ChartTypeLine,
 					Options:     ChartOptions{YAxisLabel: "blocks"},
+				},
+				{
+					MetricNames: []string{"retention_deleted_total", "retention_marked_for_deletion"},
+					Title:       "Retention Activity",
+					Description: "Blocks deleted and marked for deletion by retention policy",
+					Type:        ChartTypeLine,
+					Options:     ChartOptions{YAxisLabel: "blocks", ShowLegend: true},
 				},
 			},
 		},
@@ -317,11 +338,15 @@ func GetMetricQuery(metricName string) string {
 		"ingester_live_traces":        `sum(tempo_ingester_live_traces{namespace="{namespace}"}) by (pod)`,
 		"ingester_blocks_flushed":     `sum(rate(tempo_ingester_blocks_flushed_total{namespace="{namespace}"}[1m])) by (pod)`,
 		"ingester_flush_queue_length": `sum(tempo_ingester_flush_queue_length{namespace="{namespace}"}) by (pod)`,
+		"ingester_traces_created":     `sum(tempo_ingester_traces_created_total{namespace="{namespace}"})`,
+		"distributor_spans_received":  `sum(tempo_distributor_spans_received_total{namespace="{namespace}"})`,
 
 		// Compactor metrics
-		"compactor_blocks_compacted":    `sum(rate(tempodb_compaction_blocks_total{namespace="{namespace}"}[1m]))`,
-		"compactor_bytes_written":       `sum(rate(tempodb_compaction_bytes_written_total{namespace="{namespace}"}[1m]))`,
-		"compactor_outstanding_blocks":  `sum(tempodb_compaction_outstanding_blocks{namespace="{namespace}"})`,
+		"compactor_blocks_compacted":       `sum(rate(tempodb_compaction_blocks_total{namespace="{namespace}"}[1m]))`,
+		"compactor_bytes_written":          `sum(rate(tempodb_compaction_bytes_written_total{namespace="{namespace}"}[1m]))`,
+		"compactor_outstanding_blocks":     `sum(tempodb_compaction_outstanding_blocks{namespace="{namespace}"})`,
+		"retention_deleted_total":          `sum(tempodb_retention_deleted_total{namespace="{namespace}"})`,
+		"retention_marked_for_deletion":    `sum(tempodb_retention_marked_for_deletion_total{namespace="{namespace}"})`,
 
 		// Storage metrics
 		"query_frontend_bytes_inspected": `sum(rate(tempo_query_frontend_bytes_inspected_total{namespace="{namespace}"}[1m]))`,

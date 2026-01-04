@@ -50,6 +50,12 @@ func SetupStack(fw FrameworkOperations, resources *ResourceConfig) error {
 func buildTempoStackCR(namespace string, resources *ResourceConfig) *tempoapi.TempoStack {
 	storageSize := resource.MustParse("10Gi")
 
+	// Determine storage secret name
+	secretName := GetStorageSecretName(nil)
+	if resources != nil && resources.Storage != nil {
+		secretName = GetStorageSecretName(resources.Storage)
+	}
+
 	stackCR := &tempoapi.TempoStack{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "tempo.grafana.com/v1alpha1",
@@ -73,7 +79,7 @@ func buildTempoStackCR(namespace string, resources *ResourceConfig) *tempoapi.Te
 			Storage: tempoapi.ObjectStorageSpec{
 				Secret: tempoapi.ObjectStorageSecretSpec{
 					Type: tempoapi.ObjectStorageSecretS3,
-					Name: "minio",
+					Name: secretName,
 				},
 			},
 			StorageSize: storageSize,
@@ -115,6 +121,37 @@ func buildTempoStackCR(namespace string, resources *ResourceConfig) *tempoapi.Te
 		stackCR.Spec.Template.Ingester = tempoapi.TempoComponentSpec{
 			Replicas: &replicas,
 		}
+	}
+
+	// Apply node selector to all components if provided
+	if resources != nil && len(resources.NodeSelector) > 0 {
+		nodeSelector := resources.NodeSelector
+
+		// Apply to distributor
+		stackCR.Spec.Template.Distributor.NodeSelector = nodeSelector
+
+		// Apply to ingester (preserve replicas if already set)
+		if stackCR.Spec.Template.Ingester.Replicas != nil {
+			replicas := stackCR.Spec.Template.Ingester.Replicas
+			stackCR.Spec.Template.Ingester = tempoapi.TempoComponentSpec{
+				Replicas:     replicas,
+				NodeSelector: nodeSelector,
+			}
+		} else {
+			stackCR.Spec.Template.Ingester.NodeSelector = nodeSelector
+		}
+
+		// Apply to querier
+		stackCR.Spec.Template.Querier.NodeSelector = nodeSelector
+
+		// Apply to compactor
+		stackCR.Spec.Template.Compactor.NodeSelector = nodeSelector
+
+		// Apply to query frontend
+		stackCR.Spec.Template.QueryFrontend.TempoComponentSpec.NodeSelector = nodeSelector
+
+		// Apply to gateway
+		stackCR.Spec.Template.Gateway.TempoComponentSpec.NodeSelector = nodeSelector
 	}
 
 	return stackCR
