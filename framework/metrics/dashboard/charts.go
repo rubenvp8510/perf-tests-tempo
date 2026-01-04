@@ -138,20 +138,6 @@ func GetCategoryChartConfigs() map[string]CategoryChartConfig {
 					Type:        ChartTypeLine,
 					Options:     ChartOptions{YAxisLabel: "blocks", ShowLegend: true},
 				},
-				{
-					MetricNames: []string{"compaction_bytes_written"},
-					Title:       "Compaction Bytes Written",
-					Description: "Rate of bytes written during compaction",
-					Type:        ChartTypeArea,
-					Options:     ChartOptions{YAxisLabel: "bytes/sec", YAxisUnit: "bytes"},
-				},
-				{
-					MetricNames: []string{"bloom_filter_reads"},
-					Title:       "Bloom Filter Reads",
-					Description: "Rate of bloom filter reads (query optimization)",
-					Type:        ChartTypeLine,
-					Options:     ChartOptions{YAxisLabel: "reads/sec"},
-				},
 			},
 		},
 		"resources": {
@@ -302,7 +288,6 @@ func GetMetricUnit(metricName string) string {
 		"cpu_max_by_component":              "cores",
 		"bytes_received_rate":               "bytes",
 		"compactor_bytes_written":           "bytes",
-		"compaction_bytes_written":          "bytes",
 		"query_frontend_bytes_inspected":    "bytes",
 		"distributor_push_duration_p99":     "seconds",
 		"backend_read_latency_p99":          "seconds",
@@ -316,4 +301,60 @@ func GetMetricUnit(metricName string) string {
 		return unit
 	}
 	return "count"
+}
+
+// GetMetricQuery returns the PromQL query template for a metric
+// The {namespace} placeholder should be replaced with the actual namespace
+func GetMetricQuery(metricName string) string {
+	queryMap := map[string]string{
+		// Ingestion metrics
+		"accepted_spans_rate":         `sum(rate(tempo_receiver_accepted_spans{namespace="{namespace}"}[1m]))`,
+		"refused_spans_rate":          `sum(rate(tempo_receiver_refused_spans{namespace="{namespace}"}[1m]))`,
+		"bytes_received_rate":         `sum(rate(tempo_distributor_bytes_received_total{namespace="{namespace}"}[1m])) by (status)`,
+		"distributor_push_duration_p99": `histogram_quantile(0.99, sum(rate(tempo_distributor_push_duration_seconds_bucket{namespace="{namespace}"}[1m])) by (le))`,
+		"ingester_append_failures":    `sum(rate(tempo_ingester_failed_flushes_total{namespace="{namespace}"}[1m]))`,
+		"discarded_spans":             `sum(rate(tempo_discarded_spans_total{namespace="{namespace}"}[1m])) by (reason)`,
+		"ingester_live_traces":        `sum(tempo_ingester_live_traces{namespace="{namespace}"}) by (pod)`,
+		"ingester_blocks_flushed":     `sum(rate(tempo_ingester_blocks_flushed_total{namespace="{namespace}"}[1m])) by (pod)`,
+		"ingester_flush_queue_length": `sum(tempo_ingester_flush_queue_length{namespace="{namespace}"}) by (pod)`,
+
+		// Compactor metrics
+		"compactor_blocks_compacted":    `sum(rate(tempodb_compaction_blocks_total{namespace="{namespace}"}[1m]))`,
+		"compactor_bytes_written":       `sum(rate(tempodb_compaction_bytes_written_total{namespace="{namespace}"}[1m]))`,
+		"compactor_outstanding_blocks":  `sum(tempodb_compaction_outstanding_blocks{namespace="{namespace}"})`,
+
+		// Storage metrics
+		"query_frontend_bytes_inspected": `sum(rate(tempo_query_frontend_bytes_inspected_total{namespace="{namespace}"}[1m]))`,
+		"backend_read_latency_p99":       `histogram_quantile(0.99, sum(rate(tempodb_backend_request_duration_seconds_bucket{namespace="{namespace}"}[1m])) by (le))`,
+		"blocklist_poll_duration_p99":   `histogram_quantile(0.99, sum(rate(tempodb_blocklist_poll_duration_seconds_bucket{namespace="{namespace}"}[1m])) by (le))`,
+		"blocklist_length":              `sum(tempodb_blocklist_length{namespace="{namespace}"}) by (tenant)`,
+
+		// Resource metrics
+		"memory_usage_total":           `sum(container_memory_working_set_bytes{namespace="{namespace}", container=~"tempo.*"})`,
+		"cpu_usage_total":              `sum(rate(container_cpu_usage_seconds_total{namespace="{namespace}", container=~"tempo.*"}[5m]))`,
+		"memory_usage_by_pod_container": `sum(container_memory_working_set_bytes{namespace="{namespace}", container=~"tempo.*"}) by (pod, container)`,
+		"cpu_usage_by_pod_container":   `sum(rate(container_cpu_usage_seconds_total{namespace="{namespace}", container=~"tempo.*"}[5m])) by (pod, container)`,
+		"memory_usage_by_component":    `sum by (component) (label_replace(...container_memory_working_set_bytes...))`,
+		"cpu_usage_by_component":       `sum by (component) (label_replace(...container_cpu_usage_seconds_total...))`,
+		"memory_max_total":             `max_over_time(sum(container_memory_working_set_bytes{namespace="{namespace}", container=~"tempo.*"})[5m:])`,
+		"cpu_max_total":                `max_over_time(sum(rate(container_cpu_usage_seconds_total{namespace="{namespace}", container=~"tempo.*"}[1m]))[5m:])`,
+		"memory_max_by_component":      `max by (component) (max_over_time(...container_memory_working_set_bytes...)[5m:])`,
+		"cpu_max_by_component":         `max by (component) (max_over_time(...container_cpu_usage_seconds_total...)[5m:])`,
+
+		// Query performance metrics
+		"queries_per_second":              `sum(rate(tempo_query_frontend_queries_total{namespace="{namespace}"}[1m]))`,
+		"query_duration_p99":              `histogram_quantile(0.99, sum(rate(tempo_request_duration_seconds_bucket{namespace="{namespace}", route=~".*search.*|.*Search.*"}[5m])) by (le))`,
+		"query_duration_p50":              `histogram_quantile(0.50, sum(rate(tempo_request_duration_seconds_bucket{namespace="{namespace}", route=~".*search.*|.*Search.*"}[5m])) by (le))`,
+		"query_frontend_queue_duration_p99": `histogram_quantile(0.99, sum(rate(tempo_query_frontend_queue_duration_seconds_bucket{namespace="{namespace}"}[1m])) by (le))`,
+		"query_frontend_retries_rate":    `sum(rate(tempo_query_frontend_retries_count{namespace="{namespace}"}[1m]))`,
+
+		// Querier metrics
+		"querier_queue_length":      `sum(tempo_query_frontend_queue_length{namespace="{namespace}"}) by (pod)`,
+		"querier_jobs_in_progress":  `sum(rate(tempo_query_frontend_queries_total{namespace="{namespace}"}[1m])) by (pod)`,
+	}
+
+	if query, ok := queryMap[metricName]; ok {
+		return query
+	}
+	return ""
 }

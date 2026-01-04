@@ -65,12 +65,12 @@ func formatPercent(ratio float64) string {
 	return fmt.Sprintf("%.1f%%", ratio*100)
 }
 
-// formatTime formats a time for display
+// formatTime formats a time for display in UTC
 func formatTime(t time.Time) string {
 	if t.IsZero() {
 		return "N/A"
 	}
-	return t.Format("15:04:05")
+	return t.UTC().Format("15:04:05 UTC")
 }
 
 // formatValue formats a value with its unit

@@ -373,9 +373,74 @@
 
         @media print {
             .print-button,
-            .chart-controls {
+            .chart-controls,
+            .metric-info {
                 display: none;
             }
+        }
+
+        /* Metric info styles */
+        .metric-info {
+            margin-top: 10px;
+            border-top: 1px solid #333;
+            padding-top: 10px;
+        }
+
+        .metric-info-toggle {
+            background: transparent;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            font-size: 0.75rem;
+            padding: 4px 0;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .metric-info-toggle:hover {
+            color: #aaa;
+        }
+
+        .metric-info-toggle svg {
+            width: 12px;
+            height: 12px;
+            transition: transform 0.2s;
+        }
+
+        .metric-info-toggle.expanded svg {
+            transform: rotate(90deg);
+        }
+
+        .metric-info-content {
+            display: none;
+            margin-top: 8px;
+        }
+
+        .metric-info-content.show {
+            display: block;
+        }
+
+        .metric-query {
+            background: #1a1a2e;
+            border-radius: 4px;
+            padding: 8px 10px;
+            margin-bottom: 6px;
+            font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+            font-size: 0.7rem;
+            overflow-x: auto;
+        }
+
+        .metric-query-name {
+            color: var(--accent);
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .metric-query-promql {
+            color: #aaa;
+            white-space: pre-wrap;
+            word-break: break-all;
         }
     </style>
 </head>
@@ -388,7 +453,7 @@
                     <span class="badge badge-profile">{{ .Config.ProfileName }}</span>
                     <span class="badge badge-test">{{ .Config.TestType }}</span>
                     &nbsp;&bull;&nbsp;
-                    Generated: {{ .Config.GeneratedAt.Format "2006-01-02 15:04:05" }}
+                    Generated: {{ .Config.GeneratedAt.UTC.Format "2006-01-02 15:04:05 UTC" }}
                     {{ if gt .Config.TestDuration 0 }}
                     &nbsp;&bull;&nbsp;
                     Duration: {{ formatDuration .Config.TestDuration }}
@@ -545,6 +610,24 @@
                         <div class="no-data">No data available for this metric</div>
                         {{ end }}
                     </div>
+                    {{ if gt (len .MetricInfo) 0 }}
+                    <div class="metric-info">
+                        <button class="metric-info-toggle" onclick="toggleMetricInfo(this)">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                            </svg>
+                            PromQL Queries
+                        </button>
+                        <div class="metric-info-content">
+                            {{ range .MetricInfo }}
+                            <div class="metric-query">
+                                <div class="metric-query-name">{{ .Name }}</div>
+                                <div class="metric-query-promql">{{ .Query }}</div>
+                            </div>
+                            {{ end }}
+                        </div>
+                    </div>
+                    {{ end }}
                 </div>
                 {{ end }}
             </div>
@@ -739,6 +822,13 @@
             link.click();
         }
 
+        // Toggle metric info visibility
+        function toggleMetricInfo(btn) {
+            btn.classList.toggle('expanded');
+            const content = btn.nextElementSibling;
+            content.classList.toggle('show');
+        }
+
         // Close fullscreen on Escape key
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
@@ -863,6 +953,17 @@
                             titleColor: '#fff',
                             bodyColor: '#eee',
                             callbacks: {
+                                title: function(context) {
+                                    // Format tooltip title as UTC time
+                                    if (context.length > 0 && context[0].parsed.x) {
+                                        const date = new Date(context[0].parsed.x);
+                                        const hours = date.getUTCHours().toString().padStart(2, '0');
+                                        const mins = date.getUTCMinutes().toString().padStart(2, '0');
+                                        const secs = date.getUTCSeconds().toString().padStart(2, '0');
+                                        return `${hours}:${mins}:${secs} UTC`;
+                                    }
+                                    return '';
+                                },
                                 label: function(context) {
                                     let label = context.dataset.label || '';
                                     if (label) {
@@ -881,10 +982,29 @@
                                 unit: 'minute',
                                 displayFormats: {
                                     minute: 'HH:mm'
+                                },
+                                // Parse timestamps as UTC and display as UTC
+                                parser: function(value) {
+                                    // Ensure we treat the timestamp as UTC
+                                    const date = new Date(value);
+                                    return date.getTime();
                                 }
                             },
+                            title: {
+                                display: true,
+                                text: 'Time (UTC)',
+                                color: '#888'
+                            },
                             grid: { color: 'rgba(255,255,255,0.1)' },
-                            ticks: { color: '#aaa' }
+                            ticks: {
+                                color: '#aaa',
+                                callback: function(value) {
+                                    // Format as UTC time
+                                    const date = new Date(value);
+                                    return date.getUTCHours().toString().padStart(2, '0') + ':' +
+                                           date.getUTCMinutes().toString().padStart(2, '0');
+                                }
+                            }
                         },
                         y: {
                             title: {

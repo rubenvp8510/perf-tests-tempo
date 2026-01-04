@@ -89,6 +89,14 @@ type ChartConfig struct {
 	Type        ChartType
 	Series      []SeriesData
 	Options     ChartOptions
+	// MetricInfo contains the Prometheus metric names and queries used
+	MetricInfo []MetricQueryInfo
+}
+
+// MetricQueryInfo holds the metric name and PromQL query for display
+type MetricQueryInfo struct {
+	Name  string // e.g., "accepted_spans_rate"
+	Query string // The PromQL query used
 }
 
 // SeriesData represents a single data series for a chart

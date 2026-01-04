@@ -27,7 +27,7 @@ func main() {
 		dryRun            = flag.Bool("dry-run", false, "Print what would be executed without running")
 		skipCleanup       = flag.Bool("skip-cleanup", false, "Skip cleanup after tests (useful for debugging)")
 		checkMetrics      = flag.Bool("check-metrics", false, "Check and report metric availability after collection")
-		generateDashboard = flag.Bool("generate-dashboard", false, "Generate HTML dashboard after metrics collection")
+		generateDashboard = flag.Bool("generate-dashboard", true, "Generate HTML dashboard after metrics collection")
 	)
 	flag.Parse()
 

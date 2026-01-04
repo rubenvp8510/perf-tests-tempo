@@ -317,6 +317,16 @@ func (g *Generator) buildCategorySections(categoryMetrics map[string][]MetricSer
 				Type:        chartDef.Type,
 				Options:     chartDef.Options,
 				Series:      []SeriesData{},
+				MetricInfo:  []MetricQueryInfo{},
+			}
+
+			// Add metric query info for each metric in this chart
+			for _, metricName := range chartDef.MetricNames {
+				query := GetMetricQuery(metricName)
+				chart.MetricInfo = append(chart.MetricInfo, MetricQueryInfo{
+					Name:  metricName,
+					Query: query,
+				})
 			}
 
 			if hasData {
