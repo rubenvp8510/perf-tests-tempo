@@ -194,6 +194,13 @@ func runProfile(ctx context.Context, p *profile.Profile, testType k6.TestType, o
 		return result
 	}
 
+	// Enable user workload monitoring for Tempo metrics collection
+	fmt.Println("Enabling user workload monitoring...")
+	if err := fw.EnableUserWorkloadMonitoring(); err != nil {
+		fmt.Printf("Warning: failed to enable user workload monitoring: %v\n", err)
+		fmt.Println("Tempo metrics may not be available. Continuing anyway...")
+	}
+
 	// Setup MinIO
 	fmt.Println("Setting up MinIO...")
 	if err := fw.SetupMinIO(); err != nil {
@@ -393,6 +400,12 @@ func profileToResourceConfig(p *profile.Profile) *framework.ResourceConfig {
 		hasConfig = true
 	}
 
+	// Add replication factor if specified (only applies to TempoStack)
+	if p.Tempo.ReplicationFactor != nil {
+		config.ReplicationFactor = p.Tempo.ReplicationFactor
+		hasConfig = true
+	}
+
 	// Get max traces per user from env var (takes precedence) or profile
 	maxTracesPerUser := getMaxTracesPerUser(p)
 	if maxTracesPerUser != nil {
@@ -455,6 +468,9 @@ func printProfileSummary(p *profile.Profile, testType k6.TestType) {
 	fmt.Printf("  Description: %s\n", p.Description)
 	fmt.Printf("  Tempo:\n")
 	fmt.Printf("    Variant: %s\n", p.Tempo.Variant)
+	if p.Tempo.ReplicationFactor != nil {
+		fmt.Printf("    ReplicationFactor: %d\n", *p.Tempo.ReplicationFactor)
+	}
 	if p.Tempo.HasResources() {
 		fmt.Printf("    Resources: %s memory, %s CPU\n", p.Tempo.Resources.Memory, p.Tempo.Resources.CPU)
 	} else {

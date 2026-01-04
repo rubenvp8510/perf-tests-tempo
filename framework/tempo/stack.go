@@ -109,6 +109,12 @@ func buildTempoStackCR(namespace string, resources *ResourceConfig) *tempoapi.Te
 	// Set replication factor if configured
 	if resources != nil && resources.ReplicationFactor != nil {
 		stackCR.Spec.ReplicationFactor = *resources.ReplicationFactor
+
+		// Ingester replicas must be >= replicationFactor (Tempo Operator requirement)
+		replicas := int32(*resources.ReplicationFactor)
+		stackCR.Spec.Template.Ingester = tempoapi.TempoComponentSpec{
+			Replicas: &replicas,
+		}
 	}
 
 	return stackCR

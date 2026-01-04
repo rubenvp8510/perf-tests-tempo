@@ -379,6 +379,32 @@ func GetAllQueries(namespace string) []MetricQuery {
 			Category:    "querier",
 			Type:        "range",
 		},
+
+		// Query Throughput Metrics
+		{
+			ID:          "33",
+			Name:        "queries_per_second",
+			Description: "Total queries processed per second across all query frontends",
+			Query:       fmt.Sprintf(`sum(rate(tempo_query_frontend_queries_total{namespace="%s"}[1m]))`, namespace),
+			Category:    "query_performance",
+			Type:        "range",
+		},
+		{
+			ID:          "34",
+			Name:        "query_duration_p99",
+			Description: "P99 query duration (end-to-end latency)",
+			Query:       fmt.Sprintf(`histogram_quantile(0.99, sum(rate(tempo_request_duration_seconds_bucket{namespace="%s", route=~".*search.*|.*Search.*"}[1m])) by (le))`, namespace),
+			Category:    "query_performance",
+			Type:        "range",
+		},
+		{
+			ID:          "35",
+			Name:        "query_duration_p50",
+			Description: "P50 (median) query duration",
+			Query:       fmt.Sprintf(`histogram_quantile(0.50, sum(rate(tempo_request_duration_seconds_bucket{namespace="%s", route=~".*search.*|.*Search.*"}[1m])) by (le))`, namespace),
+			Category:    "query_performance",
+			Type:        "range",
+		},
 	}
 
 	return queries

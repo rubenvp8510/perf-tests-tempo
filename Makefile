@@ -58,18 +58,22 @@ deps-update: ## Update dependencies to latest
 # Set profiles: PROFILES=small,medium,large (comma-separated)
 # Set profiles directory: PROFILES_DIR=profiles
 # Set test type: TEST_TYPE=ingestion|query|combined
+# Skip cleanup: SKIP_CLEANUP=true (keep resources after test for debugging)
 
 PROFILES ?=
 PROFILES_DIR ?= profiles
 TEST_TYPE ?= combined
 OUTPUT_DIR ?= results
+SKIP_CLEANUP ?= false
 
 .PHONY: perf-test
 perf-test: ## Run performance tests with specified profiles
-	@if [ -z "$(PROFILES)" ]; then \
-		$(GO) run ./cmd/perf-runner --profiles-dir=$(PROFILES_DIR) --test-type=$(TEST_TYPE) --output=$(OUTPUT_DIR); \
+	@SKIP_FLAG=""; \
+	if [ "$(SKIP_CLEANUP)" = "true" ]; then SKIP_FLAG="--skip-cleanup"; fi; \
+	if [ -z "$(PROFILES)" ]; then \
+		$(GO) run ./cmd/perf-runner --profiles-dir=$(PROFILES_DIR) --test-type=$(TEST_TYPE) --output=$(OUTPUT_DIR) $$SKIP_FLAG; \
 	else \
-		$(GO) run ./cmd/perf-runner --profiles=$(PROFILES) --profiles-dir=$(PROFILES_DIR) --test-type=$(TEST_TYPE) --output=$(OUTPUT_DIR); \
+		$(GO) run ./cmd/perf-runner --profiles=$(PROFILES) --profiles-dir=$(PROFILES_DIR) --test-type=$(TEST_TYPE) --output=$(OUTPUT_DIR) $$SKIP_FLAG; \
 	fi
 
 .PHONY: perf-test-dry-run

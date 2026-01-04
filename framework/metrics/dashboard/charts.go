@@ -232,8 +232,22 @@ func GetCategoryChartConfigs() map[string]CategoryChartConfig {
 		},
 		"query_performance": {
 			Title:       "Query Performance",
-			Description: "Query frontend metrics (k6 metrics are exported to separate JSON files)",
+			Description: "Query throughput and latency metrics",
 			Charts: []ChartDefinition{
+				{
+					MetricNames: []string{"queries_per_second"},
+					Title:       "Queries Per Second",
+					Description: "Total query throughput across all query frontends",
+					Type:        ChartTypeLine,
+					Options:     ChartOptions{YAxisLabel: "queries/sec"},
+				},
+				{
+					MetricNames: []string{"query_duration_p50", "query_duration_p99"},
+					Title:       "Query Latency",
+					Description: "End-to-end query latency (P50 and P99)",
+					Type:        ChartTypeLine,
+					Options:     ChartOptions{YAxisLabel: "seconds", YAxisUnit: "seconds", ShowLegend: true},
+				},
 				{
 					MetricNames: []string{"query_frontend_queue_duration_p99"},
 					Title:       "Queue Wait Time P99",
@@ -294,6 +308,8 @@ func GetMetricUnit(metricName string) string {
 		"backend_read_latency_p99":          "seconds",
 		"blocklist_poll_duration_p99":       "seconds",
 		"query_frontend_queue_duration_p99": "seconds",
+		"query_duration_p99":                "seconds",
+		"query_duration_p50":                "seconds",
 	}
 
 	if unit, ok := unitMap[metricName]; ok {

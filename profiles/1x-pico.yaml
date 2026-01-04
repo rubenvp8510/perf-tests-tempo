@@ -1,0 +1,20 @@
+name: 1x-pico
+description: "Pico - ~50GB/day ingestion, minimal footprint for very small clusters (6.1+ only)"
+
+tempo:
+  variant: stack
+  replicationFactor: 2
+  overrides:
+    # Set to 0 for unlimited traces (prevents "max live traces reached" errors during load tests)
+    maxTracesPerUser: 0
+
+k6:
+  vus:
+    min: 2
+    max: 10
+  ingestion:
+    # ~50 GB/day = ~0.58 MB/s
+    mbPerSecond: 0.6
+    traceProfile: small
+  query:
+    queriesPerSecond: 25
