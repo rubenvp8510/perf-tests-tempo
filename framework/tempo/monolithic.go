@@ -110,10 +110,12 @@ func buildTempoMonolithicCR(namespace string, resources *ResourceConfig) *tempoa
 	}
 
 	// Build extra config as JSON
-	extraConfig := map[string]interface{}{
-		"ingester": map[string]interface{}{
-			"max_block_duration": "10m",
-		},
+	extraConfig := map[string]interface{}{}
+
+	// Build ingester config from ResourceConfig or use defaults
+	ingesterConfig := buildIngesterExtraConfig(resources)
+	if len(ingesterConfig) > 0 {
+		extraConfig["ingester"] = ingesterConfig
 	}
 
 	// Add overrides if configured
@@ -201,4 +203,38 @@ func buildTempoMonolithicCR(namespace string, resources *ResourceConfig) *tempoa
 	}
 
 	return tempoCR
+}
+
+// buildIngesterExtraConfig builds the ingester portion of extraConfig from ResourceConfig
+// If no ingester config is provided, returns a default config with max_block_duration: 10m
+func buildIngesterExtraConfig(resources *ResourceConfig) map[string]interface{} {
+	config := map[string]interface{}{}
+
+	// Check if we have custom ingester config
+	if resources != nil && resources.Overrides != nil && resources.Overrides.Ingester != nil {
+		ing := resources.Overrides.Ingester
+
+		if ing.MaxBlockDuration != "" {
+			config["max_block_duration"] = ing.MaxBlockDuration
+		}
+		if ing.TraceIdlePeriod != "" {
+			config["trace_idle_period"] = ing.TraceIdlePeriod
+		}
+		if ing.FlushCheckPeriod != "" {
+			config["flush_check_period"] = ing.FlushCheckPeriod
+		}
+		if ing.ConcurrentFlushes != nil {
+			config["concurrent_flushes"] = *ing.ConcurrentFlushes
+		}
+
+		// If any config was set, return it
+		if len(config) > 0 {
+			return config
+		}
+	}
+
+	// Default: return minimal config with max_block_duration for better performance testing
+	return map[string]interface{}{
+		"max_block_duration": "10m",
+	}
 }

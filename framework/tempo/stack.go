@@ -1,6 +1,7 @@
 package tempo
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -9,6 +10,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 
 	tempoapi "github.com/grafana/tempo-operator/api/tempo/v1alpha1"
 )
@@ -56,6 +58,14 @@ func buildTempoStackCR(namespace string, resources *ResourceConfig) *tempoapi.Te
 		secretName = GetStorageSecretName(resources.Storage)
 	}
 
+	// Build extra config for ingester tuning
+	extraConfig := map[string]interface{}{}
+	ingesterConfig := buildIngesterExtraConfig(resources)
+	if len(ingesterConfig) > 0 {
+		extraConfig["ingester"] = ingesterConfig
+	}
+	extraConfigJSON, _ := json.Marshal(extraConfig)
+
 	stackCR := &tempoapi.TempoStack{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "tempo.grafana.com/v1alpha1",
@@ -96,6 +106,11 @@ func buildTempoStackCR(namespace string, resources *ResourceConfig) *tempoapi.Te
 				Metrics: tempoapi.MetricsConfigSpec{
 					CreatePrometheusRules: true,
 					CreateServiceMonitors: true,
+				},
+			},
+			ExtraConfig: &tempoapi.ExtraConfigSpec{
+				Tempo: apiextensionsv1.JSON{
+					Raw: extraConfigJSON,
 				},
 			},
 		},

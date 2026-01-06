@@ -1,0 +1,25 @@
+name: ingester-low-flush
+description: "Ingester tuning - minimal flushing to test memory impact"
+
+tempo:
+  variant: monolithic
+  overrides:
+    maxTracesPerUser: 0
+    ingester:
+      flushCheckPeriod: "30s"
+      traceIdlePeriod: "10s"
+      maxBlockDuration: "30m"
+      concurrentFlushes: 2
+
+storage:
+  minioSize: "10Gi"
+
+k6:
+  vus:
+    min: 10
+    max: 50
+  ingestion:
+    mbPerSecond: 1
+    traceProfile: medium
+  query:
+    queriesPerSecond: 25

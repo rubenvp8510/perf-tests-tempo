@@ -49,6 +49,31 @@ type TempoOverrides struct {
 	// Set to 0 for unlimited (prevents "max live traces reached" errors).
 	// If nil/not set, uses Tempo's default (which may cause rejections under load).
 	MaxTracesPerUser *int `yaml:"maxTracesPerUser,omitempty"`
+
+	// Ingester contains ingester-specific tuning parameters
+	Ingester *IngesterConfig `yaml:"ingester,omitempty"`
+}
+
+// IngesterConfig defines ingester tuning parameters for performance testing
+type IngesterConfig struct {
+	// FlushCheckPeriod is the interval for checking flush readiness (e.g., "10s")
+	// Default: "10s"
+	FlushCheckPeriod string `yaml:"flushCheckPeriod,omitempty"`
+
+	// TraceIdlePeriod is the time before flushing an idle trace to WAL (e.g., "5s")
+	// Lower values = faster flush, less memory, but more fractured traces
+	// Default: "5s"
+	TraceIdlePeriod string `yaml:"traceIdlePeriod,omitempty"`
+
+	// MaxBlockDuration is the maximum time before cutting a block (e.g., "30m")
+	// Lower values = more frequent cuts, less memory, more compaction work
+	// Default: "30m"
+	MaxBlockDuration string `yaml:"maxBlockDuration,omitempty"`
+
+	// ConcurrentFlushes is the number of parallel flush operations
+	// Higher values = faster write throughput, more resource usage
+	// Default: 4
+	ConcurrentFlushes *int `yaml:"concurrentFlushes,omitempty"`
 }
 
 // HasResources returns true if custom resources are configured

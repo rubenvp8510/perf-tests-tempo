@@ -1,0 +1,25 @@
+name: ingester-fast-block
+description: "Ingester tuning - isolate max_block_duration effect"
+
+tempo:
+  variant: monolithic
+  overrides:
+    maxTracesPerUser: 0
+    ingester:
+      flushCheckPeriod: "10s"
+      traceIdlePeriod: "5s"
+      maxBlockDuration: "2m"
+      concurrentFlushes: 4
+
+storage:
+  minioSize: "10Gi"
+
+k6:
+  vus:
+    min: 10
+    max: 50
+  ingestion:
+    mbPerSecond: 1
+    traceProfile: medium
+  query:
+    queriesPerSecond: 25

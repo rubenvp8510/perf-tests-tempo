@@ -58,6 +58,15 @@ func (f *Framework) SetupTempo(variant string, resources *ResourceConfig) error 
 			tempoConfig.Overrides = &tempo.TempoOverrides{
 				MaxTracesPerUser: resources.Overrides.MaxTracesPerUser,
 			}
+			// Convert ingester config if present
+			if resources.Overrides.Ingester != nil {
+				tempoConfig.Overrides.Ingester = &tempo.IngesterConfig{
+					FlushCheckPeriod:  resources.Overrides.Ingester.FlushCheckPeriod,
+					TraceIdlePeriod:   resources.Overrides.Ingester.TraceIdlePeriod,
+					MaxBlockDuration:  resources.Overrides.Ingester.MaxBlockDuration,
+					ConcurrentFlushes: resources.Overrides.Ingester.ConcurrentFlushes,
+				}
+			}
 		}
 		if resources.Storage != nil {
 			tempoConfig.Storage = &tempo.StorageConfig{

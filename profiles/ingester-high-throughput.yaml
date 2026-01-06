@@ -1,0 +1,25 @@
+name: ingester-high-throughput
+description: "Ingester tuning - optimized for high throughput"
+
+tempo:
+  variant: monolithic
+  overrides:
+    maxTracesPerUser: 0
+    ingester:
+      flushCheckPeriod: "10s"
+      traceIdlePeriod: "5s"
+      maxBlockDuration: "10m"
+      concurrentFlushes: 8
+
+storage:
+  minioSize: "10Gi"
+
+k6:
+  vus:
+    min: 10
+    max: 50
+  ingestion:
+    mbPerSecond: 1
+    traceProfile: medium
+  query:
+    queriesPerSecond: 25

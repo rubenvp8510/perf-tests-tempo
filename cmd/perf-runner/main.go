@@ -442,9 +442,12 @@ func profileToResourceConfig(p *profile.Profile, nodeSelector map[string]string)
 
 	// Get max traces per user from env var (takes precedence) or profile
 	maxTracesPerUser := getMaxTracesPerUser(p)
-	if maxTracesPerUser != nil {
+	ingesterConfig := getIngesterConfig(p)
+
+	if maxTracesPerUser != nil || ingesterConfig != nil {
 		config.Overrides = &framework.TempoOverrides{
 			MaxTracesPerUser: maxTracesPerUser,
+			Ingester:         ingesterConfig,
 		}
 		hasConfig = true
 	}
@@ -477,6 +480,27 @@ func getMaxTracesPerUser(p *profile.Profile) *int {
 	}
 
 	return nil
+}
+
+// getIngesterConfig returns the ingester tuning config from the profile
+func getIngesterConfig(p *profile.Profile) *framework.IngesterConfig {
+	if p.Tempo.Overrides == nil || p.Tempo.Overrides.Ingester == nil {
+		return nil
+	}
+
+	ing := p.Tempo.Overrides.Ingester
+	// Only return config if at least one field is set
+	if ing.FlushCheckPeriod == "" && ing.TraceIdlePeriod == "" &&
+		ing.MaxBlockDuration == "" && ing.ConcurrentFlushes == nil {
+		return nil
+	}
+
+	return &framework.IngesterConfig{
+		FlushCheckPeriod:  ing.FlushCheckPeriod,
+		TraceIdlePeriod:   ing.TraceIdlePeriod,
+		MaxBlockDuration:  ing.MaxBlockDuration,
+		ConcurrentFlushes: ing.ConcurrentFlushes,
+	}
 }
 
 // getMinIOConfig returns MinIO configuration from the profile
@@ -537,6 +561,24 @@ func printProfileSummary(p *profile.Profile, testType k6.TestType) {
 		}
 	} else {
 		fmt.Printf("    MaxTracesPerUser: (Tempo default)\n")
+	}
+
+	// Show ingester tuning settings if configured
+	if p.Tempo.Overrides != nil && p.Tempo.Overrides.Ingester != nil {
+		ing := p.Tempo.Overrides.Ingester
+		fmt.Printf("    Ingester tuning:\n")
+		if ing.FlushCheckPeriod != "" {
+			fmt.Printf("      flush_check_period: %s\n", ing.FlushCheckPeriod)
+		}
+		if ing.TraceIdlePeriod != "" {
+			fmt.Printf("      trace_idle_period: %s\n", ing.TraceIdlePeriod)
+		}
+		if ing.MaxBlockDuration != "" {
+			fmt.Printf("      max_block_duration: %s\n", ing.MaxBlockDuration)
+		}
+		if ing.ConcurrentFlushes != nil {
+			fmt.Printf("      concurrent_flushes: %d\n", *ing.ConcurrentFlushes)
+		}
 	}
 
 	fmt.Printf("  K6 (%s test):\n", testType)

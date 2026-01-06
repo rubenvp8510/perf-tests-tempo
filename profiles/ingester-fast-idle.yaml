@@ -1,0 +1,25 @@
+name: ingester-fast-idle
+description: "Ingester tuning - isolate trace_idle_period effect"
+
+tempo:
+  variant: monolithic
+  overrides:
+    maxTracesPerUser: 0
+    ingester:
+      flushCheckPeriod: "10s"
+      traceIdlePeriod: "1s"
+      maxBlockDuration: "30m"
+      concurrentFlushes: 4
+
+storage:
+  minioSize: "10Gi"
+
+k6:
+  vus:
+    min: 10
+    max: 50
+  ingestion:
+    mbPerSecond: 1
+    traceProfile: medium
+  query:
+    queriesPerSecond: 25

@@ -52,6 +52,24 @@ type TempoOverrides struct {
 	// Set to 0 for unlimited (prevents "max live traces reached" errors).
 	// If nil/not set, uses Tempo's default.
 	MaxTracesPerUser *int
+
+	// Ingester contains ingester-specific tuning parameters
+	Ingester *IngesterConfig
+}
+
+// IngesterConfig defines ingester tuning parameters for performance testing
+type IngesterConfig struct {
+	// FlushCheckPeriod is the interval for checking flush readiness (e.g., "10s")
+	FlushCheckPeriod string
+
+	// TraceIdlePeriod is the time before flushing an idle trace to WAL (e.g., "5s")
+	TraceIdlePeriod string
+
+	// MaxBlockDuration is the maximum time before cutting a block (e.g., "30m")
+	MaxBlockDuration string
+
+	// ConcurrentFlushes is the number of parallel flush operations
+	ConcurrentFlushes *int
 }
 
 // StorageConfig defines S3-compatible storage configuration
