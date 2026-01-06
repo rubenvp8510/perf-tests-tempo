@@ -2,7 +2,7 @@ name: ingester-fast-idle
 description: "Ingester tuning - isolate trace_idle_period effect"
 
 tempo:
-  variant: monolithic
+  variant: stack
   overrides:
     maxTracesPerUser: 0
     ingester:
@@ -12,14 +12,14 @@ tempo:
       concurrentFlushes: 4
 
 storage:
-  minioSize: "10Gi"
+  minioSize: "200Gi"
 
 k6:
   vus:
-    min: 10
-    max: 50
+    min: 50
+    max: 200
   ingestion:
-    mbPerSecond: 1
-    traceProfile: medium
+    mbPerSecond: 23
+    traceProfile: large
   query:
-    queriesPerSecond: 25
+    queriesPerSecond: 100
