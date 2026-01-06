@@ -401,6 +401,11 @@ func runProfile(ctx context.Context, p *profile.Profile, testType k6.TestType, o
 		if _, err := fw.CollectLogs(logConfig); err != nil {
 			fmt.Printf("Warning: failed to collect logs: %v\n", err)
 		}
+
+		// Dump Tempo CR for debugging/reference
+		if _, err := fw.DumpTempoCR(p.Tempo.Variant, outputDir); err != nil {
+			fmt.Printf("Warning: failed to dump Tempo CR: %v\n", err)
+		}
 	}
 
 	result.Success = true

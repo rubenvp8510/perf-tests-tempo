@@ -8,8 +8,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/redhat/perf-tests-tempo/test/framework/gvr"
+
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/yaml"
 )
 
 // LogCollectionConfig configures log collection behavior
@@ -199,4 +202,77 @@ func (f *Framework) getPodContainerLogs(podName, containerName string, config *L
 	}
 
 	return logs.String(), nil
+}
+
+// TempoCRDump holds information about a dumped Tempo CR
+type TempoCRDump struct {
+	Variant   string // "monolithic" or "stack"
+	Name      string
+	Namespace string
+	FilePath  string
+}
+
+// DumpTempoCR fetches the Tempo CR from the cluster and writes it to a YAML file
+func (f *Framework) DumpTempoCR(variant, outputDir string) (*TempoCRDump, error) {
+	if outputDir == "" {
+		outputDir = "."
+	}
+
+	// Create output directory if needed
+	logDir := filepath.Join(outputDir, f.namespace)
+	if err := os.MkdirAll(logDir, 0755); err != nil {
+		return nil, fmt.Errorf("failed to create output directory: %w", err)
+	}
+
+	var crName string
+	var gvrToUse = gvr.TempoMonolithic
+
+	switch variant {
+	case "monolithic":
+		crName = "simplest"
+		gvrToUse = gvr.TempoMonolithic
+	case "stack":
+		crName = "tempostack"
+		gvrToUse = gvr.TempoStack
+	default:
+		return nil, fmt.Errorf("invalid tempo variant: %s (must be 'monolithic' or 'stack')", variant)
+	}
+
+	fmt.Printf("\n📄 Dumping Tempo CR (%s/%s)...\n", variant, crName)
+
+	// Fetch the CR from the cluster
+	cr, err := f.dynamicClient.Resource(gvrToUse).Namespace(f.namespace).Get(f.ctx, crName, metav1.GetOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get Tempo CR %s/%s: %w", variant, crName, err)
+	}
+
+	// Remove managed fields and other metadata that clutters the output
+	cr.SetManagedFields(nil)
+	unstructuredContent := cr.UnstructuredContent()
+
+	// Remove status if present (we want the spec, not runtime status)
+	// Actually, keep status as it shows the actual state after reconciliation
+
+	// Convert to YAML
+	yamlData, err := yaml.Marshal(unstructuredContent)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal Tempo CR to YAML: %w", err)
+	}
+
+	// Write to file
+	filename := fmt.Sprintf("tempo-%s-%s.yaml", variant, crName)
+	filePath := filepath.Join(logDir, filename)
+
+	if err := os.WriteFile(filePath, yamlData, 0644); err != nil {
+		return nil, fmt.Errorf("failed to write Tempo CR to file: %w", err)
+	}
+
+	fmt.Printf("   ✓ %s (%d bytes)\n", filename, len(yamlData))
+
+	return &TempoCRDump{
+		Variant:   variant,
+		Name:      crName,
+		Namespace: f.namespace,
+		FilePath:  filePath,
+	}, nil
 }
