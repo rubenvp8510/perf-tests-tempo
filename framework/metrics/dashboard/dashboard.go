@@ -468,6 +468,8 @@ func GenerateComparison(csvPaths []string, outputPath string, config DashboardCo
 }
 
 // buildResourceSummary calculates statistics for resource metrics
+// The "total" row is calculated as the sum of all component stats (Avg, P95, P99, Max)
+// which is more useful for capacity planning than the instantaneous sum.
 func (g *Generator) buildResourceSummary(metrics []MetricSeries) *ResourceSummary {
 	summary := &ResourceSummary{
 		Memory: []ComponentStats{},
@@ -483,7 +485,7 @@ func (g *Generator) buildResourceSummary(metrics []MetricSeries) *ResourceSummar
 		if m.Name == "memory_usage_by_component" {
 			component := m.Labels["component"]
 			if component == "" {
-				component = "total"
+				continue // Skip entries without a component label
 			}
 			for _, dp := range m.DataPoints {
 				memoryByComponent[component] = append(memoryByComponent[component], dp.Value)
@@ -494,27 +496,15 @@ func (g *Generator) buildResourceSummary(metrics []MetricSeries) *ResourceSummar
 		if m.Name == "cpu_usage_by_component" {
 			component := m.Labels["component"]
 			if component == "" {
-				component = "total"
+				continue // Skip entries without a component label
 			}
 			for _, dp := range m.DataPoints {
 				cpuByComponent[component] = append(cpuByComponent[component], dp.Value)
 			}
 		}
-
-		// Handle totals
-		if m.Name == "memory_usage_total" {
-			for _, dp := range m.DataPoints {
-				memoryByComponent["total"] = append(memoryByComponent["total"], dp.Value)
-			}
-		}
-		if m.Name == "cpu_usage_total" {
-			for _, dp := range m.DataPoints {
-				cpuByComponent["total"] = append(cpuByComponent["total"], dp.Value)
-			}
-		}
 	}
 
-	// Calculate stats for memory
+	// Calculate stats for each memory component
 	for component, values := range memoryByComponent {
 		if len(values) == 0 {
 			continue
@@ -525,7 +515,7 @@ func (g *Generator) buildResourceSummary(metrics []MetricSeries) *ResourceSummar
 		summary.Memory = append(summary.Memory, stats)
 	}
 
-	// Calculate stats for CPU
+	// Calculate stats for each CPU component
 	for component, values := range cpuByComponent {
 		if len(values) == 0 {
 			continue
@@ -534,6 +524,35 @@ func (g *Generator) buildResourceSummary(metrics []MetricSeries) *ResourceSummar
 		stats.Component = component
 		stats.Unit = "cores"
 		summary.CPU = append(summary.CPU, stats)
+	}
+
+	// Calculate "total" as sum of component stats (for capacity planning)
+	if len(summary.Memory) > 0 {
+		totalMemory := ComponentStats{
+			Component: "total",
+			Unit:      "bytes",
+		}
+		for _, s := range summary.Memory {
+			totalMemory.Avg += s.Avg
+			totalMemory.P95 += s.P95
+			totalMemory.P99 += s.P99
+			totalMemory.Max += s.Max
+		}
+		summary.Memory = append(summary.Memory, totalMemory)
+	}
+
+	if len(summary.CPU) > 0 {
+		totalCPU := ComponentStats{
+			Component: "total",
+			Unit:      "cores",
+		}
+		for _, s := range summary.CPU {
+			totalCPU.Avg += s.Avg
+			totalCPU.P95 += s.P95
+			totalCPU.P99 += s.P99
+			totalCPU.Max += s.Max
+		}
+		summary.CPU = append(summary.CPU, totalCPU)
 	}
 
 	// Sort by component name (total first, then alphabetical)
