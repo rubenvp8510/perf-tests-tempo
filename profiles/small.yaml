@@ -4,6 +4,9 @@ description: "Light load - suitable for development and CI"
 tempo:
   variant: stack
 
+storage:
+  minioSize: "2Gi"
+
 k6:
   vus:
     min: 5

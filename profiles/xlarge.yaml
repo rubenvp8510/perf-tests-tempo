@@ -4,6 +4,9 @@ description: "Extreme load - capacity testing"
 tempo:
   variant: stack
 
+storage:
+  minioSize: "200Gi"
+
 k6:
   vus:
     min: 50

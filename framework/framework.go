@@ -29,6 +29,10 @@ type Framework struct {
 	mu                      sync.Mutex
 	trackedCRs              []TrackedResource
 	trackedClusterResources []TrackedResource
+
+	// Node scheduling - stores the node selector used for Tempo
+	// Used to create anti-affinity for generator pods (k6, MinIO, OTel)
+	tempoNodeSelector map[string]string
 }
 
 // Option is a function that configures the Framework
@@ -62,7 +66,11 @@ func New(ctx context.Context, namespace string, opts ...Option) (*Framework, err
 
 	restConfig, err := rest.InClusterConfig()
 	if err != nil {
-		restConfig, err = clientcmd.BuildConfigFromFlags("", clientcmd.RecommendedHomeFile)
+		// Use KUBECONFIG env var if set, otherwise fall back to ~/.kube/config
+		loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
+		configOverrides := &clientcmd.ConfigOverrides{}
+		kubeConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, configOverrides)
+		restConfig, err = kubeConfig.ClientConfig()
 		if err != nil {
 			return nil, fmt.Errorf("%w: %v", ErrClusterConnection, err)
 		}
@@ -177,5 +185,29 @@ func (f *Framework) GetTrackedClusterResources() []TrackedResource {
 	defer f.mu.Unlock()
 	result := make([]TrackedResource, len(f.trackedClusterResources))
 	copy(result, f.trackedClusterResources)
+	return result
+}
+
+// SetTempoNodeSelector stores the node selector used for Tempo pods.
+// This is used to create anti-affinity for generator pods (k6, MinIO, OTel)
+// to ensure they don't run on the same nodes as Tempo.
+func (f *Framework) SetTempoNodeSelector(selector map[string]string) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.tempoNodeSelector = selector
+}
+
+// GetTempoNodeSelector returns the node selector used for Tempo pods.
+func (f *Framework) GetTempoNodeSelector() map[string]string {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.tempoNodeSelector == nil {
+		return nil
+	}
+	// Return a copy to prevent mutation
+	result := make(map[string]string, len(f.tempoNodeSelector))
+	for k, v := range f.tempoNodeSelector {
+		result[k] = v
+	}
 	return result
 }

@@ -147,6 +147,7 @@ go run ./cmd/perf-runner [flags]
 | `--skip-cleanup` | `false` | Skip cleanup after tests (useful for debugging) |
 | `--check-metrics` | `false` | Check and report metric availability after collection |
 | `--generate-dashboard` | `true` | Generate HTML dashboard after metrics collection |
+| `--collect-logs` | `true` | Collect logs from all components (Tempo, MinIO, OTel, k6) after test |
 | `--node-selector` | (none) | Node selector for Tempo pods (e.g., `node-role.kubernetes.io/infra=`) |
 
 ### Examples
@@ -602,6 +603,11 @@ go run ./cmd/perf-runner --profiles=large --node-selector="workload=performance,
 The node selector is applied to:
 - **TempoMonolithic**: The single Tempo pod
 - **TempoStack**: All components (distributor, ingester, querier, compactor, query-frontend, gateway)
+
+**Generator Pod Isolation**: When a node selector is configured, the framework automatically applies anti-affinity to ensure generator pods (MinIO, OTel Collector, k6 jobs) are scheduled on *different* nodes than Tempo. This provides:
+- Clean performance isolation between the system under test (Tempo) and load generators
+- More accurate performance measurements without resource contention
+- Realistic distributed deployment scenarios
 
 ### External S3 Storage
 

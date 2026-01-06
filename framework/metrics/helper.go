@@ -56,7 +56,11 @@ func CollectMetrics(np NamespaceProvider, testStart time.Time, outputPath string
 		var err error
 		kubeConfig, err = rest.InClusterConfig()
 		if err != nil {
-			kubeConfig, err = clientcmd.BuildConfigFromFlags("", clientcmd.RecommendedHomeFile)
+			// Use KUBECONFIG env var if set, otherwise fall back to ~/.kube/config
+			loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
+			configOverrides := &clientcmd.ConfigOverrides{}
+			clientConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, configOverrides)
+			kubeConfig, err = clientConfig.ClientConfig()
 			if err != nil {
 				return fmt.Errorf("failed to get kube config: %w", err)
 			}

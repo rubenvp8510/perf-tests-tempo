@@ -13,6 +13,16 @@ type Profile struct {
 
 	// K6 contains k6 load test configuration
 	K6 K6Config `yaml:"k6"`
+
+	// Storage contains storage configuration (optional)
+	Storage *StorageConfig `yaml:"storage,omitempty"`
+}
+
+// StorageConfig defines storage settings for the test
+type StorageConfig struct {
+	// MinioSize is the PVC size for MinIO (e.g., "10Gi")
+	// Default: "2Gi"
+	MinioSize string `yaml:"minioSize,omitempty"`
 }
 
 // TempoConfig defines Tempo deployment settings

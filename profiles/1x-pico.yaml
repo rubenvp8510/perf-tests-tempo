@@ -8,6 +8,9 @@ tempo:
     # Set to 0 for unlimited traces (prevents "max live traces reached" errors during load tests)
     maxTracesPerUser: 0
 
+storage:
+  minioSize: "5Gi"
+
 k6:
   vus:
     min: 2

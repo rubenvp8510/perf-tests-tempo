@@ -8,6 +8,9 @@ tempo:
     # Remove or set to a specific value to use limits
     maxTracesPerUser: 0
 
+storage:
+  minioSize: "50Gi"
+
 k6:
   vus:
     min: 20

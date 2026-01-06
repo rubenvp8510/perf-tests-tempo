@@ -24,14 +24,71 @@ type Clients interface {
 	Context() context.Context
 	Namespace() string
 	Logger() *slog.Logger
+	// GetTempoNodeSelector returns the node selector used for Tempo pods.
+	// Used to create anti-affinity for MinIO.
+	GetTempoNodeSelector() map[string]string
 }
+
+// buildNodeAntiAffinity creates a NodeAffinity that prevents scheduling on nodes
+// matching the given selector. This ensures MinIO doesn't run on Tempo nodes.
+func buildNodeAntiAffinity(nodeSelector map[string]string) *corev1.NodeAffinity {
+	if len(nodeSelector) == 0 {
+		return nil
+	}
+
+	var matchExpressions []corev1.NodeSelectorRequirement
+	for key, value := range nodeSelector {
+		var req corev1.NodeSelectorRequirement
+		if value == "" {
+			req = corev1.NodeSelectorRequirement{
+				Key:      key,
+				Operator: corev1.NodeSelectorOpDoesNotExist,
+			}
+		} else {
+			req = corev1.NodeSelectorRequirement{
+				Key:      key,
+				Operator: corev1.NodeSelectorOpNotIn,
+				Values:   []string{value},
+			}
+		}
+		matchExpressions = append(matchExpressions, req)
+	}
+
+	return &corev1.NodeAffinity{
+		RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{
+			NodeSelectorTerms: []corev1.NodeSelectorTerm{
+				{
+					MatchExpressions: matchExpressions,
+				},
+			},
+		},
+	}
+}
+
+// Config holds MinIO configuration options
+type Config struct {
+	// StorageSize is the PVC size for MinIO (e.g., "10Gi")
+	// Default: "2Gi"
+	StorageSize string
+}
+
+// DefaultStorageSize is the default PVC size for MinIO
+const DefaultStorageSize = "2Gi"
 
 // Setup deploys MinIO with PVC and waits for it to be ready
 // Note: EnsureNamespace should be called before this function
-func Setup(c Clients) error {
+func Setup(c Clients, config *Config) error {
 	namespace := c.Namespace()
 	client := c.Client()
 	ctx := c.Context()
+
+	// Determine storage size
+	storageSize := DefaultStorageSize
+	if config != nil && config.StorageSize != "" {
+		storageSize = config.StorageSize
+	}
+
+	fmt.Printf("📦 Setting up MinIO with %s storage\n", storageSize)
 
 	// Create PVC
 	pvc := &corev1.PersistentVolumeClaim{
@@ -46,7 +103,7 @@ func Setup(c Clients) error {
 			AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
 			Resources: corev1.VolumeResourceRequirements{
 				Requests: corev1.ResourceList{
-					corev1.ResourceStorage: resource.MustParse("2Gi"),
+					corev1.ResourceStorage: resource.MustParse(storageSize),
 				},
 			},
 		},
@@ -144,6 +201,13 @@ func Setup(c Clients) error {
 				},
 			},
 		},
+	}
+
+	// Apply anti-affinity to avoid Tempo nodes if node selector is set
+	if nodeSelector := c.GetTempoNodeSelector(); len(nodeSelector) > 0 {
+		deployment.Spec.Template.Spec.Affinity = &corev1.Affinity{
+			NodeAffinity: buildNodeAntiAffinity(nodeSelector),
+		}
 	}
 
 	_, err = client.AppsV1().Deployments(namespace).Create(ctx, deployment, metav1.CreateOptions{})

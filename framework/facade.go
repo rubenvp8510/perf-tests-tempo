@@ -15,12 +15,30 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 )
 
+// MinIOConfig holds MinIO configuration options
+type MinIOConfig struct {
+	// StorageSize is the PVC size for MinIO (e.g., "10Gi")
+	// Default: "2Gi"
+	StorageSize string
+}
+
 // SetupMinIO deploys MinIO with PVC and waits for it to be ready
 func (f *Framework) SetupMinIO() error {
+	return f.SetupMinIOWithConfig(nil)
+}
+
+// SetupMinIOWithConfig deploys MinIO with custom configuration
+func (f *Framework) SetupMinIOWithConfig(config *MinIOConfig) error {
 	if err := f.EnsureNamespace(); err != nil {
 		return err
 	}
-	return minio.Setup(f)
+	var minioConfig *minio.Config
+	if config != nil {
+		minioConfig = &minio.Config{
+			StorageSize: config.StorageSize,
+		}
+	}
+	return minio.Setup(f, minioConfig)
 }
 
 // SetupTempo deploys Tempo (monolithic or stack) with optional resource configuration
@@ -52,6 +70,10 @@ func (f *Framework) SetupTempo(variant string, resources *ResourceConfig) error 
 				SecretAccessKey: resources.Storage.SecretAccessKey,
 				Insecure:        resources.Storage.Insecure,
 			}
+		}
+		// Store the node selector for use in anti-affinity for generator pods
+		if len(resources.NodeSelector) > 0 {
+			f.SetTempoNodeSelector(resources.NodeSelector)
 		}
 	}
 	return tempo.Setup(f, variant, tempoConfig)

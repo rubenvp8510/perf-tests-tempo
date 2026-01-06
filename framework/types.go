@@ -11,6 +11,50 @@ import (
 	"k8s.io/client-go/rest"
 )
 
+// BuildNodeAntiAffinity creates a NodeAffinity that prevents scheduling on nodes
+// matching the given selector. This is used to ensure generator pods (k6, MinIO, OTel)
+// don't run on the same nodes as Tempo.
+//
+// For labels with empty values (e.g., "node-role.kubernetes.io/infra": ""),
+// it uses DoesNotExist operator.
+// For labels with non-empty values, it uses NotIn operator.
+func BuildNodeAntiAffinity(nodeSelector map[string]string) *corev1.NodeAffinity {
+	if len(nodeSelector) == 0 {
+		return nil
+	}
+
+	var matchExpressions []corev1.NodeSelectorRequirement
+
+	for key, value := range nodeSelector {
+		var req corev1.NodeSelectorRequirement
+		if value == "" {
+			// For empty value selectors (like node roles), use DoesNotExist
+			req = corev1.NodeSelectorRequirement{
+				Key:      key,
+				Operator: corev1.NodeSelectorOpDoesNotExist,
+			}
+		} else {
+			// For non-empty values, use NotIn
+			req = corev1.NodeSelectorRequirement{
+				Key:      key,
+				Operator: corev1.NodeSelectorOpNotIn,
+				Values:   []string{value},
+			}
+		}
+		matchExpressions = append(matchExpressions, req)
+	}
+
+	return &corev1.NodeAffinity{
+		RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{
+			NodeSelectorTerms: []corev1.NodeSelectorTerm{
+				{
+					MatchExpressions: matchExpressions,
+				},
+			},
+		},
+	}
+}
+
 const (
 	// LabelManagedBy is the label key used to identify resources managed by the framework
 	LabelManagedBy = "tempo-perf-test.io/managed-by"
@@ -107,8 +151,16 @@ type Tracker interface {
 	GetManagedLabels() map[string]string
 }
 
+// NodeScheduling provides access to node scheduling configuration
+type NodeScheduling interface {
+	// GetTempoNodeSelector returns the node selector used for Tempo pods.
+	// Used to create anti-affinity for generator pods (k6, MinIO, OTel).
+	GetTempoNodeSelector() map[string]string
+}
+
 // FrameworkOperations combines all capabilities needed by subpackages
 type FrameworkOperations interface {
 	Clients
 	Tracker
+	NodeScheduling
 }

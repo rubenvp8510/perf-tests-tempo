@@ -4,6 +4,9 @@ description: "Demo environment - minimal resources, no HA, not for production"
 tempo:
   variant: monolithic
 
+storage:
+  minioSize: "2Gi"
+
 k6:
   vus:
     min: 2

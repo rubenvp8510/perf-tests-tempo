@@ -28,6 +28,7 @@ func main() {
 		skipCleanup       = flag.Bool("skip-cleanup", false, "Skip cleanup after tests (useful for debugging)")
 		checkMetrics      = flag.Bool("check-metrics", false, "Check and report metric availability after collection")
 		generateDashboard = flag.Bool("generate-dashboard", true, "Generate HTML dashboard after metrics collection")
+		collectLogs       = flag.Bool("collect-logs", true, "Collect logs from all components after test")
 		nodeSelector      = flag.String("node-selector", "", "Node selector for Tempo pods (e.g., 'node-role.kubernetes.io/infra=')")
 	)
 	flag.Parse()
@@ -117,7 +118,7 @@ func main() {
 		default:
 		}
 
-		result := runProfile(ctx, p, tt, *outputDir, *skipCleanup, *checkMetrics, *generateDashboard, nodeSelectorMap)
+		result := runProfile(ctx, p, tt, *outputDir, *skipCleanup, *checkMetrics, *generateDashboard, *collectLogs, nodeSelectorMap)
 		results[p.Name] = result
 
 		if result.Error != nil {
@@ -144,7 +145,7 @@ type RunResult struct {
 	Error    error
 }
 
-func runProfile(ctx context.Context, p *profile.Profile, testType k6.TestType, outputDir string, skipCleanup, checkMetrics, generateDashboard bool, nodeSelector map[string]string) *RunResult {
+func runProfile(ctx context.Context, p *profile.Profile, testType k6.TestType, outputDir string, skipCleanup, checkMetrics, generateDashboard, collectLogs bool, nodeSelector map[string]string) *RunResult {
 	startTime := time.Now()
 	result := &RunResult{Profile: p.Name}
 
@@ -174,6 +175,11 @@ func runProfile(ctx context.Context, p *profile.Profile, testType k6.TestType, o
 		result.Error = fmt.Errorf("failed to re-create framework after cleanup: %w", err)
 		result.Duration = time.Since(startTime)
 		return result
+	}
+
+	// Set node selector early so all components (MinIO, OTel, k6) get anti-affinity
+	if len(nodeSelector) > 0 {
+		fw.SetTempoNodeSelector(nodeSelector)
 	}
 
 	// Cleanup after test unless skipped
@@ -208,9 +214,14 @@ func runProfile(ctx context.Context, p *profile.Profile, testType k6.TestType, o
 		fmt.Println("Tempo metrics may not be available. Continuing anyway...")
 	}
 
-	// Setup MinIO
-	fmt.Println("Setting up MinIO...")
-	if err := fw.SetupMinIO(); err != nil {
+	// Setup MinIO with storage size from profile
+	minioConfig := getMinIOConfig(p)
+	if minioConfig != nil {
+		fmt.Printf("Setting up MinIO with %s storage...\n", minioConfig.StorageSize)
+	} else {
+		fmt.Println("Setting up MinIO...")
+	}
+	if err := fw.SetupMinIOWithConfig(minioConfig); err != nil {
 		result.Error = fmt.Errorf("failed to setup MinIO: %w", err)
 		result.Duration = time.Since(startTime)
 		return result
@@ -381,6 +392,17 @@ func runProfile(ctx context.Context, p *profile.Profile, testType k6.TestType, o
 		}
 	}
 
+	// Collect logs from all components if requested
+	if collectLogs {
+		fmt.Println("\nCollecting component logs...")
+		logConfig := &framework.LogCollectionConfig{
+			OutputDir: outputDir,
+		}
+		if _, err := fw.CollectLogs(logConfig); err != nil {
+			fmt.Printf("Warning: failed to collect logs: %v\n", err)
+		}
+	}
+
 	result.Success = true
 	result.Duration = time.Since(startTime)
 	fmt.Printf("\nProfile %s completed successfully in %s\n", p.Name, result.Duration.Round(time.Second))
@@ -450,6 +472,16 @@ func getMaxTracesPerUser(p *profile.Profile) *int {
 	}
 
 	return nil
+}
+
+// getMinIOConfig returns MinIO configuration from the profile
+func getMinIOConfig(p *profile.Profile) *framework.MinIOConfig {
+	if p.Storage == nil || p.Storage.MinioSize == "" {
+		return nil
+	}
+	return &framework.MinIOConfig{
+		StorageSize: p.Storage.MinioSize,
+	}
 }
 
 func profileToK6Config(p *profile.Profile) *k6.Config {

@@ -4,6 +4,9 @@ description: "Heavy load - stress testing"
 tempo:
   variant: stack
 
+storage:
+  minioSize: "50Gi"
+
 k6:
   vus:
     min: 20

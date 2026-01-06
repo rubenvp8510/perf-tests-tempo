@@ -32,6 +32,9 @@ type FrameworkOperations interface {
 	TrackCR(gvr schema.GroupVersionResource, namespace, name string)
 	TrackClusterResource(gvr schema.GroupVersionResource, name string)
 	GetManagedLabels() map[string]string
+	// GetTempoNodeSelector returns the node selector used for Tempo pods.
+	// Used to create anti-affinity for the OTel Collector.
+	GetTempoNodeSelector() map[string]string
 }
 
 // Tempo CR names (must match tempo package)
@@ -193,7 +196,7 @@ func setupCollectorCR(fw FrameworkOperations, tempoVariant string) error {
 	}
 
 	// Build OpenTelemetryCollector CR programmatically
-	collectorObj := buildCollectorCR(namespace, tempoVariant)
+	collectorObj := buildCollectorCR(namespace, tempoVariant, fw.GetTempoNodeSelector())
 
 	// Add managed labels
 	labels := collectorObj.GetLabels()
@@ -254,8 +257,46 @@ func waitForCollectorReady(fw FrameworkOperations, timeout time.Duration) error 
 	return fmt.Errorf("otel collector not ready after %v", timeout)
 }
 
+// buildNodeAntiAffinity creates a NodeAffinity structure for unstructured objects
+// that prevents scheduling on nodes matching the given selector.
+func buildNodeAntiAffinityUnstructured(nodeSelector map[string]string) map[string]interface{} {
+	if len(nodeSelector) == 0 {
+		return nil
+	}
+
+	var matchExpressions []interface{}
+	for key, value := range nodeSelector {
+		var expr map[string]interface{}
+		if value == "" {
+			expr = map[string]interface{}{
+				"key":      key,
+				"operator": "DoesNotExist",
+			}
+		} else {
+			expr = map[string]interface{}{
+				"key":      key,
+				"operator": "NotIn",
+				"values":   []interface{}{value},
+			}
+		}
+		matchExpressions = append(matchExpressions, expr)
+	}
+
+	return map[string]interface{}{
+		"nodeAffinity": map[string]interface{}{
+			"requiredDuringSchedulingIgnoredDuringExecution": map[string]interface{}{
+				"nodeSelectorTerms": []interface{}{
+					map[string]interface{}{
+						"matchExpressions": matchExpressions,
+					},
+				},
+			},
+		},
+	}
+}
+
 // buildCollectorCR builds an OpenTelemetryCollector CR programmatically
-func buildCollectorCR(namespace string, tempoVariant string) *unstructured.Unstructured {
+func buildCollectorCR(namespace string, tempoVariant string, tempoNodeSelector map[string]string) *unstructured.Unstructured {
 	// Determine Tempo gateway host based on variant
 	var crName string
 	switch tempoVariant {
@@ -268,6 +309,66 @@ func buildCollectorCR(namespace string, tempoVariant string) *unstructured.Unstr
 	}
 	tempoGatewayHost := fmt.Sprintf("tempo-%s-gateway.%s.svc.cluster.local", crName, namespace)
 
+	spec := map[string]interface{}{
+		"mode":           "deployment",
+		"serviceAccount": "otel-collector-sa",
+		"config": map[string]interface{}{
+			"extensions": map[string]interface{}{
+				"bearertokenauth": map[string]interface{}{
+					"filename": "/var/run/secrets/kubernetes.io/serviceaccount/token",
+				},
+			},
+			"receivers": map[string]interface{}{
+				"otlp": map[string]interface{}{
+					"protocols": map[string]interface{}{
+						"grpc": map[string]interface{}{},
+						"http": map[string]interface{}{},
+					},
+				},
+			},
+			"exporters": map[string]interface{}{
+				"otlp": map[string]interface{}{
+					"endpoint": fmt.Sprintf("%s:8090", tempoGatewayHost),
+					"tls": map[string]interface{}{
+						"ca_file": "/var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt",
+					},
+					"auth": map[string]interface{}{
+						"authenticator": "bearertokenauth",
+					},
+					"headers": map[string]interface{}{
+						"X-Scope-OrgID": "tenant-1",
+					},
+				},
+				"otlphttp": map[string]interface{}{
+					"endpoint": fmt.Sprintf("https://%s:8080/api/traces/v1/tenant-1", tempoGatewayHost),
+					"tls": map[string]interface{}{
+						"ca_file": "/var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt",
+					},
+					"auth": map[string]interface{}{
+						"authenticator": "bearertokenauth",
+					},
+					"headers": map[string]interface{}{
+						"X-Scope-OrgID": "tenant-1",
+					},
+				},
+			},
+			"service": map[string]interface{}{
+				"extensions": []interface{}{"bearertokenauth"},
+				"pipelines": map[string]interface{}{
+					"traces": map[string]interface{}{
+						"receivers": []interface{}{"otlp"},
+						"exporters": []interface{}{"otlp"},
+					},
+				},
+			},
+		},
+	}
+
+	// Add anti-affinity to avoid Tempo nodes if node selector is set
+	if affinity := buildNodeAntiAffinityUnstructured(tempoNodeSelector); affinity != nil {
+		spec["affinity"] = affinity
+	}
+
 	return &unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"apiVersion": "opentelemetry.io/v1beta1",
@@ -276,60 +377,7 @@ func buildCollectorCR(namespace string, tempoVariant string) *unstructured.Unstr
 				"name":      "otel-collector",
 				"namespace": namespace,
 			},
-			"spec": map[string]interface{}{
-				"mode":           "deployment",
-				"serviceAccount": "otel-collector-sa",
-				"config": map[string]interface{}{
-					"extensions": map[string]interface{}{
-						"bearertokenauth": map[string]interface{}{
-							"filename": "/var/run/secrets/kubernetes.io/serviceaccount/token",
-						},
-					},
-					"receivers": map[string]interface{}{
-						"otlp": map[string]interface{}{
-							"protocols": map[string]interface{}{
-								"grpc": map[string]interface{}{},
-								"http": map[string]interface{}{},
-							},
-						},
-					},
-					"exporters": map[string]interface{}{
-						"otlp": map[string]interface{}{
-							"endpoint": fmt.Sprintf("%s:8090", tempoGatewayHost),
-							"tls": map[string]interface{}{
-								"ca_file": "/var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt",
-							},
-							"auth": map[string]interface{}{
-								"authenticator": "bearertokenauth",
-							},
-							"headers": map[string]interface{}{
-								"X-Scope-OrgID": "tenant-1",
-							},
-						},
-						"otlphttp": map[string]interface{}{
-							"endpoint": fmt.Sprintf("https://%s:8080/api/traces/v1/tenant-1", tempoGatewayHost),
-							"tls": map[string]interface{}{
-								"ca_file": "/var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt",
-							},
-							"auth": map[string]interface{}{
-								"authenticator": "bearertokenauth",
-							},
-							"headers": map[string]interface{}{
-								"X-Scope-OrgID": "tenant-1",
-							},
-						},
-					},
-					"service": map[string]interface{}{
-						"extensions": []interface{}{"bearertokenauth"},
-						"pipelines": map[string]interface{}{
-							"traces": map[string]interface{}{
-								"receivers": []interface{}{"otlp"},
-								"exporters": []interface{}{"otlp"},
-							},
-						},
-					},
-				},
-			},
+			"spec": spec,
 		},
 	}
 }

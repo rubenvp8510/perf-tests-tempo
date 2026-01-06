@@ -4,6 +4,9 @@ description: "Moderate load - typical production baseline"
 tempo:
   variant: stack
 
+storage:
+  minioSize: "10Gi"
+
 k6:
   vus:
     min: 10
