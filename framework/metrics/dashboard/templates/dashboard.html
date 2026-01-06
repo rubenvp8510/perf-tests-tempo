@@ -491,6 +491,34 @@
             {{ end }}
         </section>
 
+        {{ if .Config.IngesterConfig }}
+        <!-- Ingester Configuration -->
+        <section class="category-section" id="ingester-config">
+            <div class="category-header">
+                <h2>Ingester Configuration</h2>
+            </div>
+            <p class="category-description">Tempo ingester tuning parameters used in this test</p>
+            <div class="summary-grid" style="grid-template-columns: repeat(4, 1fr);">
+                <div class="summary-card">
+                    <div class="summary-value" style="font-size: 1.5rem;">{{ .Config.IngesterConfig.FlushCheckPeriod }}</div>
+                    <div class="summary-label">flush_check_period</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-value" style="font-size: 1.5rem;">{{ .Config.IngesterConfig.TraceIdlePeriod }}</div>
+                    <div class="summary-label">trace_idle_period</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-value" style="font-size: 1.5rem;">{{ .Config.IngesterConfig.MaxBlockDuration }}</div>
+                    <div class="summary-label">max_block_duration</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-value" style="font-size: 1.5rem;">{{ .Config.IngesterConfig.ConcurrentFlushes }}</div>
+                    <div class="summary-label">concurrent_flushes</div>
+                </div>
+            </div>
+        </section>
+        {{ end }}
+
         {{ if .Config.CompareMode }}
         <!-- Comparison Legend -->
         <section class="comparison-legend">

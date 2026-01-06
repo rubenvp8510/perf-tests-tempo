@@ -25,6 +25,16 @@ type DashboardConfig struct {
 	// Comparison mode settings
 	CompareMode bool
 	RunNames    []string // Names for each run in comparison mode
+	// Ingester tuning configuration (if set)
+	IngesterConfig *IngesterTuningConfig
+}
+
+// IngesterTuningConfig holds ingester tuning parameters for display
+type IngesterTuningConfig struct {
+	FlushCheckPeriod  string
+	TraceIdlePeriod   string
+	MaxBlockDuration  string
+	ConcurrentFlushes int
 }
 
 // DashboardData holds all data for rendering the dashboard

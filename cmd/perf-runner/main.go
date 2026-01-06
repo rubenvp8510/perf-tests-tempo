@@ -15,6 +15,7 @@ import (
 
 	"github.com/redhat/perf-tests-tempo/test/framework"
 	"github.com/redhat/perf-tests-tempo/test/framework/k6"
+	"github.com/redhat/perf-tests-tempo/test/framework/metrics/dashboard"
 	"github.com/redhat/perf-tests-tempo/test/framework/profile"
 )
 
@@ -385,7 +386,30 @@ func runProfile(ctx context.Context, p *profile.Profile, testType k6.TestType, o
 	if generateDashboard {
 		dashboardFile := fmt.Sprintf("%s/%s-dashboard.html", outputDir, p.Name)
 		fmt.Printf("Generating dashboard to %s...\n", dashboardFile)
-		if err := fw.GenerateDashboard(metricsFile, dashboardFile, p.Name); err != nil {
+
+		dashConfig := dashboard.DashboardConfig{
+			Title:       "Tempo Performance Test Report",
+			ProfileName: p.Name,
+			TestType:    "combined",
+			GeneratedAt: time.Now(),
+		}
+
+		// Add ingester config if present in profile
+		if p.Tempo.Overrides != nil && p.Tempo.Overrides.Ingester != nil {
+			ing := p.Tempo.Overrides.Ingester
+			concurrentFlushes := 4 // default
+			if ing.ConcurrentFlushes != nil {
+				concurrentFlushes = *ing.ConcurrentFlushes
+			}
+			dashConfig.IngesterConfig = &dashboard.IngesterTuningConfig{
+				FlushCheckPeriod:  ing.FlushCheckPeriod,
+				TraceIdlePeriod:   ing.TraceIdlePeriod,
+				MaxBlockDuration:  ing.MaxBlockDuration,
+				ConcurrentFlushes: concurrentFlushes,
+			}
+		}
+
+		if err := fw.GenerateDashboardWithConfig(metricsFile, dashboardFile, dashConfig); err != nil {
 			fmt.Printf("Warning: failed to generate dashboard: %v\n", err)
 		} else {
 			fmt.Printf("Dashboard generated: %s\n", dashboardFile)

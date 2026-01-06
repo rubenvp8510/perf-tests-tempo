@@ -180,6 +180,11 @@ func (f *Framework) GenerateDashboard(csvPath, outputPath, profileName string) e
 	return dashboard.Generate(csvPath, outputPath, config)
 }
 
+// GenerateDashboardWithConfig generates an HTML dashboard with custom config
+func (f *Framework) GenerateDashboardWithConfig(csvPath, outputPath string, config dashboard.DashboardConfig) error {
+	return dashboard.Generate(csvPath, outputPath, config)
+}
+
 // CheckMetricAvailability checks which metrics are available in Prometheus
 func (f *Framework) CheckMetricAvailability(duration time.Duration) (*metrics.AvailabilityReport, error) {
 	return metrics.CheckMetricAvailability(f, duration)
